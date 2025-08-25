@@ -1,13 +1,40 @@
 // Palmwine Merchants & Flames — Scripts
 const navToggle = document.querySelector('.nav-toggle');
 const siteNav = document.querySelector('.site-nav');
-const yearEl = document.querySelector('#year');
+// Missing DOM refs (prevent ReferenceErrors)
+const siteHeader = document.querySelector('.site-header');
 const heroEl = document.querySelector('.hero');
-const waveEl = document.querySelector('#wave');
-// night mode toggle removed per user preference
-const announce = document.querySelector('#announce');
+const waveEl = document.getElementById('wave');
+const announce = document.getElementById('announce');
 
-if (yearEl) yearEl.textContent = new Date().getFullYear();
+// Year in footer
+document.getElementById('year').textContent = new Date().getFullYear();
+
+// Simple scroll-up animations
+document.addEventListener('DOMContentLoaded', function() {
+  // Add scroll-up class to sections and cards
+  const elementsToAnimate = document.querySelectorAll('.section, .card, .testimonial, .footer-section');
+  elementsToAnimate.forEach(el => {
+    el.classList.add('scroll-up');
+  });
+
+  // Intersection Observer for scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  // Observe all elements with scroll-up class
+  document.querySelectorAll('.scroll-up').forEach(el => {
+    observer.observe(el);
+  });
+});
 
 // Mobile menu
 if (navToggle) {
@@ -16,6 +43,24 @@ if (navToggle) {
     navToggle.setAttribute('aria-expanded', String(open));
   });
 }
+
+// Active nav item based on current page
+(function(){
+  if (!siteNav) return;
+  const current = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  let set = false;
+  siteNav.querySelectorAll('a:not(.cta)').forEach(a => {
+    const href = a.getAttribute('href');
+    if (!href) return;
+    const url = new URL(href, location.href);
+    const file = (url.pathname.split('/').pop() || '').toLowerCase();
+    if (!set && file && file === current){
+      a.setAttribute('aria-current','page');
+      a.classList.add('active');
+      set = true;
+    }
+  });
+})();
 
 // Gallery horizontal slider (scroll-snap + arrows + auto-slide)
 (function(){
@@ -170,28 +215,46 @@ for (const a of document.querySelectorAll('a[href^="#"]')){
     if(el){
       e.preventDefault();
       el.scrollIntoView({behavior:'smooth'});
-      siteNav.classList.remove('open');
-      navToggle.setAttribute('aria-expanded','false');
+      if (siteNav) siteNav.classList.remove('open');
+      if (navToggle) navToggle.setAttribute('aria-expanded','false');
     }
   });
 }
 
 // Rotate hero background using banner images
 const heroImages = [
-  'img/banner.jpg',
-  'img/banner3.jpg',
-  'img/banner2.jpg',
-  'img/banner3.jpeg',
+  'img/home_banner.jpg',
+  'img/home_banner2.jpg',
+  'img/home_banner3.jpg',
+  'img/home_banner4.jpg',
 ];
 
 // Preload
 heroImages.forEach(src => { const i = new Image(); i.src = src; });
 
 let heroIdx = 0;
+// Optional focal positions per image (tweak per asset as needed)
+const heroPositions = [
+  'center 36%', // home_banner.jpg
+  'center 34%', // home_banner2.jpg
+  'center 40%', // home_banner3.jpg
+  'center 38%', // home_banner4.jpg
+];
+
 function setHero(idx){
   if(!heroEl) return;
-  const src = heroImages[idx % heroImages.length];
-  heroEl.style.backgroundImage = `linear-gradient(135deg, rgba(0,0,0,.45), rgba(0,0,0,.25)), url('${src}')`;
+  const i = idx % heroImages.length;
+  const src = heroImages[i];
+  // Layered overlays: vertical gradient + top/bottom vignettes for readability
+  const overlay = [
+    'linear-gradient(180deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.50) 28%, rgba(0,0,0,.40) 60%, rgba(0,0,0,.65) 100%)',
+    'radial-gradient(120% 70% at 50% 0%, rgba(0,0,0,.38) 0%, rgba(0,0,0,0) 60%)',
+    'radial-gradient(120% 80% at 50% 100%, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 60%)'
+  ].join(', ');
+  heroEl.style.backgroundImage = `${overlay}, url('${src}')`;
+  if(heroPositions[i]){
+    heroEl.style.backgroundPosition = `${heroPositions[i]}`;
+  }
 }
 setHero(heroIdx);
 
@@ -205,6 +268,7 @@ window.addEventListener('scroll', () => {
   const y = window.scrollY;
   if (heroEl) heroEl.style.backgroundPosition = `center ${-y * 0.15}px`;
   if (waveEl) waveEl.style.transform = `translateY(${y * 0.05}px)`;
+  if (siteHeader) siteHeader.classList.toggle('scrolled', y > 6);
 });
 
 // (night mode removed)
