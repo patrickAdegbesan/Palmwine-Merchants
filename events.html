@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Events • Palmwine Merchants & Flames</title>
   <meta name="description" content="Bush Party, pop-ups, tickets and the photo gallery." />
+  <meta name="paystack-public-key" content="pk_test_897735f7b7e9ccd7e1c7ac14667dbdc90db1d26f" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -37,9 +38,22 @@
       <a href="about.html">About</a>
       <a href="events.html">Events</a>
       <a href="menu.html">Menu</a>
+      <a href="booking.html">Booking</a>
       <a href="contact.html">Contact</a>
     </nav>
   </header>
+
+  <!-- Hanging promo sign -->
+  <div id="hang-sign" class="hang-sign" aria-hidden="true">
+    <a href="events.html#upcoming" class="hs-body">
+      <img src="img/tr_party1_logo.png" alt="Palmwine Merchants Party" class="hs-logo" />
+      <div class="hs-text">
+        <strong>Next Bush Party</strong>
+        <span>Tap to get tickets</span>
+      </div>
+    </a>
+    <button class="hs-close" aria-label="Close">×</button>
+  </div>
 
   <main>
     <section class="hero small">
@@ -147,14 +161,59 @@
       <div class="container two-col">
         <div>
           <h2>Buy Tickets</h2>
-          <p class="lead">Secure your spot securely via our payment partner.</p>
-          <ul class="bullets">
-            <li>Fast, secure checkout</li>
-            <li>Instant confirmation to your email/WhatsApp</li>
-            <li>Refunds handled according to event policy</li>
-          </ul>
-          <a class="btn primary" href="#" aria-disabled="true">Proceed to Checkout</a>
-          <p class="form-note">We can integrate Paystack/Flutterwave here. Share the checkout link(s) and I’ll wire them up.</p>
+          <p class="lead">Pay for your tickets via card (Paystack) or bank transfer, then send us your confirmation.</p>
+          <form id="payment-form" class="form" data-formspree="">
+            <label for="payQuoteId">Event / Ticket ID</label>
+            <input id="payQuoteId" name="quoteId" type="text" value="BUSH-PARTY-SEPT" placeholder="e.g. BUSH-PARTY-SEPT" required />
+
+            <label for="payerName">Your Full Name</label>
+            <input id="payerName" name="payerName" type="text" placeholder="Your name" required />
+
+            <label for="payPhone">Phone (WhatsApp)</label>
+            <input id="payPhone" name="phone" type="tel" inputmode="tel" placeholder="e.g. +234 803 123 4567" required />
+
+            <label for="payEmail">Email (optional)</label>
+            <input id="payEmail" name="email" type="email" placeholder="you@example.com" />
+
+            <div class="two-col" style="align-items:flex-start">
+              <div>
+                <label for="amountPaid">Amount (₦)</label>
+                <input id="amountPaid" name="amountPaid" type="number" min="0" step="100" placeholder="e.g. 10000" required />
+              </div>
+              <div>
+                <label for="paymentMethod">Payment Method</label>
+                <select id="paymentMethod" name="paymentMethod" required>
+                  <option value="Paystack">Paystack (Card)</option>
+                  <option value="Transfer">Bank Transfer</option>
+                  <option value="POS">POS</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <label for="txRef">Transaction Reference</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="txRef" name="txRef" type="text" placeholder="Bank ref / POS slip / Note or Paystack ref" />
+              <button id="btn-verify-paystack" type="button" class="btn ghost" aria-label="Verify Paystack payment">Verify</button>
+            </div>
+            <small id="verify-result" class="muted" role="status" aria-live="polite"></small>
+
+            <label for="paymentDate">Payment Date</label>
+            <input id="paymentDate" name="paymentDate" type="date" required />
+
+            <label for="notes">Notes (optional)</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="Any extra info (e.g. number of tickets)"></textarea>
+
+            <div class="btn-row">
+              <button class="btn secondary" id="btn-paystack-card" type="button"><i class="fa-solid fa-credit-card"></i> Pay with Card</button>
+              <button class="btn primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send Confirmation</button>
+              <a class="btn secondary" id="btn-pay-wa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Send on WhatsApp</a>
+            </div>
+            <small id="pay-status" class="muted" role="status" aria-live="polite"></small>
+
+            <p class="form-note">For bank transfer: Providus Bank — Account Name: Palmwine Merchants Co. — Account Number: 5401335797</p>
+          </form>
         </div>
         <div class="card tone">
           <h3>Need help with tickets?</h3>
@@ -301,7 +360,7 @@
       </div>
     </div>
   </footer>
-
+  <script src="https://js.paystack.co/v1/inline.js"></script>
   <script src="script.js"></script>
   <a class="fab-whatsapp" href="https://wa.me/2348039490349?text=Hi%20Palmwine%20Merchants%20—%20I%20have%20a%20quick%20question" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
     <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>

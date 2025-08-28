@@ -207,6 +207,11 @@ function handleInquiry(e){
   return false;
 }
 
+function toWhatsAppLink(text, number){
+  const wa = String(number || '2348039490349').replace(/[^\d]/g,'');
+  return `https://wa.me/${wa}?text=${encodeURIComponent(text||'')}`;
+}
+
 // Smooth scrolling for internal links
 for (const a of document.querySelectorAll('a[href^="#"]')){
   a.addEventListener('click', (e)=>{
@@ -235,10 +240,10 @@ heroImages.forEach(src => { const i = new Image(); i.src = src; });
 let heroIdx = 0;
 // Optional focal positions per image (tweak per asset as needed)
 const heroPositions = [
-  'center 36%', // home_banner.jpg
-  'center 34%', // home_banner2.jpg
-  'center 40%', // home_banner3.jpg
-  'center 38%', // home_banner4.jpg
+  'center 100%', // home_banner.jpg
+  'center 100%', // home_banner2.jpg
+  'center 100%', // home_banner3 .jpg
+  'center 100%', // home_banner4.jpg
 ];
 
 function setHero(idx){
@@ -475,4 +480,518 @@ if (announce){
       if (dx < 0) next(); else prev();
     }
   }, {passive:true});
+})();
+
+// Booking quote + invoice generation (runs only on booking.html)
+(function(){
+  const form = document.getElementById('quote-form');
+  if (!form) return; // not on booking page
+
+  // Business config (adjust as needed)
+  const BUSINESS = {
+    name: 'Palmwine Merchants & Flames',
+    waNumber: '2348039490349',
+    taxRate: 0.075,       // 7.5% VAT (adjust to your policy)
+    depositRate: 0.5,     // 50% deposit due
+    delivery: { baseFreeKm: 5, perKm: 1500 }
+  };
+
+  // Pricing template (example defaults — tweak to your offerings)
+  const PRICING = {
+    packages: {
+      palmwine: { label: 'Palmwine Service', baseFee: 100_000, perGuest: 1_500 },
+      flame:    { label: 'Open‑Flame Cuisine', baseFee: 180_000, perGuest: 3_500 },
+      full:     { label: 'Full Experience', baseFee: 250_000, perGuest: 4_500 },
+    },
+    addons: {
+      cocktails_bar:   { label: 'Palmwine Cocktails Bar', baseFee: 50_000, perGuest: 1_000 },
+      grill_station:   { label: 'Grill Station', baseFee: 60_000, perGuest: 1_500 },
+      dj:              { label: 'DJ', flat: 80_000 },
+      decor:           { label: 'Decor', flat: 60_000 },
+      custom_bottling: { label: 'Custom Bottling', perGuest: 500 },
+      ice_cups:        { label: 'Ice + Cups', baseFee: 15_000, perGuest: 200 },
+      generator:       { label: 'Generator', flat: 70_000 },
+    }
+  };
+
+  const moneyFmt = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
+  const NGN = (n)=> moneyFmt.format(Math.round(n||0));
+
+  function uniqueQuoteId(){
+    const d = new Date();
+    const pad = (n)=> String(n).padStart(2,'0');
+    const date = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+    const rnd = Math.floor(1000 + Math.random()*9000);
+    return `PMF-${date}-${rnd}`;
+  }
+
+  // DOM targets
+  const elInvoice = document.getElementById('invoice');
+  const elRows = document.getElementById('inv-rows');
+  const elId = document.getElementById('inv-id');
+  const elDate = document.getElementById('inv-date');
+  const elClient = document.getElementById('inv-client');
+  const elContact = document.getElementById('inv-contact');
+  const elEvent = document.getElementById('inv-event');
+  const elVenue = document.getElementById('inv-venue');
+  const elSubtotal = document.getElementById('inv-subtotal');
+  const elDelivery = document.getElementById('inv-delivery');
+  const elTax = document.getElementById('inv-tax');
+  const elTotal = document.getElementById('inv-total');
+  const elDeposit = document.getElementById('inv-deposit');
+  const btnPrint = document.getElementById('btn-print');
+  const btnShare = document.getElementById('btn-share');
+  const btnItemized = document.getElementById('btn-itemized');
+  const btnDiscount = document.getElementById('btn-discount');
+
+  // Accumulator for itemized rows (used for WhatsApp share)
+  let currentItems = [];
+
+  function addRow(desc, qty, unit){
+    const q = qty || 0;
+    const u = unit || 0;
+    const amount = q * u;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${desc}</td>
+      <td>${q}</td>
+      <td>${u ? NGN(u) : '—'}</td>
+      <td class="ta-right">${NGN(amount)}</td>
+    `;
+    elRows.appendChild(tr);
+    currentItems.push({ desc, qty: q, unit: u, amount });
+    return amount;
+  }
+
+  function computeQuote(data){
+    elRows.textContent = '';
+    currentItems = [];
+
+    const guests = Math.max(10, parseInt(data.guests || '0', 10) || 0);
+    const distanceKm = Math.max(0, parseInt(data.distanceKm || '0', 10) || 0);
+    const pkgKey = String(data.basePackage || 'palmwine');
+    const pkg = PRICING.packages[pkgKey] || PRICING.packages.palmwine;
+
+    let subtotal = 0;
+    // Base package
+    if (pkg.baseFee){ subtotal += addRow(`${pkg.label} — Setup & Service Team`, 1, pkg.baseFee); }
+    if (pkg.perGuest){ subtotal += addRow(`${pkg.label} — Per Guest`, guests, pkg.perGuest); }
+
+    // Add-ons
+    const addons = Array.isArray(data.addons) ? data.addons : (data.addons ? [data.addons] : []);
+    addons.forEach(key => {
+      const a = PRICING.addons[key];
+      if (!a) return;
+      if (a.flat){ subtotal += addRow(`${a.label}`, 1, a.flat); }
+      if (a.baseFee){ subtotal += addRow(`${a.label} — Setup`, 1, a.baseFee); }
+      if (a.perGuest){ subtotal += addRow(`${a.label} — Per Guest`, guests, a.perGuest); }
+    });
+
+    // Delivery (distance beyond free km)
+    let delivery = 0;
+    if (distanceKm > BUSINESS.delivery.baseFreeKm){
+      const billKm = distanceKm - BUSINESS.delivery.baseFreeKm;
+      delivery = billKm * BUSINESS.delivery.perKm;
+    }
+
+    // Tax and totals (apply tax on services subtotal only)
+    const tax = subtotal * BUSINESS.taxRate;
+    const total = subtotal + delivery + tax;
+    const deposit = total * BUSINESS.depositRate;
+
+    return { subtotal, delivery, tax, total, deposit, guests, items: currentItems };
+  }
+
+  
+
+  function buildItemizedMessage(data, result, quoteId){
+    const taxPct = (BUSINESS.taxRate * 100).toFixed(1).replace(/\.0$/, '');
+    const lines = [
+      `${BUSINESS.name} — Itemized Quote ${quoteId}`,
+      `Client: ${data.clientName || ''}`,
+      `Event: ${data.eventType || ''} • ${result.guests} guests • ${data.date || ''}`,
+      `Venue: ${data.venue || ''}`,
+      '',
+      'Items:'
+    ];
+    (result.items || []).forEach(it=>{
+      lines.push(`- ${it.desc}: ${it.qty} × ${NGN(it.unit)} = ${NGN(it.amount)}`);
+    });
+    lines.push(
+      '',
+      `Subtotal: ${NGN(result.subtotal)}`,
+      `Delivery: ${NGN(result.delivery)}`,
+      `Tax (${taxPct}%): ${NGN(result.tax)}`,
+      `Total: ${NGN(result.total)}`,
+      `Deposit Due: ${NGN(result.deposit)}`,
+      '',
+      'Reply with any line to EDIT with your new price, or say LEAVE to keep it.'
+    );
+    return lines.join('\n');
+  }
+
+  function renderInvoice(data, result, quoteId){
+    const d = new Date();
+    elId.textContent = quoteId;
+    elDate.textContent = d.toLocaleDateString();
+    elClient.textContent = data.clientName || '';
+    const contactBits = [data.phone || '', data.email || ''].filter(Boolean).join(' • ');
+    elContact.textContent = contactBits || '';
+    elEvent.textContent = `${data.eventType || ''} • ${result.guests} guests • ${data.date || ''}`;
+    elVenue.textContent = data.venue || '';
+
+    elSubtotal.textContent = NGN(result.subtotal);
+    elDelivery.textContent = NGN(result.delivery);
+    elTax.textContent = NGN(result.tax);
+    elTotal.textContent = NGN(result.total);
+    elDeposit.textContent = NGN(result.deposit);
+
+    // Share links
+    const summary = [
+      `${BUSINESS.name} — Quote ${quoteId}`,
+      `Client: ${data.clientName || ''}`,
+      `Event: ${data.eventType || ''} • ${result.guests} guests • ${data.date || ''}`,
+      `Venue: ${data.venue || ''}`,
+      `Subtotal: ${NGN(result.subtotal)}`,
+      `Delivery: ${NGN(result.delivery)}`,
+      `Tax: ${NGN(result.tax)}`,
+      `Total: ${NGN(result.total)}`,
+      `Deposit Due: ${NGN(result.deposit)}`
+    ].join('\n');
+
+    btnShare.setAttribute('href', toWhatsAppLink(summary));
+    if (btnItemized){
+      const itemized = buildItemizedMessage(data, result, quoteId);
+      btnItemized.setAttribute('href', toWhatsAppLink(itemized));
+    }
+    const discountMsg = `Hi ${BUSINESS.name}, I'd like to request a discount on Quote ${quoteId}. Total is ${NGN(result.total)} for ${result.guests} guests on ${data.date || ''}. Could you review?`;
+    btnDiscount.setAttribute('href', toWhatsAppLink(discountMsg));
+
+    elInvoice.style.display = 'block';
+    elInvoice.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const fd = new FormData(form);
+    // Ensure multi-select for checkboxes is captured
+    const data = Object.create(null);
+    for (const [k,v] of fd.entries()){
+      if (k === 'addons'){
+        if (!data.addons) data.addons = [];
+        data.addons.push(v);
+      } else {
+        data[k] = v;
+      }
+    }
+    const id = uniqueQuoteId();
+    const result = computeQuote(data);
+    // expose for payment form reuse
+    try{ window.__lastQuoteId = id; }catch(_){ /* no-op */ }
+    renderInvoice(data, result, id);
+  });
+
+  form.addEventListener('reset', ()=>{
+    // Small delay so native reset applies, then hide invoice
+    setTimeout(()=>{ if (elInvoice) elInvoice.style.display = 'none'; }, 0);
+  });
+
+  if (btnPrint){ btnPrint.addEventListener('click', ()=> window.print()); }
+})();
+
+(function(){
+  const form = document.getElementById('payment-form');
+  if (!form) return;
+
+  const qInput = document.getElementById('payQuoteId');
+  const btnUseQuote = document.getElementById('use-quote');
+  const btnWa = document.getElementById('btn-pay-wa');
+  const statusEl = document.getElementById('pay-status');
+  const waNumber = '2348039490349';
+  const pmSelect = document.getElementById('paymentMethod');
+  const txRefInput = document.getElementById('txRef');
+  const amountInput = document.getElementById('amountPaid');
+  const verifyBtn = document.getElementById('btn-verify-paystack');
+  const verifyEl = document.getElementById('verify-result');
+  let lastVerification = null; // { reference, verified, amount, currency, paid_at, status }
+
+  // Fill with last quote id if available
+  if (qInput && window.__lastQuoteId){ qInput.value = window.__lastQuoteId; }
+  if (btnUseQuote){
+    btnUseQuote.addEventListener('click', ()=>{
+      if (window.__lastQuoteId){ qInput.value = window.__lastQuoteId; updateWa(); }
+    });
+  }
+
+  function formToObject(frm){
+    const fd = new FormData(frm);
+    const obj = {};
+    for (const [k,v] of fd.entries()) obj[k] = v;
+    return obj;
+  }
+
+  function buildMessage(d){
+    const lines = [
+      'Payment Confirmation',
+      `Quote: ${d.quoteId || ''}`,
+      `Payer: ${d.payerName || ''}`,
+      `Phone/Email: ${(d.phone||'')}${d.email? ' • '+d.email: ''}`,
+      `Amount: ₦${(d.amountPaid||'')}`,
+      `Method: ${d.paymentMethod || ''}`,
+      `Transaction Ref: ${d.txRef || ''}`,
+      `Payment Date: ${d.paymentDate || ''}`,
+      d.notes ? `Notes: ${d.notes}` : ''
+    ].filter(Boolean);
+    // Include Paystack verification summary when applicable
+    if ((d.paymentMethod || '') === 'Paystack'){
+      const currentRef = (d.txRef || '').trim();
+      const ver = (lastVerification && lastVerification.reference === currentRef) ? lastVerification : null;
+      if (ver){
+        if (ver.verified){
+          lines.push(
+            'Paystack verification: VERIFIED ',
+            `Verified amount: ₦${ver.amount || 0}`,
+            ver.paid_at ? `Paid at: ${ver.paid_at}` : ''
+          );
+        } else {
+          lines.push('Paystack verification: NOT VERIFIED ');
+        }
+      } else {
+        lines.push('Paystack verification: NOT VERIFIED ');
+      }
+    }
+    return lines.join('\n');
+  }
+
+  const VERIFY_ENDPOINT = '/.netlify/functions/verify-payment';
+  function setVerifyText(text, state){
+    if (!verifyEl) return;
+    verifyEl.textContent = text || '';
+    verifyEl.classList.remove('error','success');
+    if (state === 'ok') verifyEl.classList.add('success');
+    else if (state === 'err') verifyEl.classList.add('error');
+  }
+  function clearVerification(){ lastVerification = null; setVerifyText('', null); }
+  pmSelect && pmSelect.addEventListener('change', clearVerification);
+  txRefInput && txRefInput.addEventListener('input', clearVerification);
+
+  async function verifyReference(silent){
+    try{
+      if (!pmSelect || pmSelect.value !== 'Paystack'){
+        if (!silent) setVerifyText('Select Paystack as payment method to verify.', 'err');
+        return null;
+      }
+      const ref = (txRefInput && txRefInput.value ? txRefInput.value.trim() : '');
+      if (!ref){
+        if (!silent) setVerifyText('Enter your Paystack transaction reference, then tap Verify.', 'err');
+        return null;
+      }
+      if (!silent) setVerifyText('Verifying with Paystack…', null);
+      if (verifyBtn) verifyBtn.disabled = true;
+      const res = await fetch(VERIFY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ reference: ref })
+      });
+      const data = await res.json().catch(()=>({}));
+      const ok = !!(data && data.gateway === 'paystack');
+      lastVerification = ok ? {
+        reference: data.reference || ref,
+        verified: !!data.verified,
+        amount: Number(data.amount || 0),
+        currency: data.currency || 'NGN',
+        paid_at: data.paid_at || null,
+        status: data.status || null
+      } : null;
+      if (lastVerification && lastVerification.verified){
+        const amt = lastVerification.amount ? `₦${lastVerification.amount}` : '';
+        setVerifyText(`Verified  ${amt}${lastVerification.paid_at ? ' • ' + lastVerification.paid_at : ''}`, 'ok');
+        // Optional: hint if entered amount mismatches verified
+        if (amountInput && lastVerification.amount && Number(amountInput.value || 0) !== lastVerification.amount){
+          // Non-blocking hint
+          setVerifyText(`Verified  ₦${lastVerification.amount} (entered: ₦${amountInput.value||0})`, 'ok');
+        }
+      } else {
+        if (!silent) setVerifyText('Could not verify this reference. Please double‑check and try again.', 'err');
+      }
+      updateWa();
+      return lastVerification;
+    } catch(err){
+      if (!silent) setVerifyText('Verification failed. Check your network and try again.', 'err');
+      return null;
+    } finally {
+      if (verifyBtn) verifyBtn.disabled = false;
+    }
+  }
+  verifyBtn && verifyBtn.addEventListener('click', ()=>{ verifyReference(false); });
+
+  // Paystack Inline for card payment on booking form
+  const btnPaystackCard = document.getElementById('btn-paystack-card');
+  function getPaystackPublicKey(){
+    const meta = document.querySelector('meta[name="paystack-public-key"]');
+    return (meta && meta.getAttribute('content')) || '';
+  }
+  function setPayStatus(msg, state){
+    if (!statusEl) return;
+    statusEl.textContent = msg || '';
+    statusEl.classList.remove('error','success');
+    if (state === 'ok') statusEl.classList.add('success');
+    else if (state === 'err') statusEl.classList.add('error');
+  }
+
+  btnPaystackCard && btnPaystackCard.addEventListener('click', ()=>{
+    try{
+      const key = getPaystackPublicKey();
+      if (!key){ setPayStatus('Missing Paystack public key. Set it in a <meta name="paystack-public-key" ...> tag.', 'err'); return; }
+      if (!window.PaystackPop){ setPayStatus('Paystack library not loaded. Please refresh.', 'err'); return; }
+      const amount = Number(amountInput && amountInput.value || 0);
+      if (!amount || amount <= 0){ setPayStatus('Enter the amount you want to pay first.', 'err'); return; }
+      const email = (document.getElementById('payEmail') && document.getElementById('payEmail').value) || '';
+      if (!email){ setPayStatus('Enter your email before paying with card.', 'err'); return; }
+      const name = (document.getElementById('payerName') && document.getElementById('payerName').value) || '';
+      const phone = (document.getElementById('payPhone') && document.getElementById('payPhone').value) || '';
+      const quoteId = (qInput && qInput.value) || '';
+      const ref = `PMF-${Date.now()}-${Math.floor(1000 + Math.random()*9000)}`;
+      setPayStatus('Opening Paystack…', null);
+      btnPaystackCard.disabled = true;
+
+      const handler = window.PaystackPop.setup({
+        key,
+        email,
+        amount: Math.round(amount * 100), // kobo
+        ref,
+        metadata: {
+          custom_fields: [
+            { display_name: 'Payer', variable_name: 'payer_name', value: name },
+            { display_name: 'Phone', variable_name: 'phone', value: phone },
+            { display_name: 'Quote', variable_name: 'quote_id', value: quoteId }
+          ]
+        },
+        callback: async (response)=>{
+          try{
+            if (txRefInput) txRefInput.value = response.reference || ref;
+            if (pmSelect) pmSelect.value = 'Paystack';
+            setPayStatus('Payment successful. Verifying…', null);
+            await verifyReference(false);
+          } finally {
+            btnPaystackCard.disabled = false;
+            updateWa();
+          }
+        },
+        onClose: ()=>{
+          setPayStatus('Payment popup closed. If you completed payment, enter the reference and tap Verify.', null);
+          btnPaystackCard.disabled = false;
+        }
+      });
+      handler.openIframe();
+    } catch(_){
+      setPayStatus('Could not start Paystack checkout. Try again.', 'err');
+      btnPaystackCard.disabled = false;
+    }
+  });
+
+  function updateWa(){
+    const msg = buildMessage(formToObject(form));
+    if (btnWa){ btnWa.href = toWhatsAppLink(msg); }
+  }
+  form.addEventListener('input', updateWa);
+  updateWa();
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if (statusEl){ statusEl.textContent = 'Sending...'; statusEl.classList.remove('error','success'); }
+
+    const formspreeId = form.getAttribute('data-formspree') || '';
+    const fd = new FormData(form);
+    // add timestamp
+    fd.append('_submittedAt', new Date().toISOString());
+    // If Paystack, attempt verification before sending
+    const isPaystack = pmSelect && pmSelect.value === 'Paystack';
+    if (isPaystack){ await verifyReference(true); }
+    // Append verification details for server/admin context
+    const currentRef = (txRefInput && txRefInput.value ? txRefInput.value.trim() : '');
+    const ver = (lastVerification && lastVerification.reference === currentRef) ? lastVerification : null;
+    fd.append('verification_gateway', ver ? 'paystack' : '');
+    fd.append('verification_reference', currentRef);
+    fd.append('verification_status', ver ? (ver.verified ? 'verified' : 'not_verified') : 'unknown');
+    fd.append('verification_amount', ver && ver.amount != null ? String(ver.amount) : '');
+    fd.append('verification_currency', ver && ver.currency ? ver.currency : '');
+    fd.append('verification_paid_at', ver && ver.paid_at ? ver.paid_at : '');
+    try{
+      if (formspreeId){
+        const endpoint = `https://formspree.io/f/${formspreeId}`;
+        const res = await fetch(endpoint, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('Formspree error');
+        if (statusEl){ statusEl.textContent = 'Thanks! We received your confirmation. We will follow up on WhatsApp shortly.'; statusEl.classList.add('success'); }
+        form.reset();
+        // restore quote id if available
+        if (qInput && window.__lastQuoteId){ qInput.value = window.__lastQuoteId; }
+        updateWa();
+      } else {
+        // Fallback: open WhatsApp with prefilled message
+        const msg = buildMessage(Object.fromEntries(fd.entries()));
+        window.open(toWhatsAppLink(msg), '_blank');
+        if (statusEl){ statusEl.textContent = 'Opened WhatsApp with your confirmation message.'; statusEl.classList.add('success'); }
+      }
+      
+    } catch(err){
+      if (statusEl){ statusEl.textContent = 'Could not send via form. Please use the WhatsApp button instead.'; statusEl.classList.add('error'); }
+    }
+  });
+})();
+
+// Hanging sign: delayed show, auto-hide, close with 1-day dismissal (index.html and events.html only)
+(function(){
+  const sign = document.getElementById('hang-sign');
+  if (!sign) return; // only on pages with the sign
+
+  // Limit to index.html or events.html
+  const file = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  if (file !== 'index.html' && file !== 'events.html') return;
+
+  const HANGING_SIGN_KEY = 'hangingSignDismissedAt';
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const SIGN_DELAY = 1200;
+  const SIGN_AUTO_HIDE = 10000;
+
+  function hideSign(){
+    sign.classList.remove('visible');
+    sign.setAttribute('aria-hidden', 'true');
+  }
+  function showSign(){
+    sign.classList.add('visible');
+    sign.setAttribute('aria-hidden', 'false');
+  }
+
+  // Skip if dismissed within 1 day
+  const dismissedAt = Number(localStorage.getItem(HANGING_SIGN_KEY) || '0');
+  if (dismissedAt && (Date.now() - dismissedAt) < DAY_MS){
+    hideSign();
+    return;
+  }
+
+  // Delayed show
+  let autoTimer = 0;
+  setTimeout(()=>{
+    showSign();
+    // Auto-hide after 10s (does not persist)
+    autoTimer = window.setTimeout(()=>{ hideSign(); }, SIGN_AUTO_HIDE);
+  }, SIGN_DELAY);
+
+  // Close button persists for 1 day
+  const btnClose = sign.querySelector('.hs-close');
+  if (btnClose){
+    btnClose.addEventListener('click', (e)=>{
+      e.preventDefault();
+      hideSign();
+      localStorage.setItem(HANGING_SIGN_KEY, String(Date.now()));
+      if (autoTimer) { clearTimeout(autoTimer); autoTimer = 0; }
+    });
+  }
+
+  // Optional: clicking the CTA also hides it (no persistence)
+  const cta = sign.querySelector('.hs-body');
+  if (cta){
+    cta.addEventListener('click', ()=>{ hideSign(); });
+  }
 })();
