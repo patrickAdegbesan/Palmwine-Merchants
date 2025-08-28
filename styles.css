@@ -116,6 +116,15 @@ img{max-width:100%;height:auto;display:block}
   background:linear-gradient(135deg, rgba(14,201,201,.08), rgba(255,223,112,.12), rgba(255,62,31,.06));
   background-size:cover;background-position:center;background-repeat:no-repeat;
   text-align:center;overflow:hidden;
+  will-change: background-position;
+}
+.hero::before{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+  /* Readability overlays: vertical gradient + top/bottom vignettes */
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.50) 28%, rgba(0,0,0,.40) 60%, rgba(0,0,0,.65) 100%),
+    radial-gradient(120% 70% at 50% 0%, rgba(0,0,0,.38) 0%, rgba(0,0,0,0) 60%),
+    radial-gradient(120% 80% at 50% 100%, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 60%);
 }
 .hero-inner{max-width:900px;padding:0 20px;z-index:2;position:relative}
 .hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,6.5vw,5.2rem);font-weight:700;margin:0 0 18px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4)}
@@ -151,6 +160,19 @@ img{max-width:100%;height:auto;display:block}
     .ticket-banner .ticket-inner{flex-direction:column;align-items:flex-start}
   }
 
+/* Hero responsiveness and overlay tuning */
+@media (max-width:700px){
+  .hero{ min-height:80vh; }
+  .hero::before{
+    background-image:
+      linear-gradient(180deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.58) 32%, rgba(0,0,0,.46) 62%, rgba(0,0,0,.72) 100%),
+      radial-gradient(120% 72% at 50% 0%, rgba(0,0,0,.44) 0%, rgba(0,0,0,0) 60%),
+      radial-gradient(120% 84% at 50% 100%, rgba(0,0,0,.62) 0%, rgba(0,0,0,0) 60%);
+  }
+}
+@media (min-width:1200px){
+  .hero{ min-height:90vh; }
+}
 /* Decorative wave under hero */
 .wave{height:80px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,96L60,85.3C120,75,240,53,360,74.7C480,96,600,160,720,181.3C840,203,960,181,1080,176C1200,171,1320,181,1380,186.7L1440,192L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") center/cover no-repeat;
   margin-top:-20px;

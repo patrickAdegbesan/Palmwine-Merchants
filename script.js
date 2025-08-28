@@ -232,6 +232,9 @@ const heroImages = [
   'img/home_banner2.jpg',
   'img/home_banner3.jpg',
   'img/home_banner4.jpg',
+  'img/home_banner5.jpg',
+  'img/home_banner6.jpg',
+  'img/home_banner7.jpg',
 ];
 
 // Preload
@@ -239,27 +242,57 @@ heroImages.forEach(src => { const i = new Image(); i.src = src; });
 
 let heroIdx = 0;
 // Optional focal positions per image (tweak per asset as needed)
+// Desktop/tablet defaults
 const heroPositions = [
-  'center 100%', // home_banner.jpg
+  'center 50%', // home_banner.jpg
   'center 100%', // home_banner2.jpg
   'center 100%', // home_banner3 .jpg
   'center 100%', // home_banner4.jpg
 ];
+// Mobile-specific focal positions (elevate focus slightly to avoid cutting heads)
+const heroPositionsMobile = [
+  'center 70%', // home_banner.jpg
+  'center 70%', // home_banner2.jpg
+  'center 70%', // home_banner3.jpg
+  'center 70%', // home_banner4.jpg
+];
+
+// Track base X and Y from the chosen background-position for parallax calculations
+let heroBaseX = 'center';
+let heroBaseYPercent = 50; // default fallback
+const mqHeroMobile = window.matchMedia('(max-width: 700px)');
+
+function pickHeroPosition(i){
+  const arr = mqHeroMobile.matches ? heroPositionsMobile : heroPositions;
+  return arr[i] || 'center 50%';
+}
+
+function parseBaseYPercent(pos){
+  // Accept forms like 'center 80%' or '50% 80%'; extract the last percentage number
+  if (!pos || typeof pos !== 'string') return 50;
+  const m = pos.match(/([\d.]+)%(?=[^%]*$)/); // last % value
+  return m ? Math.max(0, Math.min(100, parseFloat(m[1]))) : 50;
+}
+
+function parseBaseX(pos){
+  if (!pos || typeof pos !== 'string') return 'center';
+  // Take the first token as X (e.g., 'left', 'center', 'right', '50%')
+  const t = pos.trim().split(/\s+/)[0];
+  return t || 'center';
+}
 
 function setHero(idx){
   if(!heroEl) return;
   const i = idx % heroImages.length;
   const src = heroImages[i];
-  // Layered overlays: vertical gradient + top/bottom vignettes for readability
-  const overlay = [
-    'linear-gradient(180deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.50) 28%, rgba(0,0,0,.40) 60%, rgba(0,0,0,.65) 100%)',
-    'radial-gradient(120% 70% at 50% 0%, rgba(0,0,0,.38) 0%, rgba(0,0,0,0) 60%)',
-    'radial-gradient(120% 80% at 50% 100%, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 60%)'
-  ].join(', ');
-  heroEl.style.backgroundImage = `${overlay}, url('${src}')`;
-  if(heroPositions[i]){
-    heroEl.style.backgroundPosition = `${heroPositions[i]}`;
-  }
+  // Move readability overlays to CSS (.hero::before). Only set the image here.
+  heroEl.style.backgroundImage = `url('${src}')`;
+  const basePos = pickHeroPosition(i);
+  heroBaseX = parseBaseX(basePos);
+  heroBaseYPercent = parseBaseYPercent(basePos);
+  // Apply once (scroll handler adds dynamic offset)
+  heroEl.style.backgroundPosition = basePos;
+  updateHeroParallax();
 }
 setHero(heroIdx);
 
@@ -268,13 +301,28 @@ setInterval(()=>{
   setHero(heroIdx);
 }, 5000); // change every 5s
 
-// Parallax on scroll for hero and wave
+// Parallax on scroll for hero and wave — respect base focal position
+function updateHeroParallax(){
+  if (!heroEl) return;
+  const y = window.scrollY || 0;
+  // Keep X centered; offset Y around the base percentage for subtle parallax
+  heroEl.style.backgroundPosition = `${heroBaseX} calc(${heroBaseYPercent}% + ${-y * 0.15}px)`;
+}
+
 window.addEventListener('scroll', () => {
+  updateHeroParallax();
   const y = window.scrollY;
-  if (heroEl) heroEl.style.backgroundPosition = `center ${-y * 0.15}px`;
   if (waveEl) waveEl.style.transform = `translateY(${y * 0.05}px)`;
   if (siteHeader) siteHeader.classList.toggle('scrolled', y > 6);
 });
+
+// Re-apply hero when viewport breakpoint changes to pick mobile/desktop focal points
+if (mqHeroMobile && typeof mqHeroMobile.addEventListener === 'function'){
+  mqHeroMobile.addEventListener('change', () => { setHero(heroIdx); });
+} else if (mqHeroMobile && typeof mqHeroMobile.addListener === 'function') {
+  // Safari/older browsers
+  mqHeroMobile.addListener(() => { setHero(heroIdx); });
+}
 
 // (night mode removed)
 
@@ -839,15 +887,77 @@ if (announce){
     else if (state === 'err') statusEl.classList.add('error');
   }
 
+  // Basic email validator (client-side sanity only)
+  function isValidEmail(email){
+    if (!email) return false;
+    const s = String(email).trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  }
+
+  // Try legacy v1 inline (setup + openIframe)
+  function tryStartPaystackV1(opts, callback, onClose){
+    try{
+      if (!window.PaystackPop || typeof window.PaystackPop.setup !== 'function') return false;
+      const handler = window.PaystackPop.setup({
+        key: opts.key,
+        email: opts.email,
+        amount: opts.amount,
+        ref: opts.ref,
+        currency: 'NGN',
+        metadata: opts.metadata,
+        callback,
+        onClose
+      });
+      if (handler && typeof handler.openIframe === 'function'){
+        handler.openIframe();
+        return true;
+      }
+      return false;
+    } catch (err){
+      console.error('Paystack v1 setup/open failed:', err);
+      return false;
+    }
+  }
+
+  // Try newer v2 inline (newTransaction)
+  function tryStartPaystackV2(opts, callback, onClose){
+    try{
+      const Pop = window.PaystackPop;
+      if (!Pop) return false;
+      let pop = null;
+      try { pop = typeof Pop === 'function' ? new Pop() : null; } catch(_) { pop = null; }
+      if (pop && typeof pop.newTransaction === 'function'){
+        pop.newTransaction({
+          key: opts.key,
+          email: opts.email,
+          amount: opts.amount,
+          reference: opts.ref,
+          currency: 'NGN',
+          metadata: opts.metadata,
+          onSuccess: (trx)=>{
+            const ref = (trx && trx.reference) || opts.ref;
+            Promise.resolve(callback({ reference: ref })).catch(err=> console.error('Paystack onSuccess cb error:', err));
+          },
+          onCancel: ()=>{ try{ onClose(); } catch(e){ console.error('Paystack onCancel cb error:', e); } }
+        });
+        return true;
+      }
+      return false;
+    } catch (err){
+      console.error('Paystack v2 newTransaction failed:', err);
+      return false;
+    }
+  }
+
   btnPaystackCard && btnPaystackCard.addEventListener('click', ()=>{
     try{
-      const key = getPaystackPublicKey();
+      const key = (getPaystackPublicKey() || '').trim();
       if (!key){ setPayStatus('Missing Paystack public key. Set it in a <meta name="paystack-public-key" ...> tag.', 'err'); return; }
       if (!window.PaystackPop){ setPayStatus('Paystack library not loaded. Please refresh.', 'err'); return; }
       const amount = Number(amountInput && amountInput.value || 0);
       if (!amount || amount <= 0){ setPayStatus('Enter the amount you want to pay first.', 'err'); return; }
-      const email = (document.getElementById('payEmail') && document.getElementById('payEmail').value) || '';
-      if (!email){ setPayStatus('Enter your email before paying with card.', 'err'); return; }
+      const email = (document.getElementById('payEmail') && document.getElementById('payEmail').value || '').trim();
+      if (!isValidEmail(email)){ setPayStatus('Enter a valid email before paying with card.', 'err'); return; }
       const name = (document.getElementById('payerName') && document.getElementById('payerName').value) || '';
       const phone = (document.getElementById('payPhone') && document.getElementById('payPhone').value) || '';
       const quoteId = (qInput && qInput.value) || '';
@@ -855,7 +965,7 @@ if (announce){
       setPayStatus('Opening Paystack…', null);
       btnPaystackCard.disabled = true;
 
-      const handler = window.PaystackPop.setup({
+      const opts = {
         key,
         email,
         amount: Math.round(amount * 100), // kobo
@@ -866,25 +976,39 @@ if (announce){
             { display_name: 'Phone', variable_name: 'phone', value: phone },
             { display_name: 'Quote', variable_name: 'quote_id', value: quoteId }
           ]
-        },
-        callback: async (response)=>{
-          try{
-            if (txRefInput) txRefInput.value = response.reference || ref;
-            if (pmSelect) pmSelect.value = 'Paystack';
-            setPayStatus('Payment successful. Verifying…', null);
-            await verifyReference(false);
-          } finally {
-            btnPaystackCard.disabled = false;
-            updateWa();
-          }
-        },
-        onClose: ()=>{
-          setPayStatus('Payment popup closed. If you completed payment, enter the reference and tap Verify.', null);
-          btnPaystackCard.disabled = false;
         }
-      });
-      handler.openIframe();
-    } catch(_){
+      };
+
+      const callback = async (response)=>{
+        try{
+          if (txRefInput) txRefInput.value = (response && response.reference) || ref;
+          if (pmSelect) pmSelect.value = 'Paystack';
+          setPayStatus('Payment successful. Verifying…', null);
+          await verifyReference(false);
+        } catch(err){
+          console.error('Post-payment verify error:', err);
+        } finally {
+          btnPaystackCard.disabled = false;
+          updateWa();
+        }
+      };
+      const onClose = ()=>{
+        setPayStatus('Payment popup closed. If you completed payment, enter the reference and tap Verify.', null);
+        btnPaystackCard.disabled = false;
+      };
+
+      let started = false;
+      // Prefer v1, fallback to v2 if needed
+      started = tryStartPaystackV1(opts, callback, onClose);
+      if (!started){
+        started = tryStartPaystackV2(opts, callback, onClose);
+      }
+      if (!started){
+        setPayStatus('Could not start Paystack checkout. Please refresh and try again.', 'err');
+        btnPaystackCard.disabled = false;
+      }
+    } catch(e){
+      console.error('Could not start Paystack checkout:', e);
       setPayStatus('Could not start Paystack checkout. Try again.', 'err');
       btnPaystackCard.disabled = false;
     }
