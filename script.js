@@ -24,12 +24,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (entry.isIntersecting) {
         entry.target.classList.add('visible');
       }
-    });
-  }, {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-  });
 
+    });
+  });
+  
   // Observe all elements with scroll-up class
   document.querySelectorAll('.scroll-up').forEach(el => {
     observer.observe(el);
@@ -735,7 +733,11 @@ if (announce){
     const id = uniqueQuoteId();
     const result = computeQuote(data);
     // expose for payment form reuse
-    try{ window.__lastQuoteId = id; }catch(_){ /* no-op */ }
+    try{
+      window.__lastQuoteId = id;
+      window.__lastQuote = { id, data, result };
+      window.dispatchEvent(new CustomEvent('last-quote', { detail: { id, data, result } }));
+    }catch(_){ /* no-op */ }
     renderInvoice(data, result, id);
   });
 
@@ -761,14 +763,59 @@ if (announce){
   const amountInput = document.getElementById('amountPaid');
   const verifyBtn = document.getElementById('btn-verify-paystack');
   const verifyEl = document.getElementById('verify-result');
+  // Define Paystack button early so updatePaymentUI can safely reference it
+  let btnPaystackCard = document.getElementById('btn-paystack-card');
   let lastVerification = null; // { reference, verified, amount, currency, paid_at, status }
+  // When true, we will auto-submit the form after a successful Paystack verification
+  let __autoSubmitAfterPay = false;
 
-  // Fill with last quote id if available
-  if (qInput && window.__lastQuoteId){ qInput.value = window.__lastQuoteId; }
+  // Populate payment form from the last computed quote (non-destructive by default)
+  function populateFromLastQuote(force){
+    try{
+      const last = (typeof window !== 'undefined') ? (window.__lastQuote || null) : null;
+      // Always set Quote ID if we at least have __lastQuoteId
+      if (!last){
+        if (qInput && typeof window !== 'undefined' && window.__lastQuoteId && (force || !qInput.value)){
+          qInput.value = window.__lastQuoteId;
+        }
+        updateWa();
+        return false;
+      }
+      const { id, data, result } = last;
+      const setIf = (el, val) => {
+        if (!el) return;
+        if (force || !el.value){ el.value = val != null ? String(val) : ''; }
+      };
+      setIf(qInput, id || (typeof window !== 'undefined' && window.__lastQuoteId) || '');
+      setIf(document.getElementById('payerName'), (data && data.clientName) || '');
+      setIf(document.getElementById('payPhone'), (data && data.phone) || '');
+      setIf(document.getElementById('payEmail'), (data && data.email) || '');
+      if (amountInput && (force || !amountInput.value)){
+        const pref = (result && (Number(result.deposit || 0) || Number(result.total || 0))) || 0;
+        amountInput.value = String(Math.round(pref));
+      }
+      const notesEl = document.getElementById('notes');
+      if (notesEl && (force || !notesEl.value)){
+        const evBits = [];
+        if (data && data.eventType) evBits.push(data.eventType);
+        if (data && data.date) evBits.push(data.date);
+        const venue = (data && data.venue) ? ` • ${data.venue}` : '';
+        const q = id || (typeof window !== 'undefined' && window.__lastQuoteId) || 'quote';
+        notesEl.value = `Payment for ${q}${evBits.length ? ' — ' + evBits.join(' • ') : ''}${venue}`;
+      }
+      updateWa();
+      return true;
+    } catch(_){
+      return false;
+    }
+  }
+  // Non-destructive prefill on load
+  try{ populateFromLastQuote(false); } catch(_){ }
+  // Update when a new quote is computed on the page
+  window.addEventListener('last-quote', ()=>{ try{ populateFromLastQuote(true); } catch(_){}});
+  // Force-populate on button click
   if (btnUseQuote){
-    btnUseQuote.addEventListener('click', ()=>{
-      if (window.__lastQuoteId){ qInput.value = window.__lastQuoteId; updateWa(); }
-    });
+    btnUseQuote.addEventListener('click', ()=>{ populateFromLastQuote(true); });
   }
 
   function formToObject(frm){
@@ -820,8 +867,48 @@ if (announce){
     else if (state === 'err') verifyEl.classList.add('error');
   }
   function clearVerification(){ lastVerification = null; setVerifyText('', null); }
-  pmSelect && pmSelect.addEventListener('change', clearVerification);
+  pmSelect && pmSelect.addEventListener('change', ()=>{ clearVerification(); updatePaymentUI(); });
   txRefInput && txRefInput.addEventListener('input', clearVerification);
+
+  // Toggle UI by payment method
+  function updatePaymentUI(){
+    const method = pmSelect ? pmSelect.value : '';
+    const isPaystack = method === 'Paystack';
+    const txRefLabel = document.querySelector('label[for="txRef"]');
+    const txRefRow = txRefInput ? txRefInput.parentElement : null; // contains input + verify button
+
+    // Show Paystack popup button only when Paystack is selected
+    if (btnPaystackCard){
+      btnPaystackCard.style.display = isPaystack ? '' : 'none';
+      // Optional: clearer label
+      try{ btnPaystackCard.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay with Paystack (Card/Transfer/USSD)'; } catch(_){}
+    }
+
+    // For Paystack: hide reference UI completely; it will be auto-filled & verified
+    // For others: show input; hide Verify button since verification is only for Paystack
+    if (txRefLabel) txRefLabel.style.display = isPaystack ? 'none' : '';
+    if (txRefRow) txRefRow.style.display = isPaystack ? 'none' : 'flex';
+    // Hide manual Verify button entirely (verification is automatic for Paystack and not applicable for others)
+    if (verifyBtn) verifyBtn.style.display = 'none';
+    // Show verification status only for Paystack
+    if (verifyEl) verifyEl.style.display = isPaystack ? '' : 'none';
+
+    if (txRefInput){
+      if (isPaystack){
+        txRefInput.readOnly = true;
+        txRefInput.placeholder = 'Will be auto-filled after Paystack';
+      } else {
+        txRefInput.readOnly = false;
+        let ph = 'Reference / Note';
+        if (method === 'Transfer') ph = 'Bank transfer reference or note';
+        else if (method === 'POS') ph = 'POS slip reference or note';
+        else if (method === 'Cash' || method === 'Other') ph = 'Note (optional)';
+        txRefInput.placeholder = ph;
+      }
+    }
+  }
+  // Initialize UI state once DOM is ready
+  try{ updatePaymentUI(); } catch(_){}
 
   async function verifyReference(silent){
     try{
@@ -831,7 +918,7 @@ if (announce){
       }
       const ref = (txRefInput && txRefInput.value ? txRefInput.value.trim() : '');
       if (!ref){
-        if (!silent) setVerifyText('Enter your Paystack transaction reference, then tap Verify.', 'err');
+        if (!silent) setVerifyText('No Paystack reference yet. Please complete Paystack checkout; we\'ll verify automatically.', 'err');
         return null;
       }
       if (!silent) setVerifyText('Verifying with Paystack…', null);
@@ -871,10 +958,33 @@ if (announce){
       if (verifyBtn) verifyBtn.disabled = false;
     }
   }
+  // If verification just succeeded and auto-submit was requested, submit the form now
+  function postVerificationAutoSubmitIfNeeded(){
+    try{
+      let should = __autoSubmitAfterPay;
+      if (!should){
+        try{ should = (localStorage.getItem('pm_autoSubmit') === '1'); } catch(_){}
+      }
+      if (!should) return;
+      if (!pmSelect || pmSelect.value !== 'Paystack') return;
+      const currentRef = (txRefInput && txRefInput.value ? txRefInput.value.trim() : '');
+      if (!currentRef) return;
+      if (!(lastVerification && lastVerification.reference === currentRef && lastVerification.verified)) return;
+      __autoSubmitAfterPay = false;
+      try{ localStorage.removeItem('pm_autoSubmit'); } catch(_){}
+      if (form && typeof form.requestSubmit === 'function'){
+        form.requestSubmit();
+      } else if (form){
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      }
+    } catch(err){
+      console.error('Auto-submit after verification failed:', err);
+    }
+  }
   verifyBtn && verifyBtn.addEventListener('click', ()=>{ verifyReference(false); });
 
-  // Paystack Inline for card payment on booking form
-  const btnPaystackCard = document.getElementById('btn-paystack-card');
+  // Paystack Inline for card payment (ensure reference stays current)
+  btnPaystackCard = document.getElementById('btn-paystack-card');
   function getPaystackPublicKey(){
     const meta = document.querySelector('meta[name="paystack-public-key"]');
     return (meta && meta.getAttribute('content')) || '';
@@ -905,6 +1015,7 @@ if (announce){
         ref: opts.ref,
         currency: 'NGN',
         metadata: opts.metadata,
+        channels: ['card','bank','ussd','mobile_money','bank_transfer','qr'],
         callback,
         onClose
       });
@@ -934,6 +1045,7 @@ if (announce){
           reference: opts.ref,
           currency: 'NGN',
           metadata: opts.metadata,
+          channels: ['card','bank','ussd','mobile_money','bank_transfer','qr'],
           onSuccess: (trx)=>{
             const ref = (trx && trx.reference) || opts.ref;
             Promise.resolve(callback({ reference: ref })).catch(err=> console.error('Paystack onSuccess cb error:', err));
@@ -949,11 +1061,63 @@ if (announce){
     }
   }
 
-  btnPaystackCard && btnPaystackCard.addEventListener('click', ()=>{
+  // Helper: read query param from current URL
+  function getQueryParam(name){
+    try{ return new URLSearchParams(window.location.search).get(name); } catch(_){ return null; }
+  }
+
+  // If returned from Paystack Standard redirect, auto-fill ref and verify
+  (function maybeHandleReturnFromPaystack(){
+    const ref = getQueryParam('ps_ref');
+    if (!ref) return;
+    if (txRefInput) txRefInput.value = ref;
+    if (pmSelect) pmSelect.value = 'Paystack';
+    try{ updatePaymentUI(); } catch(_){}
+    setPayStatus('Returned from Paystack. Verifying…', null);
+    // Clean URL without ps_ref
+    try{
+      const url = new URL(window.location.href);
+      url.searchParams.delete('ps_ref');
+      window.history.replaceState({}, '', url.toString());
+    } catch(_){ /* ignore */ }
+    // Fire verification (non-blocking)
+    verifyReference(false).then(()=>{ postVerificationAutoSubmitIfNeeded(); });
+  })();
+
+  // Fallback: Initialize Standard checkout and redirect
+  async function initiatePaystackStandard(opts){
+    const callbackUrl = `${window.location.origin}${window.location.pathname}?ps_ref=${encodeURIComponent(opts.ref)}`;
+    try{
+      const res = await fetch('/.netlify/functions/init-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          email: opts.email,
+          amount: opts.amount,
+          reference: opts.ref,
+          currency: 'NGN',
+          metadata: opts.metadata,
+          callback_url: callbackUrl
+        })
+      });
+      const json = await res.json().catch(()=>({}));
+      if (json && json.ok && json.authorization_url){
+        window.location.href = json.authorization_url;
+        return true;
+      }
+      console.error('init-payment failed:', json);
+      return false;
+    } catch(err){
+      console.error('init-payment error:', err);
+      return false;
+    }
+  }
+
+  btnPaystackCard && btnPaystackCard.addEventListener('click', async ()=>{
     try{
       const key = (getPaystackPublicKey() || '').trim();
       if (!key){ setPayStatus('Missing Paystack public key. Set it in a <meta name="paystack-public-key" ...> tag.', 'err'); return; }
-      if (!window.PaystackPop){ setPayStatus('Paystack library not loaded. Please refresh.', 'err'); return; }
+      if (!window.PaystackPop){ console.warn('Paystack library not loaded; will try redirect checkout.'); }
       const amount = Number(amountInput && amountInput.value || 0);
       if (!amount || amount <= 0){ setPayStatus('Enter the amount you want to pay first.', 'err'); return; }
       const email = (document.getElementById('payEmail') && document.getElementById('payEmail').value || '').trim();
@@ -983,8 +1147,10 @@ if (announce){
         try{
           if (txRefInput) txRefInput.value = (response && response.reference) || ref;
           if (pmSelect) pmSelect.value = 'Paystack';
+          try{ updatePaymentUI(); } catch(_){}
           setPayStatus('Payment successful. Verifying…', null);
           await verifyReference(false);
+          postVerificationAutoSubmitIfNeeded();
         } catch(err){
           console.error('Post-payment verify error:', err);
         } finally {
@@ -993,7 +1159,9 @@ if (announce){
         }
       };
       const onClose = ()=>{
-        setPayStatus('Payment popup closed. If you completed payment, enter the reference and tap Verify.', null);
+        setPayStatus('Payment popup closed. If you completed payment, we\'ll verify automatically. If not, please try again.', null);
+        __autoSubmitAfterPay = false;
+        try{ localStorage.removeItem('pm_autoSubmit'); } catch(_){ }
         btnPaystackCard.disabled = false;
       };
 
@@ -1004,8 +1172,13 @@ if (announce){
         started = tryStartPaystackV2(opts, callback, onClose);
       }
       if (!started){
-        setPayStatus('Could not start Paystack checkout. Please refresh and try again.', 'err');
-        btnPaystackCard.disabled = false;
+        // Fallback to Standard redirect
+        setPayStatus('Opening Paystack checkout page…', null);
+        const ok = await initiatePaystackStandard(opts);
+        if (!ok){
+          setPayStatus('Could not start Paystack checkout. Please refresh and try again.', 'err');
+          btnPaystackCard.disabled = false;
+        }
       }
     } catch(e){
       console.error('Could not start Paystack checkout:', e);
@@ -1023,6 +1196,19 @@ if (announce){
 
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
+    // If Paystack is selected but no reference yet, auto-launch checkout then submit after verification
+    const isPaystackMethod = pmSelect && pmSelect.value === 'Paystack';
+    const hasRef = !!(txRefInput && txRefInput.value && txRefInput.value.trim());
+    if (isPaystackMethod && !hasRef){
+      __autoSubmitAfterPay = true;
+      try{ localStorage.setItem('pm_autoSubmit','1'); } catch(_){}
+      if (btnPaystackCard){
+        btnPaystackCard.click();
+      } else {
+        setPayStatus('Unable to launch Paystack checkout. Please use the Pay with Card button.', 'err');
+      }
+      return;
+    }
     if (statusEl){ statusEl.textContent = 'Sending...'; statusEl.classList.remove('error','success'); }
 
     const formspreeId = form.getAttribute('data-formspree') || '';
