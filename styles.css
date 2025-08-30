@@ -508,6 +508,14 @@ h2:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:6px;back
 .muted{color:var(--muted)}
 .money{font-variant-numeric:tabular-nums}
 
+/* Invoice branding */
+.invoice-logo{ height:56px; width:auto; margin-bottom:6px }
+.invoice{ position:relative }
+/* Hidden by default; revealed for print to avoid distracting on-screen */
+.invoice-watermark{ display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:60%; max-width:640px; opacity:.06; filter:grayscale(100%); pointer-events:none }
+/* Utility */
+.print-only{ display:none !important }
+
 .invoice-party{display:flex;justify-content:space-between;gap:20px;padding:12px 0;margin-top:6px;border-top:1px solid #eee;border-bottom:1px solid #eee}
 .invoice-party strong{color:var(--leaf)}
 
@@ -530,6 +538,15 @@ h2:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:6px;back
   .section{padding:0 !important}
   .invoice{display:block !important;box-shadow:none !important;border:0 !important;padding:0 !important;margin:0 !important}
   .invoice-table th,.invoice-table td{border-color:#ccc !important}
+  /* Watermark visible only when printing */
+  .invoice{ position:relative !important }
+  .invoice-watermark{ display:block !important }
+  /* Ensure content layers above watermark */
+  .invoice .invoice-head,
+  .invoice .invoice-party,
+  .invoice .table-wrap,
+  .invoice .totals,
+  .invoice .form-note{ position:relative; z-index:1 }
 }
 
 /* Hanging promo sign */

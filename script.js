@@ -60,6 +60,40 @@ if (navToggle) {
   });
 })();
 
+// Quick Quote calculator (homepage only)
+(function(){
+  const form = document.getElementById('qq-form');
+  if (!form) return;
+  const guestsInput = document.getElementById('qq-guests');
+  const totalEl = document.getElementById('qq-total');
+  const breakdownEl = document.getElementById('qq-breakdown');
+
+  const RATES = { palmwine: 2000, cocktails: 3500 };
+  const TAX = 0.075; // align with BUSINESS.taxRate
+  const FIXED = 85_500; // fixed service & logistics fee
+  const fmt = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
+  const NGN2 = (n)=> fmt.format(Math.round(n||0));
+
+  function currentType(){
+    const r = form.querySelector('input[name="qq_type"]:checked');
+    return r ? r.value : 'palmwine';
+  }
+  function compute(){
+    const g = Math.max(0, parseInt(guestsInput.value || '0', 10) || 0);
+    const type = currentType();
+    const per = RATES[type] || 0;
+    const subtotal = g * per + FIXED;
+    const tax = subtotal * TAX;
+    const total = subtotal + tax;
+    if (totalEl) totalEl.textContent = NGN2(total);
+    if (breakdownEl) breakdownEl.textContent = `${g} × ₦${per.toLocaleString()} + ₦${FIXED.toLocaleString()} svc/log + 7.5% VAT (excl. distance delivery)`;
+  }
+
+  form.addEventListener('input', compute);
+  form.addEventListener('submit', (e)=>{ e.preventDefault(); compute(); });
+  compute();
+})();
+
 // Gallery horizontal slider (scroll-snap + arrows + auto-slide)
 (function(){
   const wrap = document.querySelector('#gallery .gallery-wrap');
@@ -545,18 +579,12 @@ if (announce){
   // Pricing template (example defaults — tweak to your offerings)
   const PRICING = {
     packages: {
-      palmwine: { label: 'Palmwine Service', baseFee: 100_000, perGuest: 1_500 },
-      flame:    { label: 'Open‑Flame Cuisine', baseFee: 180_000, perGuest: 3_500 },
-      full:     { label: 'Full Experience', baseFee: 250_000, perGuest: 4_500 },
+      palmwine: { label: 'Palmwine Service', perGuest: 2_000 },
+      cocktails:{ label: 'Palmwine Cocktails', perGuest: 3_500 }
     },
-    addons: {
-      cocktails_bar:   { label: 'Palmwine Cocktails Bar', baseFee: 50_000, perGuest: 1_000 },
-      grill_station:   { label: 'Grill Station', baseFee: 60_000, perGuest: 1_500 },
-      dj:              { label: 'DJ', flat: 80_000 },
-      decor:           { label: 'Decor', flat: 60_000 },
-      custom_bottling: { label: 'Custom Bottling', perGuest: 500 },
-      ice_cups:        { label: 'Ice + Cups', baseFee: 15_000, perGuest: 200 },
-      generator:       { label: 'Generator', flat: 70_000 },
+    fees: {
+      // Fixed service charge & logistics fee applied to automated packages
+      serviceLogisticsFixed: 85_500
     }
   };
 
@@ -589,6 +617,7 @@ if (announce){
   const btnShare = document.getElementById('btn-share');
   const btnItemized = document.getElementById('btn-itemized');
   const btnDiscount = document.getElementById('btn-discount');
+  const btnComputePrint = document.getElementById('btn-compute-print');
 
   // Accumulator for itemized rows (used for WhatsApp share)
   let currentItems = [];
@@ -622,16 +651,11 @@ if (announce){
     // Base package
     if (pkg.baseFee){ subtotal += addRow(`${pkg.label} — Setup & Service Team`, 1, pkg.baseFee); }
     if (pkg.perGuest){ subtotal += addRow(`${pkg.label} — Per Guest`, guests, pkg.perGuest); }
-
-    // Add-ons
-    const addons = Array.isArray(data.addons) ? data.addons : (data.addons ? [data.addons] : []);
-    addons.forEach(key => {
-      const a = PRICING.addons[key];
-      if (!a) return;
-      if (a.flat){ subtotal += addRow(`${a.label}`, 1, a.flat); }
-      if (a.baseFee){ subtotal += addRow(`${a.label} — Setup`, 1, a.baseFee); }
-      if (a.perGuest){ subtotal += addRow(`${a.label} — Per Guest`, guests, a.perGuest); }
-    });
+    // Add-ons removed — pricing is per-guest only for Palmwine or Cocktails
+    // Fixed service & logistics fee (applies to automated packages)
+    if (pkgKey === 'palmwine' || pkgKey === 'cocktails'){
+      subtotal += addRow('Service Charge & Logistics (fixed)', 1, PRICING.fees.serviceLogisticsFixed);
+    }
 
     // Delivery (distance beyond free km)
     let delivery = 0;
@@ -717,8 +741,7 @@ if (announce){
     elInvoice.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  form.addEventListener('submit', (e)=>{
-    e.preventDefault();
+  function processQuote(printAfter){
     const fd = new FormData(form);
     // Ensure multi-select for checkboxes is captured
     const data = Object.create(null);
@@ -730,6 +753,26 @@ if (announce){
         data[k] = v;
       }
     }
+    // Manual routing for packages requiring custom pricing
+    const pkgKey = String(data.basePackage || '');
+    if (pkgKey === 'flame' || pkgKey === 'full'){
+      const pkgLabel = pkgKey === 'flame' ? 'Open‑Flame Cuisine' : 'Full Experience';
+      const summary = [
+        'Manual Quote Request',
+        `Package: ${pkgLabel}`,
+        `Client: ${data.clientName || ''}`,
+        `Guests: ${data.guests || ''}`,
+        `Event: ${data.eventType || ''}`,
+        `Date: ${data.date || ''}`,
+        `Venue: ${data.venue || ''}`,
+        `Contact: ${(data.phone || '')}${data.email ? ' • ' + data.email : ''}`,
+        '',
+        'Please share pricing and availability.'
+      ].join('\n');
+      try{ if (elInvoice) elInvoice.style.display = 'none'; } catch(_){ }
+      window.open(toWhatsAppLink(summary, BUSINESS.waNumber), '_blank');
+      return;
+    }
     const id = uniqueQuoteId();
     const result = computeQuote(data);
     // expose for payment form reuse
@@ -739,6 +782,15 @@ if (announce){
       window.dispatchEvent(new CustomEvent('last-quote', { detail: { id, data, result } }));
     }catch(_){ /* no-op */ }
     renderInvoice(data, result, id);
+    if (printAfter){
+      // Allow DOM to update before invoking print
+      setTimeout(()=> window.print(), 100);
+    }
+  }
+
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    processQuote(false);
   });
 
   form.addEventListener('reset', ()=>{
@@ -747,6 +799,7 @@ if (announce){
   });
 
   if (btnPrint){ btnPrint.addEventListener('click', ()=> window.print()); }
+  if (btnComputePrint){ btnComputePrint.addEventListener('click', ()=> processQuote(true)); }
 })();
 
 (function(){

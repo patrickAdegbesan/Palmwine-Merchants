@@ -1,62 +1,76 @@
 # Palmwine Merchants & Flames — Website
 
-A simple, responsive landing site built with vanilla HTML/CSS/JS.
+A modern, mobile‑first site built with vanilla HTML/CSS/JS. It includes an instant booking quote generator, WhatsApp sharing (summary + itemized), and a payment confirmation flow with Paystack (Inline and Standard redirect) plus secure server‑side verification via Netlify Functions. The booking quote now auto‑fills the payment form so clients can pay the recommended amount in one step.
 
 ## Structure
-- `index.html` — Main page with sections: Hero, About, Cocktails, Cuisine, Events, Mission, Contact/Bookings.
-- `styles.css` — Afrocentric-modern palette and layout.
-- `script.js` — Mobile menu, smooth scroll, and simple inquiry handler.
-- `img/` — Brand images (`comp_logo.jpg` used in header, `party_logo.jpg` used in Events + hero bg).
+- `index.html` — Home with hero, about, cocktails, cuisine, events, mission, contact/booking CTA.
+- `booking.html` — Booking details form → computes quote/invoice and exposes a Payment Confirmation form.
+- `events.html` — Ticket purchase/confirmation using the same payment form logic and IDs as booking.
+- `menu.html`, `about.html`, `contact.html` — Additional pages.
+- `styles.css` — Afrocentric‑modern palette and layout.
+- `script.js` — All interactivity: gallery slider, lightbox, hero rotation/parallax, quote compute, WhatsApp share, payment + Paystack integration.
+- `img/` — Brand images and assets.
+- `netlify/functions/verify-payment.js` — Verifies Paystack references server‑side.
+- `netlify/functions/init-payment.js` — Initializes Paystack Standard redirect (fallback checkout).
+- `netlify.toml` — Netlify config (functions directory + bundler).
+
+## Features
+- __Instant quote (booking)__: Computes line items by package/add‑ons, delivery by distance, VAT, total, and required deposit. Renders a printable invoice.
+- __WhatsApp sharing__: Share quote summary or an __itemized__ breakdown (qty × unit = amount for each line).
+- __Booking → Payment auto‑fill__: After “Compute Quote,” the Payment Confirmation form auto‑fills payer details and a recommended amount (deposit by default, falls back to total).
+- __Paystack payments__: Inline v1/v2 popup, with fallback to Standard redirect. After success, the reference auto‑fills and verification runs automatically.
+- __Server verification__: Netlify Function securely verifies Paystack references and returns status/amount/time.
+- __Events flow__: `events.html` reuses the same payment form IDs, so all Paystack + WhatsApp logic works there too.
 
 ## Run locally
-Just open `index.html` in your browser.
+Option A — Static preview (no functions):
+- Open `index.html` directly in your browser.
+- PowerShell: `start .\index.html`
 
-Windows PowerShell:
-```
-start .\index.html
-```
+Option B — Full preview with Netlify Functions:
+1) Install Node.js (LTS) and Netlify CLI: `npm i -g netlify-cli`
+2) From project root, run: `netlify dev`
+   - Serves the site and proxies `/.netlify/functions/*` locally.
+   - Good for testing Paystack verification and Standard redirect.
 
 ## Customize
-- Text: update content directly in `index.html`.
-- Colors/typography: tweak variables in `styles.css` `:root{}`.
-- Form: replace `handleInquiry()` in `script.js` with your backend or a service like Formspree/Netlify Forms.
+ - __Content__: edit the HTML files directly.
+ - __Colors/typography__: tweak variables in `styles.css` `:root{}`.
+ - __Quote math__: adjust business/pricing in `script.js` under `BUSINESS` and `PRICING`.
+ - __WhatsApp__: change default number in `toWhatsAppLink()`.
+ - __Formspree (optional)__: add your Formspree ID to `booking.html` Payment Confirmation form attribute `data-formspree="YOUR_ID"` to enable form submits (otherwise WhatsApp is used).
 
 ## Deployment
-You can host on any static host (GitHub Pages, Netlify, Vercel). On Netlify, drag the folder to the dashboard or link a repo.
+Host on any static provider (GitHub Pages, Netlify, Vercel). For full Paystack flows, Netlify is recommended.
 
-### Payment Verification (Paystack + Netlify Functions)
-This site includes a Netlify Function that verifies Paystack transaction references securely.
+### Netlify setup
+- Link your GitHub repo or drag‑and‑drop the folder in Netlify.
+- `netlify.toml` already points functions to `netlify/functions/` using `esbuild`.
 
-- Functions directory: `netlify/functions/`
-- Verify endpoint (after deploy): `/.netlify/functions/verify-payment`
-- Config file: `netlify.toml`
+Environment variables (Site settings → Build & deploy → Environment):
+- `PAYSTACK_SECRET_KEY` = your Paystack secret key (test or live). Keep it server‑side only.
 
-Steps (Netlify):
-1. Add environment variable in Site settings → Build & deploy → Environment:
-  - `PAYSTACK_SECRET_KEY` = your Paystack secret key (test or live). Do NOT expose this in frontend code.
-2. Deploy the site. Netlify will auto-publish and serve the function.
-3. Test the function (example fetch):
-  ```js
-  fetch('/.netlify/functions/verify-payment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reference: 'PAYSTACK_REF' })
-  }).then(r=>r.json()).then(console.log);
-  ```
+Pages that use Paystack must include a public key tag:
+```html
+<meta name="paystack-public-key" content="pk_test_xxx_or_pk_live_xxx" />
+```
 
-Frontend flow (booking page):
-- In Payment Confirmation, select Method = "Paystack".
-- Enter the Paystack transaction reference and click "Verify".
-- The status appears below the reference field.
-- On submit, verification metadata is sent (or included in WhatsApp message):
-  - `verification_gateway`, `verification_reference`, `verification_status`, `verification_amount`, `verification_currency`, `verification_paid_at`.
+Functions and endpoints:
+- Verify: `/.netlify/functions/verify-payment` → checks a Paystack reference securely.
+- Init Standard: `/.netlify/functions/init-payment` → creates a Paystack Standard session and redirects back with `?ps_ref=...`.
 
-Notes:
-- For local testing of functions, use Netlify CLI (`netlify dev`). Otherwise, verification works on the deployed site.
-- Amount from Paystack is converted from kobo to naira in the response.
+Testing tips:
+- Use a test public key in the `<meta>` tag on `booking.html` and `events.html`.
+- In Payment Confirmation, click “Pay with Card” to open Inline; after success, the reference auto‑fills and verifies.
+- If Inline fails to load, the code falls back to Standard redirect; on return, `ps_ref` is read and verified.
+- The WhatsApp button always reflects the latest form state, including verification summary when Paystack is used.
+
+Frontend flows:
+- __Booking__: After you click “Compute Quote,” the Payment Confirmation form auto‑fills: Quote ID, payer name/phone/email, recommended amount (deposit by default), and a helpful note.
+- __Paystack__: Select “Paystack,” use the Card button. On success, `txRef` is filled and verification runs automatically. Verify button is hidden for Paystack; manual refs are for non‑Paystack methods.
+- __Events__: `events.html` reuses the same IDs, so the same Paystack + verification + WhatsApp logic applies.
 
 ## Contact Details
 - Phone/WhatsApp: `+234 803 949 0349`
 - Email: `Palmwinemerchants@gmail.com`
 - Instagram: `@palmwinemerchants`
-- Bank: Providus Bank — Account Name: Palmwine Merchants Co. — Account Number: 5401335797

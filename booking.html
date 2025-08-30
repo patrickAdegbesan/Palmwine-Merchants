@@ -91,19 +91,10 @@
               <fieldset style="border:1px solid #eee;padding:12px;border-radius:12px;margin-bottom:12px">
                 <legend style="padding:0 8px;font-weight:700;color:var(--leaf)">Service Package</legend>
                 <label style="display:block;margin:6px 0"><input type="radio" name="basePackage" value="palmwine" required /> Palmwine Service</label>
-                <label style="display:block;margin:6px 0"><input type="radio" name="basePackage" value="flame" /> Open‑Flame Cuisine</label>
-                <label style="display:block;margin:6px 0"><input type="radio" name="basePackage" value="full" /> Full Experience (Palmwine + Flame)</label>
-              </fieldset>
-
-              <fieldset style="border:1px solid #eee;padding:12px;border-radius:12px;margin-bottom:12px">
-                <legend style="padding:0 8px;font-weight:700;color:var(--leaf)">Add‑ons</legend>
-                <label style="display:block;margin:6px 0"><input type="checkbox" name="addons" value="cocktails_bar" /> Palmwine Cocktails Bar</label>
-                <label style="display:block;margin:6px 0"><input type="checkbox" name="addons" value="grill_station" /> Grill Station</label>
-                <label style="display:block;margin:6px 0"><input type="checkbox" name="addons" value="dj" /> DJ</label>
-                <label style="display:block;margin:6px 0"><input type="checkbox" name="addons" value="decor" /> Decor</label>
-                <label style="display:block;margin:6px 0"><input type="checkbox" name="addons" value="custom_bottling" /> Custom Bottling</label>
-                <label style="display:block;margin:6px 0"><input type="checkbox" name="addons" value="ice_cups" /> Ice + Cups</label>
-                <label style="display:block;margin:6px 0"><input type="checkbox" name="addons" value="generator" /> Generator</label>
+                <label style="display:block;margin:6px 0"><input type="radio" name="basePackage" value="cocktails" /> Palmwine Cocktails</label>
+                <label style="display:block;margin:6px 0"><input type="radio" name="basePackage" value="flame" /> Open‑Flame Cuisine (WhatsApp quote)</label>
+                <label style="display:block;margin:6px 0"><input type="radio" name="basePackage" value="full" /> Full Experience — Palmwine + Flame (WhatsApp quote)</label>
+                <small class="muted">Selecting Open‑Flame or Full Experience will open WhatsApp for manual pricing.</small>
               </fieldset>
 
               <label for="distanceKm">Delivery Distance (km from Lekki I)</label>
@@ -111,6 +102,7 @@
 
               <div class="btn-row">
                 <button class="btn primary" type="submit"><i class="fa-solid fa-calculator"></i> Compute Quote</button>
+                <button class="btn secondary" id="btn-compute-print" type="button"><i class="fa-solid fa-print"></i> Compute + Print</button>
                 <button class="btn ghost" type="reset"><i class="fa-solid fa-rotate"></i> Reset</button>
               </div>
               <p class="form-note">Estimates include tax where applicable. Delivery is distance‑based. A deposit is required to secure the date.</p>
@@ -119,8 +111,10 @@
         </form>
 
         <div id="invoice" class="invoice" style="display:none" aria-live="polite">
+          <img src="img/comp1_logo.png" alt="" class="invoice-watermark" aria-hidden="true" />
           <div class="invoice-head">
             <div>
+              <img src="img/comp2_logo.png" alt="Palmwine Merchants & Flames logo" class="invoice-logo" />
               <h3 style="margin:0">Palmwine Merchants & Flames</h3>
               <small class="muted">Lagos, Nigeria · +234 803 949 0349 · Palmwinemerchants@gmail.com</small>
             </div>
