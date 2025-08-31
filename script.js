@@ -60,6 +60,7 @@ if (navToggle) {
   });
 })();
 
+
 // Quick Quote calculator (homepage only)
 (function(){
   const form = document.getElementById('qq-form');
@@ -93,6 +94,7 @@ if (navToggle) {
   form.addEventListener('submit', (e)=>{ e.preventDefault(); compute(); });
   compute();
 })();
+
 
 // Gallery horizontal slider (scroll-snap + arrows + auto-slide)
 (function(){
@@ -228,6 +230,7 @@ if (navToggle) {
     }
   }, { passive: true });
 })();
+
 
 function handleInquiry(e){
   e.preventDefault();
@@ -562,6 +565,7 @@ if (announce){
   }, {passive:true});
 })();
 
+
 // Booking quote + invoice generation (runs only on booking.html)
 (function(){
   const form = document.getElementById('quote-form');
@@ -618,6 +622,16 @@ if (announce){
   const btnItemized = document.getElementById('btn-itemized');
   const btnDiscount = document.getElementById('btn-discount');
   const btnComputePrint = document.getElementById('btn-compute-print');
+
+  // Additional DOM references for booking page
+  const announceClose = document.querySelector('.announce-close');
+  const hangSign = document.getElementById('hang-sign');
+  const hangSignClose = document.querySelector('.hs-close');
+
+  // Booking form elements
+  const btnComputeQuote = document.getElementById('btn-compute-quote');
+  const btnReset = document.getElementById('btn-reset');
+  const invoiceContainer = document.getElementById('invoice-container');
 
   // Accumulator for itemized rows (used for WhatsApp share)
   let currentItems = [];
@@ -801,6 +815,7 @@ if (announce){
   if (btnPrint){ btnPrint.addEventListener('click', ()=> window.print()); }
   if (btnComputePrint){ btnComputePrint.addEventListener('click', ()=> processQuote(true)); }
 })();
+
 
 (function(){
   const form = document.getElementById('payment-form');
@@ -1137,6 +1152,7 @@ if (announce){
     verifyReference(false).then(()=>{ postVerificationAutoSubmitIfNeeded(); });
   })();
 
+
   // Fallback: Initialize Standard checkout and redirect
   async function initiatePaystackStandard(opts){
     const callbackUrl = `${window.location.origin}${window.location.pathname}?ps_ref=${encodeURIComponent(opts.ref)}`;
@@ -1303,6 +1319,7 @@ if (announce){
   });
 })();
 
+
 // Hanging sign: delayed show, auto-hide, close with 1-day dismissal (index.html and events.html only)
 (function(){
   const sign = document.getElementById('hang-sign');
@@ -1357,4 +1374,183 @@ if (announce){
   if (cta){
     cta.addEventListener('click', ()=>{ hideSign(); });
   }
+})();
+
+// Pricing Calculator Modal (homepage only)
+(function() {
+  const btnPricingCalculator = document.getElementById('btn-pricing-calculator');
+  const pricingModal = document.getElementById('pricing-modal');
+  const modalClose = document.querySelector('.modal-close');
+  const modalOverlay = document.querySelector('.modal-overlay');
+  const productCards = document.querySelectorAll('.product-card');
+  const calculatorSections = document.querySelectorAll('.calculator-section');
+  
+  console.log('Pricing Calculator Debug:', {
+    btnPricingCalculator,
+    pricingModal,
+    modalClose,
+    modalOverlay,
+    productCardsCount: productCards.length,
+    calculatorSectionsCount: calculatorSections.length
+  });
+  
+  if (!btnPricingCalculator || !pricingModal) {
+    console.log('Missing elements - button or modal not found');
+    return;
+  }
+
+  // Open modal
+  btnPricingCalculator.addEventListener('click', () => {
+    console.log('Button clicked - opening modal');
+    pricingModal.setAttribute('aria-hidden', 'false');
+    pricingModal.classList.add('show');
+    pricingModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    console.log('Modal should be visible now');
+  });
+
+  // Close modal
+  function closeModal() {
+    pricingModal.setAttribute('aria-hidden', 'true');
+    pricingModal.classList.remove('show');
+    pricingModal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  modalClose?.addEventListener('click', closeModal);
+  modalOverlay?.addEventListener('click', closeModal);
+
+  // ESC key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && pricingModal.getAttribute('aria-hidden') === 'false') {
+      closeModal();
+    }
+  });
+
+  // Product selection
+  productCards.forEach(card => {
+    card.addEventListener('click', () => {
+      // Remove active class from all cards
+      productCards.forEach(c => c.classList.remove('active'));
+      // Add active class to clicked card
+      card.classList.add('active');
+      
+      // Hide all calculator sections
+      calculatorSections.forEach(section => {
+        section.style.display = 'none';
+      });
+      
+      // Show relevant calculator section
+      const type = card.dataset.type;
+      const calcSection = document.getElementById(`${type}-calc`);
+      if (calcSection) {
+        calcSection.style.display = 'block';
+      }
+    });
+  });
+
+  // Bottles calculator
+  const bottlesQty = document.getElementById('bottles-qty');
+  const bottlesSubtotal = document.getElementById('bottles-subtotal');
+  const bottlesVat = document.getElementById('bottles-vat');
+  const bottlesTotal = document.getElementById('bottles-total');
+
+  function updateBottlesCalc() {
+    const qty = parseInt(bottlesQty?.value || 1);
+    const subtotal = qty * 2000;
+    const vat = Math.round(subtotal * 0.075);
+    const total = subtotal + vat;
+
+    if (bottlesSubtotal) bottlesSubtotal.textContent = `₦${subtotal.toLocaleString()}`;
+    if (bottlesVat) bottlesVat.textContent = `₦${vat.toLocaleString()}`;
+    if (bottlesTotal) bottlesTotal.textContent = `₦${total.toLocaleString()}`;
+  }
+
+  bottlesQty?.addEventListener('input', updateBottlesCalc);
+
+  // Kegs calculator
+  const kegsQty = document.getElementById('kegs-qty');
+  const kegsSubtotal = document.getElementById('kegs-subtotal');
+  const kegsVat = document.getElementById('kegs-vat');
+  const kegsTotal = document.getElementById('kegs-total');
+
+  function updateKegsCalc() {
+    const qty = parseInt(kegsQty?.value || 1);
+    const subtotal = qty * 40000;
+    const vat = Math.round(subtotal * 0.075);
+    const total = subtotal + vat;
+
+    if (kegsSubtotal) kegsSubtotal.textContent = `₦${subtotal.toLocaleString()}`;
+    if (kegsVat) kegsVat.textContent = `₦${vat.toLocaleString()}`;
+    if (kegsTotal) kegsTotal.textContent = `₦${total.toLocaleString()}`;
+  }
+
+  kegsQty?.addEventListener('input', updateKegsCalc);
+
+  // Service calculator
+  const serviceGuests = document.getElementById('service-guests');
+  const serviceTypeRadios = document.querySelectorAll('input[name="service-type"]');
+  const serviceSubtotal = document.getElementById('service-subtotal');
+  const serviceVat = document.getElementById('service-vat');
+  const serviceTotal = document.getElementById('service-total');
+
+  function updateServiceCalc() {
+    const guests = parseInt(serviceGuests?.value || 50);
+    const serviceType = document.querySelector('input[name="service-type"]:checked')?.value || 'palmwine';
+    const pricePerGuest = serviceType === 'cocktails' ? 3500 : 2000;
+    
+    const serviceAmount = guests * pricePerGuest;
+    const logisticsFee = 85500;
+    const subtotal = serviceAmount + logisticsFee;
+    const vat = Math.round(subtotal * 0.075);
+    const total = subtotal + vat;
+
+    if (serviceSubtotal) serviceSubtotal.textContent = `₦${serviceAmount.toLocaleString()}`;
+    if (serviceVat) serviceVat.textContent = `₦${vat.toLocaleString()}`;
+    if (serviceTotal) serviceTotal.textContent = `₦${total.toLocaleString()}`;
+  }
+
+  serviceGuests?.addEventListener('input', updateServiceCalc);
+  serviceTypeRadios.forEach(radio => {
+    radio.addEventListener('change', updateServiceCalc);
+  });
+
+  // WhatsApp share functionality
+  const btnWhatsAppQuote = document.getElementById('btn-whatsapp-quote');
+  const btnBookNow = document.getElementById('btn-book-now');
+
+  btnWhatsAppQuote?.addEventListener('click', () => {
+    const activeCard = document.querySelector('.product-card.active');
+    if (!activeCard) return;
+
+    const type = activeCard.dataset.type;
+    let message = 'Hi Palmwine Merchants — Here\'s my quote request:\n\n';
+
+    if (type === 'bottles') {
+      const qty = parseInt(bottlesQty?.value || 1);
+      const total = qty * 2000 + Math.round(qty * 2000 * 0.075);
+      message += `🥤 50CL Bottles\nQuantity: ${qty}\nTotal: ₦${total.toLocaleString()}`;
+    } else if (type === 'kegs') {
+      const qty = parseInt(kegsQty?.value || 1);
+      const total = qty * 40000 + Math.round(qty * 40000 * 0.075);
+      message += `🛢️ 25L Kegs\nQuantity: ${qty}\nTotal: ₦${total.toLocaleString()}`;
+    } else if (type === 'service') {
+      const guests = parseInt(serviceGuests?.value || 50);
+      const serviceType = document.querySelector('input[name="service-type"]:checked')?.value || 'palmwine';
+      const serviceName = serviceType === 'cocktails' ? 'Palmwine Cocktails' : 'Palmwine Service';
+      message += `🍶 ${serviceName}\nGuests: ${guests}\nPlease confirm final pricing and availability.`;
+    }
+
+    const whatsappUrl = `https://wa.me/2348039490349?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  });
+
+  btnBookNow?.addEventListener('click', () => {
+    window.location.href = 'booking.html';
+  });
+
+  // Initialize calculations
+  updateBottlesCalc();
+  updateKegsCalc();
+  updateServiceCalc();
 })();
