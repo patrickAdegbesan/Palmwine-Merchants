@@ -1387,7 +1387,11 @@ if (announce){
       // Store ticket in database and then auto-download barcode
       setTimeout(async () => {
         const ticketInfo = JSON.parse(generatedBarcode.data);
-        await Promise.all([storeTicketInDatabase(ticketInfo), saveToGoogleSheet(ticketInfo)]);
+        await Promise.all([
+          storeTicketInDatabase(ticketInfo),
+          saveToGoogleSheet(ticketInfo),
+          sendTicketEmail(ticketInfo)
+        ]);
         autoDownloadBarcode(ticketInfo);
       }, 1000);
       
@@ -1481,8 +1485,41 @@ if (announce){
     }
   }
 
+  // Send ticket via email through Netlify function
+  async function sendTicketEmail(ticketData) {
+    try {
+      if (!ticketData || !ticketData.email) {
+        console.warn('Skipping email send: missing ticket email.');
+        return;
+      }
+      const payload = {
+        email: ticketData.email,
+        customerName: ticketData.customerName || '',
+        code: ticketData.code,
+        amount: ticketData.amount || '0',
+        eventDetails: ticketData.eventDetails || {},
+        validUntil: ticketData.validUntil || '',
+        imageUrl: (generatedBarcode && generatedBarcode.imageUrl) || ''
+      };
+      const res = await fetch('/.netlify/functions/send-ticket-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({error:'Unknown'}));
+        console.error('Failed to send ticket email:', err);
+        return;
+      }
+      const json = await res.json().catch(()=>({}));
+      console.log('Ticket email sent:', json);
+    } catch (e) {
+      console.error('Error sending ticket email:', e);
+    }
+  }
+
   // Auto-download barcode function
-  function autoDownloadBarcode() {
+  function autoDownloadBarcode(ticketInfo) {
     if (!generatedBarcode || !confirmationCode) return;
     
     try {
