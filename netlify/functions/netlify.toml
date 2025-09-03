@@ -1,0 +1,13 @@
+[build]
+  command = "npm install"
+  functions = "functions"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--prefix=functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

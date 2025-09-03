@@ -44,16 +44,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Load existing tickets
-    let tickets = {};
-    try {
-      const data = await fs.readFile(TICKETS_FILE, 'utf8');
-      tickets = JSON.parse(data);
-    } catch (error) {
-      // File doesn't exist yet, start with empty object
-      tickets = {};
-    }
-
     // Add timestamp and status
     const ticket = {
       ...ticketData,
@@ -64,10 +54,11 @@ exports.handler = async (event, context) => {
     };
 
     // Store ticket with confirmation code as key
-    tickets[ticketData.code] = ticket;
-
-    // Save back to file
-    await fs.writeFile(TICKETS_FILE, JSON.stringify(tickets, null, 2));
+    const result = await query({
+      text: `INSERT INTO tickets (code, customer_name, amount, created_at, status, used_at, verification_count)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      values: [ticketData.code, ticketData.customerName, ticketData.amount, ticket.createdAt, ticket.status, ticket.usedAt, ticket.verificationCount]
+    });
 
     return {
       statusCode: 200,

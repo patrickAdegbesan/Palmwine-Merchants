@@ -1551,10 +1551,15 @@ if (announce){
         ctx.font = '14px Arial';
         ctx.textAlign = 'left';
         
-        const customerName = document.getElementById('payerName')?.value || 'N/A';
-        const phone = document.getElementById('payPhone')?.value || 'N/A';
-        const email = document.getElementById('payEmail')?.value || 'N/A';
-        const amount = document.getElementById('amountPaid')?.value || '0';
+        // Prefer provided ticketInfo (single source of truth), fallback to DOM inputs if needed
+        const customerName = (ticketInfo && (ticketInfo.customerName || ticketInfo.name))
+          || document.getElementById('payerName')?.value || 'N/A';
+        const phone = (ticketInfo && (ticketInfo.phone || ticketInfo.phoneNumber))
+          || document.getElementById('payPhone')?.value || 'N/A';
+        const email = (ticketInfo && ticketInfo.email)
+          || document.getElementById('payEmail')?.value || 'N/A';
+        const amount = (ticketInfo && (ticketInfo.amount || ticketInfo.amountPaid))
+          || document.getElementById('amountPaid')?.value || '0';
         
         let yPos = 310;
         ctx.fillText(`Customer: ${customerName}`, 20, yPos);
