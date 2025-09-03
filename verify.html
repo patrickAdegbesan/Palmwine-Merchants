@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket Verification • Palmwine Merchants & Flames</title>
+  <meta name="description" content="Verify event tickets by scanning QR codes or entering confirmation codes." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="img/comp_logo.jpg" type="image/png" sizes="32x32" />
+</head>
+<body>
+  <header class="site-header">
+    <a href="index.html" class="brand">
+      <img src="img/comp_logo.png" alt="Palmwine Merchants & Flames logo" />
+    </a>
+    <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+    <nav class="site-nav" role="navigation">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="events.html">Events</a>
+      <a href="menu.html">Menu</a>
+      <a href="booking.html">Booking</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero small">
+      <div class="hero-inner">
+        <h1><span class="display">Ticket Verification</span></h1>
+        <p class="tagline">Scan QR code or enter confirmation code to verify tickets.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="two-col">
+          <div>
+            <h2>QR Code Scanner</h2>
+            <p>Use your device camera to scan the ticket QR code.</p>
+            <div id="qr-scanner" class="qr-scanner">
+              <video id="qr-video" width="100%" height="300" style="border: 2px solid var(--teal); border-radius: 8px;"></video>
+              <div class="scanner-overlay">
+                <div class="scanner-frame"></div>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button id="start-scanner" class="btn primary">
+                <i class="fa-solid fa-camera"></i> Start Scanner
+              </button>
+              <button id="stop-scanner" class="btn secondary" style="display:none;">
+                <i class="fa-solid fa-stop"></i> Stop Scanner
+              </button>
+            </div>
+          </div>
+          
+          <div>
+            <h2>Manual Verification</h2>
+            <p>Enter the confirmation code from the ticket.</p>
+            <form id="verify-form" class="form">
+              <label for="confirmation-code">Confirmation Code</label>
+              <input id="confirmation-code" name="code" type="text" placeholder="PMF-PAY-XXXXXX-XXXXXX" required />
+              
+              <button type="submit" class="btn primary">
+                <i class="fa-solid fa-check"></i> Verify Ticket
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Verification Results -->
+        <div id="verification-result" class="verification-result" style="display:none;">
+          <div class="result-card">
+            <div id="result-status" class="result-status"></div>
+            <div id="result-details" class="result-details"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>Palmwine Merchants & Flames</h3>
+          <p>Authentic palmwine experience with modern flair.</p>
+        </div>
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <p><i class="fa-solid fa-phone"></i> +234 803 949 0349</p>
+          <p><i class="fa-solid fa-envelope"></i> hello@palmwinemerchants.com</p>
+        </div>
+        <div class="footer-section">
+          <h3>Follow Us</h3>
+          <div class="social-links">
+            <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="year">2024</span> Palmwine Merchants & Flames. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- QR Scanner Library -->
+  <script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

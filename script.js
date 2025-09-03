@@ -61,6 +61,152 @@ if (navToggle) {
 })();
 
 
+// Ticket Modal (events.html): open/close, populate, and total calculation
+document.addEventListener('DOMContentLoaded', function(){
+  const modal = document.getElementById('ticket-modal');
+  if (!modal) return; // only on events.html
+
+  const btnsBuy = document.querySelectorAll('.buy-ticket');
+  const backdrop = modal.querySelector('.modal-backdrop');
+  const btnClose = modal.querySelector('.modal-close');
+  const titleEl = document.getElementById('tm-title');
+  const subEl = document.getElementById('tm-sub');
+  const metaEl = document.getElementById('tm-event-meta');
+  const listEl = document.getElementById('tm-ticket-list');
+  const totalEl = document.getElementById('tm-total-amt');
+
+  // Payment form fields (inside modal)
+  const form = document.getElementById('payment-form');
+  const amountInput = document.getElementById('amountPaid');
+  const quoteInput = document.getElementById('payQuoteId');
+  const notesEl = document.getElementById('notes');
+  const dateEl = document.getElementById('paymentDate');
+  const pmSelect = document.getElementById('paymentMethod');
+
+  let lastFocused = null;
+  const FOCUSABLE_SELECTOR = 'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  function naira(n){ try{ return '₦' + Number(n||0).toLocaleString(); } catch(_){ return '₦' + (n||0); } }
+
+  function openModal(){
+    lastFocused = document.activeElement;
+    modal.setAttribute('aria-hidden', 'false');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    setTimeout(()=>{
+      const f = modal.querySelector(FOCUSABLE_SELECTOR);
+      if (f) f.focus(); else modal.focus();
+    }, 0);
+  }
+  function closeModal(){
+    modal.setAttribute('aria-hidden', 'true');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  }
+
+  function recalc(){
+    if (!listEl) return;
+    let total = 0;
+    let anyDiscount = false;
+    const DISCOUNT_RATE = 0.15; // 15% off when buying 5+ of a ticket type
+    listEl.querySelectorAll('input[data-price]')?.forEach(inp=>{
+      const qty = Math.max(0, parseInt(inp.value || '0', 10) || 0);
+      const price = Math.max(0, parseInt(inp.getAttribute('data-price')||'0', 10) || 0);
+      let subtotal = qty * price;
+      if (qty >= 5 && subtotal > 0){
+        subtotal = Math.round(subtotal * (1 - DISCOUNT_RATE));
+        anyDiscount = true;
+      }
+      total += subtotal;
+    });
+    if (totalEl){
+      totalEl.textContent = naira(total) + (anyDiscount ? ' (15% discount applied)' : '');
+    }
+    if (amountInput) amountInput.value = String(total);
+  }
+
+  function populateFromButton(btn){
+    const evId = btn.getAttribute('data-event-id') || 'EVENT';
+    const evName = btn.getAttribute('data-event-name') || 'Event';
+    const evDate = btn.getAttribute('data-event-date') || '';
+    const evLoc = btn.getAttribute('data-event-location') || '';
+    const ticketsJson = btn.getAttribute('data-tickets') || '[]';
+    let tickets = [];
+    try{ tickets = JSON.parse(ticketsJson); } catch(_){ tickets = []; }
+
+    if (titleEl) titleEl.textContent = 'Buy Tickets';
+    if (subEl) subEl.textContent = `Select tickets for ${evName}`;
+    if (metaEl) metaEl.textContent = [evName, evDate, evLoc].filter(Boolean).join(' • ');
+
+    if (listEl){
+      listEl.innerHTML = '';
+      tickets.forEach((t, idx)=>{
+        const row = document.createElement('div');
+        row.className = 'tm-row';
+        const id = `tmq_${idx}`;
+        row.innerHTML = `
+          <div class="tm-label">${t.label || 'Ticket'}</div>
+          <div class="tm-price">${naira(t.price || 0)}</div>
+          <div class="tm-qty">
+            <label class="sr-only" for="${id}">Quantity for ${t.label||'ticket'}</label>
+            <input id="${id}" type="number" min="0" step="1" value="0" data-price="${t.price||0}" />
+          </div>`;
+        listEl.appendChild(row);
+      });
+      listEl.querySelectorAll('input[data-price]')?.forEach(inp=>{
+        inp.addEventListener('input', recalc);
+        inp.addEventListener('change', recalc);
+      });
+    }
+
+    // Defaults for payment form
+    if (pmSelect) pmSelect.value = 'Paystack';
+    if (dateEl && !dateEl.value){
+      try{ dateEl.valueAsDate = new Date(); } catch(_){
+        const d = new Date();
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        const dd = String(d.getDate()).padStart(2,'0');
+        dateEl.value = `${d.getFullYear()}-${mm}-${dd}`;
+      }
+    }
+    const qId = `${evId}-${Date.now()}`;
+    if (quoteInput) quoteInput.value = qId;
+    if (notesEl && !notesEl.value){
+      notesEl.value = `Payment for ${qId} — ${evName}${evDate? ' • '+evDate:''}${evLoc? ' • '+evLoc:''}`;
+    }
+
+    recalc();
+  }
+
+  btnsBuy.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      populateFromButton(btn);
+      openModal();
+    });
+  });
+
+  btnClose?.addEventListener('click', closeModal);
+  backdrop?.addEventListener('click', (e)=>{ if (e.target === backdrop || (e.target && e.target.getAttribute('data-close')==='modal')) closeModal(); });
+  document.addEventListener('keydown', (e)=>{
+    if (modal.getAttribute('aria-hidden') !== 'false') return;
+    if (e.key === 'Escape'){ closeModal(); return; }
+    if (e.key === 'Tab'){
+      const focusables = Array.from(modal.querySelectorAll(FOCUSABLE_SELECTOR)).filter(el=> el.offsetParent !== null);
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length-1];
+      const active = document.activeElement;
+      if (e.shiftKey){
+        if (active === first || !modal.contains(active)){ last.focus(); e.preventDefault(); }
+      } else {
+        if (active === last){ first.focus(); e.preventDefault(); }
+      }
+    }
+  });
+});
+
+
 // Quick Quote calculator (homepage only)
 (function(){
   const form = document.getElementById('qq-form');
@@ -802,7 +948,7 @@ if (announce){
     }
   }
 
-  form.addEventListener('submit', (e)=>{
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     processQuote(false);
   });
@@ -821,6 +967,10 @@ if (announce){
   const form = document.getElementById('payment-form');
   if (!form) return;
 
+  // Google Sheet integration
+  const SHEET_ENDPOINT  = 'https://script.google.com/macros/s/AKfycbybyxcH6rpAhYcNOb58_50tL-maER-sCn1M4aC4d_8aU6z0F4fDg9N1nfx35E6FLJsE/exec';
+  const WEBHOOK_SECRET  = 'palmwine&merchants&flames!';
+
   const qInput = document.getElementById('payQuoteId');
   const btnUseQuote = document.getElementById('use-quote');
   const btnWa = document.getElementById('btn-pay-wa');
@@ -836,6 +986,10 @@ if (announce){
   let lastVerification = null; // { reference, verified, amount, currency, paid_at, status }
   // When true, we will auto-submit the form after a successful Paystack verification
   let __autoSubmitAfterPay = false;
+  
+  // Barcode generation variables
+  let generatedBarcode = null;
+  let confirmationCode = null;
 
   // Populate payment form from the last computed quote (non-destructive by default)
   function populateFromLastQuote(force){
@@ -1009,6 +1163,8 @@ if (announce){
       if (lastVerification && lastVerification.verified){
         const amt = lastVerification.amount ? `₦${lastVerification.amount}` : '';
         setVerifyText(`Verified  ${amt}${lastVerification.paid_at ? ' • ' + lastVerification.paid_at : ''}`, 'ok');
+        // Generate barcode on successful Paystack verification
+        generatePaymentBarcode();
         // Optional: hint if entered amount mismatches verified
         if (amountInput && lastVerification.amount && Number(amountInput.value || 0) !== lastVerification.amount){
           // Non-blocking hint
@@ -1050,6 +1206,103 @@ if (announce){
     }
   }
   verifyBtn && verifyBtn.addEventListener('click', ()=>{ verifyReference(false); });
+  
+  // Download barcode functionality - setup event listener
+  setTimeout(() => {
+    const downloadBarcodeBtn = document.getElementById('btn-download-barcode');
+    if (downloadBarcodeBtn) {
+      downloadBarcodeBtn.addEventListener('click', function() {
+        if (!generatedBarcode) return;
+        
+          try {
+            // Create a canvas to draw the QR code and text
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 350;
+            
+            // White background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Load and draw QR code
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function() {
+              // Draw QR code
+              ctx.drawImage(img, 50, 50, 200, 200);
+              
+              // Add text
+              ctx.fillStyle = '#333333';
+              ctx.font = 'bold 16px Arial';
+              ctx.textAlign = 'center';
+              ctx.fillText('Payment Confirmation', canvas.width/2, 30);
+              
+              ctx.font = '12px Arial';
+              ctx.fillText(confirmationCode, canvas.width/2, 280);
+              ctx.fillText(new Date().toLocaleDateString(), canvas.width/2, 300);
+              ctx.fillText('Palmwine Merchants & Flames', canvas.width/2, 320);
+              
+              // Download
+              const link = document.createElement('a');
+              link.download = `payment-confirmation-${confirmationCode}.png`;
+              link.href = canvas.toDataURL();
+              link.click();
+            };
+            img.src = generatedBarcode.imageUrl;
+            
+          } catch (error) {
+            console.error('Error downloading barcode:', error);
+            // Fallback: open QR code in new tab
+            window.open(generatedBarcode.imageUrl, '_blank');
+          }
+      });
+    }
+  }, 100);
+
+  // Paystack success handler
+  function handlePaystackSuccess(response) {
+    if (!response || !response.reference) {
+      console.error('Invalid Paystack response:', response);
+      setPayStatus('Error processing payment. Please try again.', 'err');
+      return;
+    }
+    
+    // Update the transaction reference
+    if (txRefInput) {
+      txRefInput.value = response.reference;
+      
+      // Show loading state
+      setVerifyText('Verifying payment...', null);
+      
+      // Auto-verify the payment
+      verifyReference(true).then(verification => {
+        if (verification && verification.verified) {
+          // Update payment status
+          setPayStatus('Payment verified successfully!', 'ok');
+          
+          // Generate and show barcode
+          const barcodeGenerated = generatePaymentBarcode();
+          
+          if (barcodeGenerated) {
+            // Auto-submit the form after a short delay
+            setTimeout(() => {
+              if (form && typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+              } else if (form) {
+                form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+              }
+            }, 1000);
+          }
+        } else {
+          setPayStatus('Payment received but verification failed. Please contact support.', 'err');
+        }
+      }).catch(error => {
+        console.error('Payment verification error:', error);
+        setPayStatus('Payment received but verification failed. Please contact support.', 'err');
+      });
+    }
+  }
 
   // Paystack Inline for card payment (ensure reference stays current)
   btnPaystackCard = document.getElementById('btn-paystack-card');
@@ -1063,6 +1316,269 @@ if (announce){
     statusEl.classList.remove('error','success');
     if (state === 'ok') statusEl.classList.add('success');
     else if (state === 'err') statusEl.classList.add('error');
+    
+    // Generate barcode on successful payment
+    if (state === 'ok' && msg && msg.toLowerCase().includes('success')) {
+      generatePaymentBarcode();
+    }
+  }
+  
+  // Generate barcode for payment confirmation
+  function generatePaymentBarcode() {
+    try {
+      const barcodeSection = document.getElementById('payment-barcode-section');
+      const barcodeContainer = document.getElementById('barcode-container');
+      const confirmationCodeEl = document.getElementById('confirmation-code');
+      
+      if (!barcodeSection || !barcodeContainer || !confirmationCodeEl) {
+        console.warn('Barcode elements not found in the DOM');
+        return false;
+      }
+      
+      // Generate unique confirmation code if not already generated
+      if (!confirmationCode) {
+        const timestamp = Date.now();
+        const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const paymentMethod = pmSelect ? pmSelect.value : 'UNKNOWN';
+        const amount = amountInput ? amountInput.value : '0';
+        confirmationCode = `PMF-${paymentMethod.substring(0,3).toUpperCase()}-${randomPart}-${timestamp.toString().slice(-6)}`;
+      }
+      
+      // Create barcode data with customer details
+      const barcodeData = {
+        code: confirmationCode,
+        customerName: document.getElementById('payerName') ? document.getElementById('payerName').value : '',
+        phone: document.getElementById('payPhone') ? document.getElementById('payPhone').value : '',
+        email: document.getElementById('payEmail') ? document.getElementById('payEmail').value : '',
+        amount: amountInput ? amountInput.value : '0',
+        method: pmSelect ? pmSelect.value : 'UNKNOWN',
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString(),
+        ref: txRefInput ? txRefInput.value : '',
+        timestamp: new Date().toISOString(),
+        eventDetails: getEventDetails(),
+        validUntil: getValidUntilDate()
+      };
+      
+      // Clear previous barcode if any
+      barcodeContainer.innerHTML = '';
+      
+      // Generate QR code using external service
+      generateQRCode(JSON.stringify(barcodeData), barcodeContainer);
+      
+      // Display confirmation code
+      confirmationCodeEl.textContent = confirmationCode;
+      
+      // Show barcode section with animation
+      barcodeSection.style.display = 'block';
+      barcodeSection.style.opacity = '0';
+      barcodeSection.style.transition = 'opacity 0.3s ease-in-out';
+      
+      // Force reflow to enable transition
+      void barcodeSection.offsetWidth;
+      barcodeSection.style.opacity = '1';
+      
+      // Scroll to barcode section if not in view
+      const rect = barcodeSection.getBoundingClientRect();
+      if (rect.top < 0 || rect.bottom > window.innerHeight) {
+        barcodeSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      
+      // Store ticket in database and then auto-download barcode
+      setTimeout(async () => {
+        const ticketInfo = JSON.parse(generatedBarcode.data);
+        await Promise.all([storeTicketInDatabase(ticketInfo), saveToGoogleSheet(ticketInfo)]);
+        autoDownloadBarcode(ticketInfo);
+      }, 1000);
+      
+      return true;
+      
+    } catch (error) {
+      console.error('Error generating barcode:', error);
+      setPayStatus('Error generating barcode. Please try again or contact support.', 'err');
+      return false;
+    }
+  }
+  
+  // Helper functions for barcode data
+  function getEventDetails() {
+    // Try to get event details from the current page or form
+    const eventName = document.querySelector('[data-event-name]')?.getAttribute('data-event-name') || 'Event Ticket';
+    const eventDate = document.querySelector('[data-event-date]')?.getAttribute('data-event-date') || '';
+    const eventLocation = document.querySelector('[data-event-location]')?.getAttribute('data-event-location') || '';
+    
+    return {
+      name: eventName,
+      date: eventDate,
+      location: eventLocation
+    };
+  }
+  
+  function getValidUntilDate() {
+    // Set barcode valid until event date or 30 days from now
+    const eventDateStr = document.querySelector('[data-event-date]')?.getAttribute('data-event-date');
+    if (eventDateStr) {
+      // Try to parse event date and use that
+      const eventDate = new Date(eventDateStr);
+      if (!isNaN(eventDate.getTime())) {
+        return eventDate.toISOString().split('T')[0];
+      }
+    }
+    
+    // Default to 30 days from now
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + 30);
+    return validUntil.toISOString().split('T')[0];
+  }
+  
+  // Store ticket in database
+  async function storeTicketInDatabase(ticketData) {
+    try {
+      const response = await fetch('/.netlify/functions/store-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticketData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('Ticket stored successfully:', result.ticketId);
+      } else {
+        console.error('Failed to store ticket:', result.error);
+      }
+    } catch (error) {
+      console.error('Error storing ticket:', error);
+    }
+  }
+
+  // Save ticket to Google Sheet
+  async function saveToGoogleSheet(ticketData) {
+    if (!ticketData || !ticketData.code || !SHEET_ENDPOINT || !WEBHOOK_SECRET) {
+      console.warn('Skipping Google Sheet save: missing ticket data or config.');
+      return;
+    }
+    try {
+      const body = new URLSearchParams({
+        secret: WEBHOOK_SECRET,
+        reference: ticketData.ref || '',
+        name: ticketData.customerName || '',
+        phone: ticketData.phone || '',
+        email: ticketData.email || '',
+        barcode: ticketData.code || ''
+      }).toString();
+
+      // We don't need to read the response; log fire-and-forget
+      fetch(SHEET_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors', // avoids CORS preflight; we don't need to read the response
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+      });
+      console.log('Successfully sent ticket data to Google Sheet.');
+    } catch (error) {
+      console.error('Error calling Google Sheet endpoint:', error);
+    }
+  }
+
+  // Auto-download barcode function
+  function autoDownloadBarcode() {
+    if (!generatedBarcode || !confirmationCode) return;
+    
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 400;
+      canvas.height = 500;
+      
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Load and draw QR code
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        // Draw QR code
+        ctx.drawImage(img, 100, 80, 200, 200);
+        
+        // Add header
+        ctx.fillStyle = '#2c5530';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('PALMWINE MERCHANTS & FLAMES', canvas.width/2, 30);
+        ctx.fillText('EVENT TICKET', canvas.width/2, 55);
+        
+        // Add customer details
+        ctx.fillStyle = '#333333';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'left';
+        
+        const customerName = document.getElementById('payerName')?.value || 'N/A';
+        const phone = document.getElementById('payPhone')?.value || 'N/A';
+        const email = document.getElementById('payEmail')?.value || 'N/A';
+        const amount = document.getElementById('amountPaid')?.value || '0';
+        
+        let yPos = 310;
+        ctx.fillText(`Customer: ${customerName}`, 20, yPos);
+        yPos += 20;
+        ctx.fillText(`Phone: ${phone}`, 20, yPos);
+        yPos += 20;
+        ctx.fillText(`Email: ${email}`, 20, yPos);
+        yPos += 20;
+        ctx.fillText(`Amount: ₦${amount}`, 20, yPos);
+        yPos += 20;
+        ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, 20, yPos);
+        yPos += 20;
+        ctx.fillText(`Time: ${new Date().toLocaleTimeString()}`, 20, yPos);
+        
+        // Add confirmation code
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Code: ${confirmationCode}`, canvas.width/2, 450);
+        
+        // Add footer
+        ctx.font = '12px Arial';
+        ctx.fillText('Scan to verify ticket authenticity', canvas.width/2, 480);
+        
+        // Download
+        const link = document.createElement('a');
+        const customerNameClean = customerName.replace(/[^a-zA-Z0-9]/g, '_');
+        link.download = `ticket-${customerNameClean}-${confirmationCode}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        // Show success message
+        setPayStatus('Ticket downloaded successfully!', 'ok');
+      };
+      img.src = generatedBarcode.imageUrl;
+      
+    } catch (error) {
+      console.error('Error auto-downloading barcode:', error);
+      setPayStatus('Barcode generated but download failed. Use the download button.', 'err');
+    }
+  }
+
+  // Simple QR code generator
+  function generateQRCode(data, container) {
+    // Clear container
+    container.innerHTML = '';
+    
+    // Create QR code using QR Server API
+    const qrSize = 200;
+    const qrImg = document.createElement('img');
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(data)}`;
+    qrImg.alt = 'Payment Confirmation QR Code';
+    qrImg.style.cssText = 'max-width: 100%; height: auto; border: 2px solid var(--teal); border-radius: 8px; background: white; padding: 8px;';
+    
+    container.appendChild(qrImg);
+    
+    // Store for download
+    generatedBarcode = {
+      data: data,
+      code: confirmationCode,
+      imageUrl: qrImg.src
+    };
   }
 
   // Basic email validator (client-side sanity only)
@@ -1377,7 +1893,7 @@ if (announce){
 })();
 
 // Pricing Calculator Modal (homepage only)
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
   const btnPricingCalculator = document.getElementById('btn-pricing-calculator');
   const pricingModal = document.getElementById('pricing-modal');
   const modalClose = document.querySelector('.modal-close');
@@ -1385,28 +1901,60 @@ if (announce){
   const productCards = document.querySelectorAll('.product-card');
   const calculatorSections = document.querySelectorAll('.calculator-section');
   
-  console.log('Pricing Calculator Debug:', {
-    btnPricingCalculator,
-    pricingModal,
-    modalClose,
-    modalOverlay,
-    productCardsCount: productCards.length,
-    calculatorSectionsCount: calculatorSections.length
-  });
-  
   if (!btnPricingCalculator || !pricingModal) {
-    console.log('Missing elements - button or modal not found');
+    // Silently fail if elements for the modal are not on the current page.
     return;
   }
 
-  // Open modal
-  btnPricingCalculator.addEventListener('click', () => {
-    console.log('Button clicked - opening modal');
+  let lastFocusedBeforeModal = null;
+  const FOCUSABLE_SELECTOR = 'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function focusFirstInModal(){
+    const focusables = pricingModal.querySelectorAll(FOCUSABLE_SELECTOR);
+    if (focusables.length) {
+      (focusables[0]).focus();
+    } else {
+      pricingModal.focus();
+    }
+  }
+  function selectProductType(type){
+    const card = pricingModal.querySelector(`.product-card[data-type="${type}"]`);
+    if (card){ card.click(); return true; }
+    return false;
+  }
+  function ensureDefaultSelection(preferType){
+    // Try preferred type first
+    if (preferType && selectProductType(preferType)) return;
+    // Otherwise keep existing active or pick first
+    const active = pricingModal.querySelector('.product-card.active');
+    if (active) return;
+    const first = pricingModal.querySelector('.product-card');
+    if (first){ first.click(); }
+  }
+  function openPricingModal(preferType){
+    lastFocusedBeforeModal = document.activeElement;
     pricingModal.setAttribute('aria-hidden', 'false');
     pricingModal.classList.add('show');
     pricingModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    console.log('Modal should be visible now');
+    ensureDefaultSelection(preferType);
+    setTimeout(focusFirstInModal, 0);
+  }
+
+  // Open modal from CTA
+  btnPricingCalculator.addEventListener('click', () => { openPricingModal(); });
+  // Open modal from homepage product cards
+  document.querySelectorAll('.hp-product-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const type = card.getAttribute('data-type');
+      openPricingModal(type);
+    });
+    card.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        const type = card.getAttribute('data-type');
+        openPricingModal(type);
+      }
+    });
   });
 
   // Close modal
@@ -1415,6 +1963,10 @@ if (announce){
     pricingModal.classList.remove('show');
     pricingModal.style.display = 'none';
     document.body.style.overflow = '';
+    // Restore focus to the trigger if available
+    if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === 'function') {
+      lastFocusedBeforeModal.focus();
+    }
   }
 
   modalClose?.addEventListener('click', closeModal);
@@ -1422,8 +1974,28 @@ if (announce){
 
   // ESC key to close
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && pricingModal.getAttribute('aria-hidden') === 'false') {
+    if (pricingModal.getAttribute('aria-hidden') !== 'false') return;
+    if (e.key === 'Escape') {
       closeModal();
+      return;
+    }
+    if (e.key === 'Tab'){
+      const focusables = Array.from(pricingModal.querySelectorAll(FOCUSABLE_SELECTOR)).filter(el=>el.offsetParent !== null || el === modalClose);
+      if (!focusables.length) return;
+      const firstEl = focusables[0];
+      const lastEl = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey){
+        if (active === firstEl || !pricingModal.contains(active)){
+          lastEl.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (active === lastEl){
+          firstEl.focus();
+          e.preventDefault();
+        }
+      }
     }
   });
 
@@ -1538,7 +2110,13 @@ if (announce){
       const guests = parseInt(serviceGuests?.value || 50);
       const serviceType = document.querySelector('input[name="service-type"]:checked')?.value || 'palmwine';
       const serviceName = serviceType === 'cocktails' ? 'Palmwine Cocktails' : 'Palmwine Service';
-      message += `🍶 ${serviceName}\nGuests: ${guests}\nPlease confirm final pricing and availability.`;
+      const pricePerGuest = serviceType === 'cocktails' ? 3500 : 2000;
+      const serviceAmount = guests * pricePerGuest;
+      const logisticsFee = 85500;
+      const subtotal = serviceAmount + logisticsFee;
+      const vat = Math.round(subtotal * 0.075);
+      const total = subtotal + vat;
+      message += `🍶 ${serviceName}\nGuests: ${guests}\nService: ₦${serviceAmount.toLocaleString()}\nService & Logistics: ₦${logisticsFee.toLocaleString()}\nVAT (7.5%): ₦${vat.toLocaleString()}\nTotal: ₦${total.toLocaleString()}`;
     }
 
     const whatsappUrl = `https://wa.me/2348039490349?text=${encodeURIComponent(message)}`;
@@ -1553,4 +2131,184 @@ if (announce){
   updateBottlesCalc();
   updateKegsCalc();
   updateServiceCalc();
+});
+
+// Ticket Verification System
+(function() {
+  const verifyForm = document.getElementById('verify-form');
+  const qrVideo = document.getElementById('qr-video');
+  const startScannerBtn = document.getElementById('start-scanner');
+  const stopScannerBtn = document.getElementById('stop-scanner');
+  const verificationResult = document.getElementById('verification-result');
+  const resultStatus = document.getElementById('result-status');
+  const resultDetails = document.getElementById('result-details');
+  
+  let qrScanner = null;
+  
+  if (!verifyForm) return; // Not on verification page
+  
+  // Manual verification form
+  verifyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = document.getElementById('confirmation-code').value.trim();
+    if (!code) return;
+    
+    await verifyTicket({ code });
+  });
+  
+  // QR Scanner functionality
+  if (startScannerBtn && qrVideo) {
+    startScannerBtn.addEventListener('click', startQRScanner);
+    stopScannerBtn.addEventListener('click', stopQRScanner);
+  }
+  
+  async function startQRScanner() {
+    try {
+      if (typeof QrScanner === 'undefined') {
+        alert('QR Scanner library not loaded. Please refresh the page.');
+        return;
+      }
+      
+      qrScanner = new QrScanner(qrVideo, result => {
+        console.log('QR Code detected:', result);
+        verifyTicket({ qrData: result });
+        stopQRScanner();
+      });
+      
+      await qrScanner.start();
+      startScannerBtn.style.display = 'none';
+      stopScannerBtn.style.display = 'inline-block';
+      
+    } catch (error) {
+      console.error('Error starting QR scanner:', error);
+      alert('Could not access camera. Please check permissions.');
+    }
+  }
+  
+  function stopQRScanner() {
+    if (qrScanner) {
+      qrScanner.stop();
+      qrScanner = null;
+    }
+    startScannerBtn.style.display = 'inline-block';
+    stopScannerBtn.style.display = 'none';
+  }
+  
+  async function verifyTicket(data) {
+    try {
+      showVerificationResult('Verifying ticket...', 'loading');
+      
+      const response = await fetch('/.netlify/functions/verify-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.valid) {
+        showValidTicket(result);
+      } else {
+        showInvalidTicket(result);
+      }
+      
+    } catch (error) {
+      console.error('Verification error:', error);
+      showVerificationResult('Verification failed. Please try again.', 'error');
+    }
+  }
+  
+  function showValidTicket(result) {
+    const ticket = result.ticket;
+    const statusHtml = `
+      <div class="status-icon valid">
+        <i class="fa-solid fa-check-circle"></i>
+      </div>
+      <h3>Valid Ticket</h3>
+      <p>${result.message}</p>
+    `;
+    
+    const detailsHtml = `
+      <div class="ticket-details">
+        <div class="detail-row">
+          <strong>Confirmation Code:</strong> ${ticket.code}
+        </div>
+        <div class="detail-row">
+          <strong>Customer:</strong> ${ticket.customerName}
+        </div>
+        <div class="detail-row">
+          <strong>Phone:</strong> ${ticket.phone}
+        </div>
+        <div class="detail-row">
+          <strong>Email:</strong> ${ticket.email}
+        </div>
+        <div class="detail-row">
+          <strong>Amount Paid:</strong> ₦${ticket.amount}
+        </div>
+        <div class="detail-row">
+          <strong>Purchase Date:</strong> ${ticket.purchaseDate} ${ticket.purchaseTime}
+        </div>
+        <div class="detail-row">
+          <strong>Event:</strong> ${ticket.eventDetails.name || 'N/A'}
+        </div>
+        <div class="detail-row">
+          <strong>Event Date:</strong> ${ticket.eventDetails.date || 'N/A'}
+        </div>
+        <div class="detail-row">
+          <strong>Location:</strong> ${ticket.eventDetails.location || 'N/A'}
+        </div>
+        <div class="detail-row">
+          <strong>Valid Until:</strong> ${ticket.validUntil}
+        </div>
+        <div class="detail-row">
+          <strong>Verified At:</strong> ${new Date(result.verifiedAt).toLocaleString()}
+        </div>
+      </div>
+    `;
+    
+    resultStatus.innerHTML = statusHtml;
+    resultDetails.innerHTML = detailsHtml;
+    verificationResult.style.display = 'block';
+    verificationResult.className = 'verification-result valid';
+  }
+  
+  function showInvalidTicket(result) {
+    const statusHtml = `
+      <div class="status-icon invalid">
+        <i class="fa-solid fa-times-circle"></i>
+      </div>
+      <h3>Invalid Ticket</h3>
+      <p>${result.message}</p>
+    `;
+    
+    const detailsHtml = `
+      <div class="ticket-details">
+        <div class="detail-row">
+          <strong>Status:</strong> ${result.status}
+        </div>
+        <div class="detail-row">
+          <strong>Verified At:</strong> ${new Date(result.verifiedAt).toLocaleString()}
+        </div>
+      </div>
+    `;
+    
+    resultStatus.innerHTML = statusHtml;
+    resultDetails.innerHTML = detailsHtml;
+    verificationResult.style.display = 'block';
+    verificationResult.className = 'verification-result invalid';
+  }
+  
+  function showVerificationResult(message, type) {
+    const statusHtml = `
+      <div class="status-icon ${type}">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+      </div>
+      <h3>${message}</h3>
+    `;
+    
+    resultStatus.innerHTML = statusHtml;
+    resultDetails.innerHTML = '';
+    verificationResult.style.display = 'block';
+    verificationResult.className = `verification-result ${type}`;
+  }
 })();

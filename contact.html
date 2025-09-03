@@ -50,47 +50,201 @@
       </div>
     </section>
 
-    <section id="contact" class="section contact">
-      <div class="container two-col">
-        <div>
-          <h2>Bookings & Inquiries</h2>
-          <p class="lead">Call/WhatsApp, email, or DM us. We respond quickly.</p>
-          <div class="contact-grid">
-            <a class="contact-item" href="tel:+2348039490349">
-              <i class="fa-solid fa-phone" aria-hidden="true"></i>
-              <span>+234 803 949 0349</span>
+    <section id="contact" class="section contact corner-leaves">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">📞 Get In Touch</span>
+          <h2>Connect With Us</h2>
+          <p class="section-intro">Ready to create unforgettable experiences? We're here to bring your vision to life with authentic Nigerian flavors, premium palmwine, and exceptional service.</p>
+        </div>
+        
+        <div class="contact-hero">
+          <div class="contact-promise">
+            <h3>🤝 Our Promise to You</h3>
+            <p>Lightning-fast responses, personalized service, and attention to every detail. Your satisfaction is our priority.</p>
+            <div class="response-time">
+              <span class="time-badge">⚡ Average response: 15 minutes</span>
+              <span class="availability">📅 Available 7 days a week</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="contact-methods">
+          <div class="method-grid">
+            <a class="contact-method primary" href="https://wa.me/2348039490349" target="_blank" rel="noopener">
+              <div class="method-icon whatsapp">
+                <i class="fa-brands fa-whatsapp"></i>
+              </div>
+              <div class="method-content">
+                <h3>WhatsApp Chat</h3>
+                <p>Instant messaging for quick questions and bookings</p>
+                <span class="method-action">Start chatting →</span>
+              </div>
+              <div class="method-badge">Most Popular</div>
             </a>
-            <a class="contact-item" href="https://wa.me/2348039490349" target="_blank" rel="noopener">
-              <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
-              <span>WhatsApp</span>
+            
+            <a class="contact-method" href="tel:+2348039490349">
+              <div class="method-icon phone">
+                <i class="fa-solid fa-phone"></i>
+              </div>
+              <div class="method-content">
+                <h3>Direct Call</h3>
+                <p>Speak directly with our team</p>
+                <span class="method-number">+234 803 949 0349</span>
+              </div>
             </a>
-            <a class="contact-item" href="mailto:Palmwinemerchants@gmail.com">
-              <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-              <span>Palmwinemerchants@gmail.com</span>
+            
+            <a class="contact-method" href="mailto:Palmwinemerchants@gmail.com">
+              <div class="method-icon email">
+                <i class="fa-solid fa-envelope"></i>
+              </div>
+              <div class="method-content">
+                <h3>Email Us</h3>
+                <p>Detailed inquiries and formal bookings</p>
+                <span class="method-action">Send email →</span>
+              </div>
             </a>
-            <a class="contact-item" href="https://instagram.com/palmwinemerchants" target="_blank" rel="noopener">
-              <i class="fa-brands fa-instagram" aria-hidden="true"></i>
-              <span>@palmwinemerchants</span>
+            
+            <a class="contact-method" href="https://instagram.com/palmwinemerchants" target="_blank" rel="noopener">
+              <div class="method-icon instagram">
+                <i class="fa-brands fa-instagram"></i>
+              </div>
+              <div class="method-content">
+                <h3>Instagram DM</h3>
+                <p>Follow us and slide into our DMs</p>
+                <span class="method-handle">@palmwinemerchants</span>
+              </div>
             </a>
           </div>
         </div>
-        <form class="card form" onsubmit="return handleInquiry(event)">
-          <h3>Quick Inquiry</h3>
-          <label>
-            Your Name
-            <input type="text" name="name" required />
-          </label>
-          <label>
-            Email or Phone
-            <input type="text" name="contact" required />
-          </label>
-          <label>
-            Message
-            <textarea name="message" rows="5" placeholder="Tell us about your event or supply needs…" required></textarea>
-          </label>
-          <button class="btn primary" type="submit">Send</button>
-          <p class="form-note">We’ll follow up via WhatsApp or email.</p>
-        </form>
+        
+        <div class="contact-form-section">
+          <div class="form-intro">
+            <h3>💬 Send Us a Message</h3>
+            <p>Prefer to write? Fill out the form below and we'll get back to you within the hour!</p>
+          </div>
+          
+          <form class="enhanced-form" onsubmit="return handleInquiry(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="inquiry-name">
+                  <i class="fa-solid fa-user"></i>
+                  Your Name
+                </label>
+                <input id="inquiry-name" type="text" name="name" placeholder="Enter your full name" required />
+              </div>
+              
+              <div class="form-group">
+                <label for="inquiry-contact">
+                  <i class="fa-solid fa-address-book"></i>
+                  Email or Phone
+                </label>
+                <input id="inquiry-contact" type="text" name="contact" placeholder="your@email.com or +234..." required />
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="inquiry-type">
+                <i class="fa-solid fa-tag"></i>
+                Inquiry Type
+              </label>
+              <select id="inquiry-type" name="type" required>
+                <option value="">Select inquiry type...</option>
+                <option value="event-booking">🎉 Event Booking</option>
+                <option value="corporate">🏢 Corporate Event</option>
+                <option value="private-party">🥳 Private Party</option>
+                <option value="palmwine-supply">🍹 Palmwine Supply</option>
+                <option value="catering">🍽️ Catering Services</option>
+                <option value="general">💬 General Inquiry</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="inquiry-message">
+                <i class="fa-solid fa-message"></i>
+                Tell Us More
+              </label>
+              <textarea id="inquiry-message" name="message" rows="6" placeholder="Share details about your event, guest count, preferred dates, special requirements, or any questions you have..." required></textarea>
+            </div>
+            
+            <div class="form-extras">
+              <div class="form-checkboxes">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="newsletter" />
+                  <span class="checkmark"></span>
+                  Subscribe to our newsletter for exclusive offers and event updates
+                </label>
+                
+                <label class="checkbox-label">
+                  <input type="checkbox" name="whatsapp-updates" />
+                  <span class="checkmark"></span>
+                  Receive booking updates via WhatsApp
+                </label>
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button class="btn primary btn-fit" type="submit">
+                <i class="fa-solid fa-paper-plane"></i>
+                Send Message
+              </button>
+              <p class="form-guarantee">🔒 We respect your privacy and never share your information</p>
+            </div>
+          </form>
+        </div>
+        
+        <div class="contact-extras">
+          <div class="extras-grid">
+            <div class="extra-info">
+              <div class="info-icon">🕒</div>
+              <h4>Business Hours</h4>
+              <ul>
+                <li><strong>Mon - Thu:</strong> 10am - 10pm</li>
+                <li><strong>Fri - Sat:</strong> 10am - 12am</li>
+                <li><strong>Sunday:</strong> 12pm - 9pm</li>
+                <li><em>Emergency bookings: 24/7 via WhatsApp</em></li>
+              </ul>
+            </div>
+            
+            <div class="extra-info">
+              <div class="info-icon">📍</div>
+              <h4>Service Areas</h4>
+              <ul>
+                <li><strong>Primary:</strong> Lagos Island & Mainland</li>
+                <li><strong>Extended:</strong> Abuja, Port Harcourt</li>
+                <li><strong>Special Events:</strong> Nationwide delivery</li>
+                <li><em>International shipping available</em></li>
+              </ul>
+            </div>
+            
+            <div class="extra-info">
+              <div class="info-icon">🎯</div>
+              <h4>What We Do Best</h4>
+              <ul>
+                <li><strong>Bush Parties:</strong> Outdoor cultural experiences</li>
+                <li><strong>Corporate Events:</strong> Team building & networking</li>
+                <li><strong>Weddings:</strong> Traditional & modern celebrations</li>
+                <li><strong>Private Dining:</strong> Intimate flame-kissed meals</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div class="contact-cta">
+          <h2>🔥 Ready to Create Magic Together?</h2>
+          <p>Don't wait! The best dates fill up fast. Reach out now and let's start planning your unforgettable experience.</p>
+          <div class="cta-urgency">
+            <span class="urgency-note">⏰ Limited weekend slots available this month</span>
+          </div>
+          <div class="cta-buttons">
+            <a href="https://wa.me/2348039490349?text=Hi%20Palmwine%20Merchants%20—%20I'm%20ready%20to%20book%20an%20amazing%20experience!" class="btn accent btn-fit" target="_blank" rel="noopener">
+              🚀 Book Now via WhatsApp
+            </a>
+            <a href="booking.html" class="btn secondary btn-fit">
+              📋 View Booking Options
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   </main>

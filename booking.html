@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Get a Quote • Palmwine Merchants & Flames</title>
   <meta name="description" content="Self-serve quote for palmwine service, open-flame cuisine, and event add-ons." />
-  <meta name="paystack-public-key" content="pk_test_897735f7b7e9ccd7e1c7ac14667dbdc90db1d26f" />
+  <meta name="paystack-public-key" content="pk_live_94ab90ae335acee3f0a8d78f713da2148b970154" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -228,6 +228,15 @@
                 <a class="btn secondary" id="btn-pay-wa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Send on WhatsApp</a>
               </div>
               <small id="pay-status" class="muted" role="status" aria-live="polite"></small>
+              
+              <!-- Payment Confirmation Barcode -->
+              <div id="payment-barcode-section" class="payment-barcode" style="display:none;">
+                <h4>Payment Confirmation</h4>
+                <div id="barcode-container"></div>
+                <p class="barcode-info">Your payment confirmation code: <strong id="confirmation-code"></strong></p>
+                <button id="btn-download-barcode" class="btn accent btn-fit" type="button"><i class="fa-solid fa-download"></i> Download Barcode</button>
+              </div>
+              
               <p class="form-note">Tip: Add a screenshot of your payment when you message us on WhatsApp for faster verification.</p>
             </div>
           </div>
