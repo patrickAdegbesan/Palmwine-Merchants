@@ -37,8 +37,9 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const client = await pool.connect();
+    const client = getClient();
     try {
+      await client.connect();
       await client.query('BEGIN');
       
       const result = await client.query(
@@ -137,13 +138,8 @@ exports.handler = async (event, context) => {
       await client.query('ROLLBACK');
       throw error;
     } finally {
-      client.release();
+      await client.end();
     }
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(response)
-    };
     
   } catch (error) {
     console.error('Ticket verification error:', error);

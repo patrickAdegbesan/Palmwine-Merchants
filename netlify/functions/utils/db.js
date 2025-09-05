@@ -1,19 +1,22 @@
 // Shared PostgreSQL client for Netlify Functions
 const { Client } = require('pg');
 
-// Initialize a new client using Netlify's DATABASE_URL env var
+// Initialize a new client using available env vars (supports Netlify Neon)
 function getClient() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not set');
+  const connStr =
+    process.env.DATABASE_URL ||
+    process.env.NETLIFY_DATABASE_URL ||
+    process.env.NETLIFY_DATABASE_URL_UNPOOLED;
+
+  if (!connStr) {
+    throw new Error('Database URL not set. Set DATABASE_URL or NETLIFY_DATABASE_URL in env.');
   }
-  
+
   const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false // Required for Netlify Postgres
-    }
+    connectionString: connStr,
+    ssl: { rejectUnauthorized: false }
   });
-  
+
   return client;
 }
 

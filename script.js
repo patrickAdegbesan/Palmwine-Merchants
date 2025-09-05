@@ -990,6 +990,19 @@ if (announce){
   // Barcode generation variables
   let generatedBarcode = null;
   let confirmationCode = null;
+  // Track last entered payment info to avoid N/A when DOM resets
+  let lastPaymentInfo = { name: '', phone: '', email: '', amount: '' };
+  // Prevent multiple downloads for the same code
+  const downloadedCodes = new Set();
+
+  // Generate a short, human-friendly confirmation code (no ambiguous chars)
+  function generateShortCode(prefix){
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1
+    let s = '';
+    for (let i = 0; i < 6; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
+    const p = (prefix || 'PMF').toUpperCase().slice(0,3);
+    return `PMF-${p}-${s}`; // e.g., PMF-PAY-7XK2FQ
+  }
 
   // Populate payment form from the last computed quote (non-destructive by default)
   function populateFromLastQuote(force){
@@ -1310,17 +1323,30 @@ if (announce){
     const meta = document.querySelector('meta[name="paystack-public-key"]');
     return (meta && meta.getAttribute('content')) || '';
   }
+
+  // Capture the latest form values at the moment user initiates payment
+  if (btnPaystackCard) {
+    btnPaystackCard.addEventListener('click', () => {
+      try {
+        const n = (document.getElementById('payerName')?.value || '').trim();
+        const p = (document.getElementById('payPhone')?.value || '').trim();
+        const e = (document.getElementById('payEmail')?.value || '').trim();
+        const a = (document.getElementById('amountPaid')?.value || '').trim();
+        lastPaymentInfo = { name: n, phone: p, email: e, amount: a };
+        // Debug
+        console.log('[lastPaymentInfo captured]', lastPaymentInfo);
+      } catch (err) {
+        console.warn('Could not capture lastPaymentInfo:', err);
+      }
+    });
+  }
   function setPayStatus(msg, state){
     if (!statusEl) return;
     statusEl.textContent = msg || '';
     statusEl.classList.remove('error','success');
     if (state === 'ok') statusEl.classList.add('success');
     else if (state === 'err') statusEl.classList.add('error');
-    
-    // Generate barcode on successful payment
-    if (state === 'ok' && msg && msg.toLowerCase().includes('success')) {
-      generatePaymentBarcode();
-    }
+    // Do not auto-generate barcode here to avoid duplicate triggers.
   }
   
   // Generate barcode for payment confirmation
@@ -1335,22 +1361,29 @@ if (announce){
         return false;
       }
       
-      // Generate unique confirmation code if not already generated
+      // Generate short confirmation code if not already generated
       if (!confirmationCode) {
-        const timestamp = Date.now();
-        const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
         const paymentMethod = pmSelect ? pmSelect.value : 'UNKNOWN';
-        const amount = amountInput ? amountInput.value : '0';
-        confirmationCode = `PMF-${paymentMethod.substring(0,3).toUpperCase()}-${randomPart}-${timestamp.toString().slice(-6)}`;
+        confirmationCode = generateShortCode(paymentMethod);
       }
       
+      // Collect customer details with robust fallbacks
+      const domName = (document.getElementById('payerName')?.value || '').trim();
+      const domPhone = (document.getElementById('payPhone')?.value || '').trim();
+      const domEmail = (document.getElementById('payEmail')?.value || '').trim();
+      const domAmount = (amountInput ? String(amountInput.value || '').trim() : '');
+      const name = domName || lastPaymentInfo.name || '';
+      const phone = domPhone || lastPaymentInfo.phone || '';
+      const email = domEmail || lastPaymentInfo.email || '';
+      const amountVal = domAmount || lastPaymentInfo.amount || '0';
+
       // Create barcode data with customer details
       const barcodeData = {
         code: confirmationCode,
-        customerName: document.getElementById('payerName') ? document.getElementById('payerName').value : '',
-        phone: document.getElementById('payPhone') ? document.getElementById('payPhone').value : '',
-        email: document.getElementById('payEmail') ? document.getElementById('payEmail').value : '',
-        amount: amountInput ? amountInput.value : '0',
+        customerName: name,
+        phone: phone,
+        email: email,
+        amount: amountVal,
         method: pmSelect ? pmSelect.value : 'UNKNOWN',
         date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString(),
@@ -1363,8 +1396,9 @@ if (announce){
       // Clear previous barcode if any
       barcodeContainer.innerHTML = '';
       
-      // Generate QR code using external service
-      generateQRCode(JSON.stringify(barcodeData), barcodeContainer);
+      // Performance: encode only the confirmation code in the QR
+      // but keep the full ticket info associated to generatedBarcode
+      generateQRCode(confirmationCode, barcodeContainer, barcodeData);
       
       // Display confirmation code
       confirmationCodeEl.textContent = confirmationCode;
@@ -1386,14 +1420,20 @@ if (announce){
       
       // Store ticket in database and then auto-download barcode
       setTimeout(async () => {
-        const ticketInfo = JSON.parse(generatedBarcode.data);
-        await Promise.all([
-          storeTicketInDatabase(ticketInfo),
-          saveToGoogleSheet(ticketInfo),
-          sendTicketEmail(ticketInfo)
-        ]);
+        const ticketInfo = (generatedBarcode && generatedBarcode.full) || (function(){
+          try { return JSON.parse(generatedBarcode.data); } catch(_) { return null; }
+        })() || barcodeData;
+        try {
+          await Promise.all([
+            storeTicketInDatabase(ticketInfo),
+            saveToGoogleSheet(ticketInfo),
+            sendTicketEmail(ticketInfo)
+          ]);
+        } catch (e) {
+          console.warn('Post-generation side effects failed:', e);
+        }
         autoDownloadBarcode(ticketInfo);
-      }, 1000);
+      }, 800);
       
       return true;
       
@@ -1521,6 +1561,8 @@ if (announce){
   // Auto-download barcode function
   function autoDownloadBarcode(ticketInfo) {
     if (!generatedBarcode || !confirmationCode) return;
+    // Prevent repeated downloads for the same code
+    if (downloadedCodes.has(confirmationCode)) return;
     
     try {
       const canvas = document.createElement('canvas');
@@ -1551,15 +1593,19 @@ if (announce){
         ctx.font = '14px Arial';
         ctx.textAlign = 'left';
         
-        // Prefer provided ticketInfo (single source of truth), fallback to DOM inputs if needed
-        const customerName = (ticketInfo && (ticketInfo.customerName || ticketInfo.name))
-          || document.getElementById('payerName')?.value || 'N/A';
-        const phone = (ticketInfo && (ticketInfo.phone || ticketInfo.phoneNumber))
-          || document.getElementById('payPhone')?.value || 'N/A';
-        const email = (ticketInfo && ticketInfo.email)
-          || document.getElementById('payEmail')?.value || 'N/A';
-        const amount = (ticketInfo && (ticketInfo.amount || ticketInfo.amountPaid))
-          || document.getElementById('amountPaid')?.value || '0';
+        // Prefer provided ticketInfo (single source of truth), then lastPaymentInfo, then DOM inputs
+        const pick = (primary, fallback1, fallback2) => {
+          const v = (primary ?? '').toString().trim();
+          if (v) return v;
+          const f1 = (fallback1 ?? '').toString().trim();
+          if (f1) return f1;
+          const f2 = (fallback2 ?? '').toString().trim();
+          return f2 || 'N/A';
+        };
+        const customerName = pick(ticketInfo && (ticketInfo.customerName || ticketInfo.name), lastPaymentInfo.name, document.getElementById('payerName')?.value);
+        const phone = pick(ticketInfo && (ticketInfo.phone || ticketInfo.phoneNumber), lastPaymentInfo.phone, document.getElementById('payPhone')?.value);
+        const email = pick(ticketInfo && ticketInfo.email, lastPaymentInfo.email, document.getElementById('payEmail')?.value);
+        const amount = pick(ticketInfo && (ticketInfo.amount || ticketInfo.amountPaid), lastPaymentInfo.amount, document.getElementById('amountPaid')?.value || '0');
         
         let yPos = 310;
         ctx.fillText(`Customer: ${customerName}`, 20, yPos);
@@ -1588,6 +1634,7 @@ if (announce){
         const customerNameClean = customerName.replace(/[^a-zA-Z0-9]/g, '_');
         link.download = `ticket-${customerNameClean}-${confirmationCode}.png`;
         link.href = canvas.toDataURL();
+        downloadedCodes.add(confirmationCode);
         link.click();
         
         // Show success message
@@ -1596,13 +1643,12 @@ if (announce){
       img.src = generatedBarcode.imageUrl;
       
     } catch (error) {
-      console.error('Error auto-downloading barcode:', error);
-      setPayStatus('Barcode generated but download failed. Use the download button.', 'err');
+      console.error('Error in autoDownloadBarcode:', error);
     }
   }
 
   // Simple QR code generator
-  function generateQRCode(data, container) {
+  function generateQRCode(data, container, fullData) {
     // Clear container
     container.innerHTML = '';
     
@@ -1610,16 +1656,20 @@ if (announce){
     const qrSize = 200;
     const qrImg = document.createElement('img');
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(data)}`;
-    qrImg.alt = 'Payment Confirmation QR Code';
-    qrImg.style.cssText = 'max-width: 100%; height: auto; border: 2px solid var(--teal); border-radius: 8px; background: white; padding: 8px;';
+    qrImg.alt = 'QR Code';
+    qrImg.style.width = qrSize + 'px';
+    qrImg.style.height = qrSize + 'px';
+    qrImg.style.imageRendering = 'crisp-edges';
     
+    // Add to container
     container.appendChild(qrImg);
     
     // Store for download
     generatedBarcode = {
-      data: data,
+      data: data,          // what is encoded into the QR (now only the code)
       code: confirmationCode,
-      imageUrl: qrImg.src
+      imageUrl: qrImg.src,
+      full: fullData || null // full ticket info for email/storage/download rendering
     };
   }
 

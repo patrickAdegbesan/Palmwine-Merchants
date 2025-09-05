@@ -1,23 +1,10 @@
-const { Client } = require('pg');
+const { getClient } = require('./utils/db');
 
-async function initDB() {
-  if (!process.env.DATABASE_URL) {
-    console.error('Error: DATABASE_URL environment variable is not set');
-    process.exit(1);
-  }
-
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  });
-
+exports.handler = async () => {
   try {
+    const client = getClient();
     await client.connect();
-    console.log('Connected to database');
 
-    // Create tickets table
     await client.query(`
       CREATE TABLE IF NOT EXISTS tickets (
         id SERIAL PRIMARY KEY,
@@ -38,17 +25,19 @@ async function initDB() {
       );
     `);
 
-    // Create indexes
     await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_code ON tickets(code)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)');
 
-    console.log('Database initialized successfully');
-  } catch (error) {
-    console.error('Error initializing database:', error);
-  } finally {
     await client.end();
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true, message: 'Database initialized' })
+    };
+  } catch (err) {
+    console.error('init-db error:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ success: false, error: err.message })
+    };
   }
-}
-
-// Run the initialization
-initDB();
+};
