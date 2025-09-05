@@ -1,33 +1,18 @@
-// Shared PostgreSQL client for Netlify Functions
-const { Client } = require('pg');
+// Shared DB access using Netlify Neon
+const { neon } = require('@netlify/neon');
 
-// Initialize a new client using available env vars (supports Netlify Neon)
-function getClient() {
-  const connStr =
-    process.env.DATABASE_URL ||
-    process.env.NETLIFY_DATABASE_URL ||
-    process.env.NETLIFY_DATABASE_URL_UNPOOLED;
-
-  if (!connStr) {
-    throw new Error('Database URL not set. Set DATABASE_URL or NETLIFY_DATABASE_URL in env.');
-  }
-
-  const client = new Client({
-    connectionString: connStr,
-    ssl: { rejectUnauthorized: false }
-  });
-
-  return client;
+// Returns a tagged template function bound to NETLIFY_DATABASE_URL
+function getSql() {
+  const sql = neon();
+  if (!sql) throw new Error('Neon client not initialized');
+  return sql;
 }
 
 // Initialize the database tables if they don't exist
 async function initDB() {
-  const client = getClient();
+  const sql = getSql();
   try {
-    await client.connect();
-    
-    // Create tickets table if it doesn't exist
-    await client.query(`
+    await sql`
       CREATE TABLE IF NOT EXISTS tickets (
         id SERIAL PRIMARY KEY,
         code VARCHAR(50) UNIQUE NOT NULL,
@@ -45,38 +30,16 @@ async function initDB() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-      
-      -- Create index for faster lookups
-      CREATE INDEX IF NOT EXISTS idx_tickets_code ON tickets(code);
-      CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
-    `);
-    
-    console.log('Database initialized successfully');
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS idx_tickets_code ON tickets(code)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)`;
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;
-  } finally {
-    await client.end();
-  }
-}
-
-// Helper to execute a query with error handling
-async function query(text, params) {
-  const client = getClient();
-  try {
-    await client.connect();
-    const result = await client.query(text, params);
-    return result;
-  } catch (error) {
-    console.error('Database query error:', { query: text, error });
-    throw error;
-  } finally {
-    await client.end();
   }
 }
 
 module.exports = {
-  getClient,
+  getSql,
   initDB,
-  query
 };

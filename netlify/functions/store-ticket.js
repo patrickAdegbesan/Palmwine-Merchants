@@ -1,4 +1,4 @@
-const { getClient } = require('./utils/db');
+const { getSql } = require('./utils/db');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -40,41 +40,31 @@ exports.handler = async (event, context) => {
     const createdAt = new Date();
     const status = 'active';
 
-    const client = getClient();
-    try {
-      await client.connect();
-      const result = await client.query(
-        `INSERT INTO tickets (
-          code, customer_name, phone, email, amount, method, ref, event_details, valid_until, status, created_at, updated_at
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11)
-        ON CONFLICT (code) DO UPDATE SET
-          customer_name = EXCLUDED.customer_name,
-          phone = EXCLUDED.phone,
-          email = EXCLUDED.email,
-          amount = EXCLUDED.amount,
-          method = EXCLUDED.method,
-          ref = EXCLUDED.ref,
-          event_details = EXCLUDED.event_details,
-          valid_until = EXCLUDED.valid_until,
-          status = EXCLUDED.status,
-          updated_at = EXCLUDED.updated_at
-        RETURNING id, code, customer_name, email, amount, status, created_at`,
-        [
-          ticketData.code,
-          ticketData.customerName,
-          ticketData.phone || null,
-          ticketData.email || null,
-          amount,
-          ticketData.method || null,
-          ticketData.ref || null,
-          ticketData.eventDetails ? JSON.stringify(ticketData.eventDetails) : null,
-          ticketData.validUntil ? new Date(ticketData.validUntil) : null,
-          status,
-          createdAt
-        ]
-      );
+    const sql = getSql();
+    const rows = await sql`
+      INSERT INTO tickets (
+        code, customer_name, phone, email, amount, method, ref, event_details, valid_until, status, created_at, updated_at
+      ) VALUES (
+        ${ticketData.code}, ${ticketData.customerName}, ${ticketData.phone || null}, ${ticketData.email || null},
+        ${amount}, ${ticketData.method || null}, ${ticketData.ref || null},
+        ${ticketData.eventDetails ? JSON.stringify(ticketData.eventDetails) : null},
+        ${ticketData.validUntil ? new Date(ticketData.validUntil) : null}, ${status}, ${createdAt}, ${createdAt}
+      )
+      ON CONFLICT (code) DO UPDATE SET
+        customer_name = EXCLUDED.customer_name,
+        phone = EXCLUDED.phone,
+        email = EXCLUDED.email,
+        amount = EXCLUDED.amount,
+        method = EXCLUDED.method,
+        ref = EXCLUDED.ref,
+        event_details = EXCLUDED.event_details,
+        valid_until = EXCLUDED.valid_until,
+        status = EXCLUDED.status,
+        updated_at = EXCLUDED.updated_at
+      RETURNING id, code, customer_name, email, amount, status, created_at
+    `;
 
-      const saved = result.rows[0];
+    const saved = rows[0];
       return {
         statusCode: 200,
         headers,
@@ -92,9 +82,7 @@ exports.handler = async (event, context) => {
           }
         })
       };
-    } finally {
-      await client.end();
-    }
+    
 
   } catch (error) {
     console.error('Error storing ticket:', error);

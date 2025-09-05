@@ -1,4 +1,4 @@
-const { getClient } = require('./utils/db');
+const { getSql } = require('./utils/db');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -37,35 +37,32 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const client = getClient();
-    try {
-      await client.connect();
-      await client.query('BEGIN');
-      
-      const result = await client.query(
-        `SELECT * FROM tickets 
-         WHERE code = $1 
-         FOR UPDATE`, 
-        [code]
-      );
-      
-      if (!result.rows || result.rows.length === 0) {
-        await client.query('ROLLBACK');
+    const sql = getSql();
+    const now = new Date();
+
+    // Try to mark as used in one atomic statement
+    const updated = await sql`
+      UPDATE tickets 
+      SET verification_count = COALESCE(verification_count, 0) + 1,
+          last_verified_at = ${now},
+          status = 'used',
+          updated_at = ${now}
+      WHERE code = ${code} AND status <> 'used'
+      RETURNING *
+    `;
+
+    if (updated.length === 0) {
+      // Not updated: either not found or already used. Check existence.
+      const existing = await sql`SELECT * FROM tickets WHERE code = ${code} LIMIT 1`;
+      if (existing.length === 0) {
         return {
           statusCode: 404,
           headers,
-          body: JSON.stringify({ 
-            error: 'Ticket not found',
-            success: false
-          })
+          body: JSON.stringify({ error: 'Ticket not found', success: false })
         };
       }
-      
-      const ticket = result.rows[0];
-      const now = new Date();
-      
-      if (ticket.status === 'used') {
-        await client.query('ROLLBACK');
+      const t = existing[0];
+      if (t.status === 'used') {
         return {
           statusCode: 400,
           headers,
@@ -73,73 +70,46 @@ exports.handler = async (event, context) => {
             success: false,
             error: 'This ticket has already been used',
             ticket: {
-              code: ticket.code,
-              status: ticket.status,
-              lastVerifiedAt: ticket.last_verified_at,
-              verificationCount: ticket.verification_count
+              code: t.code,
+              status: t.status,
+              lastVerifiedAt: t.last_verified_at,
+              verificationCount: t.verification_count
             }
           })
         };
       }
-      
-      if (ticket.valid_until && new Date(ticket.valid_until) < now) {
-        await client.query('ROLLBACK');
+      // Otherwise some other state like expired
+      if (t.valid_until && new Date(t.valid_until) < now) {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({
-            success: false,
-            error: 'This ticket has expired',
-            ticket: {
-              code: ticket.code,
-              status: 'expired',
-              validUntil: ticket.valid_until
-            }
-          })
+          body: JSON.stringify({ success: false, error: 'This ticket has expired', ticket: { code: t.code, status: 'expired', validUntil: t.valid_until } })
         };
       }
-      
-      const updateResult = await client.query(
-        `UPDATE tickets 
-         SET verification_count = verification_count + 1,
-             last_verified_at = $1,
-             status = 'used',
-             updated_at = $1
-         WHERE code = $2
-         RETURNING *`,
-        [now, code]
-      );
-      
-      await client.query('COMMIT');
-      
-      const updatedTicket = updateResult.rows[0];
-      
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          ticket: {
-            id: updatedTicket.id,
-            code: updatedTicket.code,
-            customerName: updatedTicket.customer_name,
-            email: updatedTicket.email,
-            amount: updatedTicket.amount,
-            status: updatedTicket.status,
-            verificationCount: updatedTicket.verification_count,
-            lastVerifiedAt: updatedTicket.last_verified_at,
-            eventDetails: updatedTicket.event_details,
-            validUntil: updatedTicket.valid_until
-          }
-        })
-      };
-      
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      await client.end();
+      // Fallback: return as not updated
+      return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: 'Unable to update ticket' }) };
     }
+
+    const ut = updated[0];
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        ticket: {
+          id: ut.id,
+          code: ut.code,
+          customerName: ut.customer_name,
+          email: ut.email,
+          amount: ut.amount,
+          status: ut.status,
+          verificationCount: ut.verification_count,
+          lastVerifiedAt: ut.last_verified_at,
+          eventDetails: ut.event_details,
+          validUntil: ut.valid_until
+        }
+      })
+    };
     
   } catch (error) {
     console.error('Ticket verification error:', error);
