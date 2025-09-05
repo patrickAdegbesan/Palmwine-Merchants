@@ -31,6 +31,28 @@ async function initDB() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
+    // Optional supporting tables for future features
+    await sql`
+      CREATE TABLE IF NOT EXISTS events (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        date TIMESTAMP WITH TIME ZONE NOT NULL,
+        location VARCHAR(255),
+        price DECIMAL(10,2) NOT NULL,
+        available_tickets INTEGER NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'customer',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
     await sql`CREATE INDEX IF NOT EXISTS idx_tickets_code ON tickets(code)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)`;
   } catch (error) {
