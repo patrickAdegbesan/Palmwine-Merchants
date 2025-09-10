@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const totalEl = document.getElementById('qq-total');
   const breakdownEl = document.getElementById('qq-breakdown');
 
-  const RATES = { palmwine: 2000, cocktails: 3500 };
+  const RATES = { palmwine: 2500, cocktails: 3500 };
   const TAX = 0.075; // align with BUSINESS.taxRate
   const FIXED = 85_500; // fixed service & logistics fee
   const fmt = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
@@ -2317,7 +2317,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function updateBottlesCalc() {
     const qty = parseInt(bottlesQty?.value || 1);
-    const subtotal = qty * 2000;
+    const subtotal = qty * 2500;
     const vat = Math.round(subtotal * 0.075);
     const total = subtotal + vat;
 
@@ -2392,7 +2392,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (type === 'bottles') {
       const qty = parseInt(bottlesQty?.value || 1);
-      const total = qty * 2000 + Math.round(qty * 2000 * 0.075);
+      const total = qty * 2500 + Math.round(qty * 2500 * 0.075);
       message += `🥤 50CL Bottles\nQuantity: ${qty}\nTotal: ₦${total.toLocaleString()}`;
     } else if (type === 'kegs') {
       const qty = parseInt(kegsQty?.value || 1);
