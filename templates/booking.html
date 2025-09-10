@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Book Your Experience - Palmwine Merchants & Flames{% endblock %}
+
+{% block extra_css %}
+<meta name="paystack-public-key" content="pk_test_897735f7b7e9ccd7e1c7ac14667dbdc90db1d26f" />
+{% endblock %}
+
+{% block content %}
+    <section class="hero small">
+      <div class="hero-inner">
+        <h1><span class="display">Get an Instant Quote</span></h1>
+        <p class="tagline">Enter your event details. We’ll calculate line items, tax, delivery and deposit — ready to print or share.</p>
+      </div>
+    </section>
+
+    <section class="section" id="quote">
+      <div class="container">
+        <h2>Booking Details</h2>
+        <p class="lead">Tell us about your event. Prices are estimates — we’ll confirm on WhatsApp.</p>
+
+        <form id="quote-form" class="form" autocomplete="on">
+          <div class="two-col" style="align-items:flex-start">
+            <div>
+              <label for="clientName">Full Name</label>
+              <input id="clientName" name="clientName" type="text" placeholder="e.g. Ade Ola" required />
+
+              <label for="phone">WhatsApp Number</label>
+              <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="e.g. +234 803 123 4567" required />
+
+              <label for="email">Email (optional)</label>
+              <input id="email" name="email" type="email" placeholder="you@example.com" />
+
+              <label for="date">Event Date</label>
+              <input id="date" name="date" type="date" required />
+
+              <label for="eventType">Event Type</label>
+              <select id="eventType" name="eventType" required>
+                <option value="Private">Private</option>
+                <option value="Corporate">Corporate</option>
+                <option value="Wedding">Wedding</option>
+                <option value="Birthday">Birthday</option>
+                <option value="Festival">Festival</option>
+              </select>
+
+              <label for="venue">Venue / Address</label>
+              <textarea id="venue" name="venue" rows="3" placeholder="Venue name / address" required></textarea>
+
+              <label for="guests">Expected Guests</label>
+              <input id="guests" name="guests" type="number" min="10" step="1" placeholder="e.g. 80" required />
+            </div>
+
+            <div>
+              <fieldset class="radio-fieldset" style="border:1px solid #eee;padding:12px;border-radius:12px;margin-bottom:12px">
+                <legend style="padding:0 8px;font-weight:700;color:var(--leaf)">Service Package</legend>
+                <label class="radio-label"><input type="radio" name="basePackage" value="palmwine" required /> Palmwine Service</label>
+                <label class="radio-label"><input type="radio" name="basePackage" value="cocktails" /> Palmwine Cocktails</label>
+                <label class="radio-label"><input type="radio" name="basePackage" value="flame" /> Open‑Flame Cuisine (WhatsApp quote)</label>
+                <label class="radio-label"><input type="radio" name="basePackage" value="full" /> Full Experience — Palmwine + Flame (WhatsApp quote)</label>
+                <small class="muted">Selecting Open‑Flame or Full Experience will open WhatsApp for manual pricing.</small>
+              </fieldset>
+
+              <label for="distanceKm">Delivery Distance (km from Lekki I)</label>
+              <input id="distanceKm" name="distanceKm" type="number" min="0" step="1" placeholder="e.g. 12" />
+
+              <div class="btn-row">
+                <button class="btn primary" type="submit"><i class="fa-solid fa-calculator"></i> Compute Quote</button>
+                <button class="btn ghost" type="reset"><i class="fa-solid fa-rotate"></i> Reset</button>
+              </div>
+              <p class="form-note"> Delivery is distance‑based. A deposit is required to secure the date.</p>
+            </div>
+          </div>
+        </form>
+
+        <div id="invoice" class="invoice" style="display:none" aria-live="polite">
+                      <!-- Payment Status Section -->
+            <div id="payment-status-section" style="display:none;">
+              <div class="success-message" style="text-align: center; padding: 20px; background: #f8fff8; border: 1px solid #2c5530; border-radius: 8px; margin: 20px 0;">
+                <i class="fa-solid fa-circle-check" style="color: #2c5530; font-size: 48px;"></i>
+                <h2 id="payment-success-title" style="color: #2c5530; margin: 10px 0;">Payment Successful!</h2>
+                <p id="payment-success-message" class="lead">Your payment has been confirmed.</p>
+                <div class="btn-row" style="margin-top: 20px;">
+                  <button id="btn-download-receipt" class="btn accent"><i class="fa-solid fa-download"></i> Download Receipt</button>
+                  <a id="btn-whatsapp-confirm" class="btn secondary" href="#" target="_blank"><i class="fa-brands fa-whatsapp"></i> Confirm on WhatsApp</a>
+                </div>
+                <p class="form-note" style="margin-top: 10px;">A copy of your receipt will also be sent to your email if provided.</p>
+              </div>
+            </div>
+          <img src="{% static 'img/comp1_logo.png' %}" alt="" class="invoice-watermark" aria-hidden="true" />
+          <div class="invoice-head">
+            <div>
+              <img src="{% static 'img/comp2_logo.png' %}" alt="Palmwine Merchants & Flames logo" class="invoice-logo" />
+              <h3 style="margin:0">Palmwine Merchants & Flames</h3>
+              <small class="muted">Lagos, Nigeria · +234 803 949 0349 · Palmwinemerchants@gmail.com</small>
+            </div>
+            <div class="invoice-meta">
+              <div><strong>Quote #</strong>: <span id="inv-id">—</span></div>
+              <div><strong>Date</strong>: <span id="inv-date">—</span></div>
+            </div>
+          </div>
+
+          <div class="invoice-party">
+            <div>
+              <strong>Billed To</strong>
+              <div id="inv-client">—</div>
+              <div class="muted" id="inv-contact">—</div>
+            </div>
+            <div>
+              <strong>Event</strong>
+              <div id="inv-event">—</div>
+              <div class="muted" id="inv-venue">—</div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="invoice-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th class="ta-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="inv-rows"></tbody>
+            </table>
+          </div>
+
+          <div class="totals">
+            <div></div>
+            <ul>
+              <li><span>Service Cost</span><strong class="money" id="inv-subtotal">₦0</strong></li>
+              <li><span>Delivery</span><strong class="money" id="inv-delivery">₦0</strong></li>
+              <li class="grand"><span>Total Amount</span><strong class="money" id="inv-total">₦0</strong></li>
+              <li class="accent"><span>Deposit (40%)</span><strong class="money" id="inv-deposit">₦0</strong></li>
+            </ul>
+          </div>
+
+          <div class="btn-row print-hide">
+            <button class="btn primary" id="btn-pay-deposit" type="button"><i class="fa-solid fa-credit-card"></i> Pay Deposit (₦<span id="deposit-amount">0</span>)</button>
+            <button class="btn accent" id="btn-pay-full" type="button"><i class="fa-solid fa-credit-card"></i> Pay Full Amount (₦<span id="full-amount">0</span>)</button>
+            <a class="btn secondary" id="btn-share" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Share Quote</a>
+          </div>
+
+          <p class="form-note">This is an estimate. Availability is not guaranteed until deposit is received. Prices may vary with final brief and logistics.</p>
+        </div>
+
+        <hr class="print-hide" style="margin:28px 0;border:0;border-top:1px solid #eee" />
+
+        <!-- Removed booking section to be displayed only after customer computes quote and clicks 'Make Payment' -->
+        <!-- 
+        <h2 class="print-hide">Payment Confirmation</h2>
+        <p class="lead print-hide">Secure your date by paying deposit or full amount, then send us your confirmation. Use the WhatsApp button for the fastest response. If you used the quote above, click "Use last quote" to autofill the reference.</p>
+
+        <form id="payment-form" class="form print-hide" data-formspree="">
+          <div class="two-col" style="align-items:flex-start">
+            <div>
+              <label for="payQuoteId">Quote / Invoice ID</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="payQuoteId" name="quoteId" type="text" placeholder="e.g. PMF-20250827-1234" required />
+                <button id="use-quote" type="button" class="btn ghost" aria-label="Use last quote id">Use last quote</button>
+              </div>
+
+              <label for="payerName">Payer Full Name</label>
+              <input id="payerName" name="payerName" type="text" placeholder="Your name" required />
+
+              <label for="payPhone">Phone (WhatsApp)</label>
+              <input id="payPhone" name="phone" type="tel" inputmode="tel" placeholder="e.g. +234 803 123 4567" required />
+
+              <label for="payEmail">Email (optional)</label>
+              <input id="payEmail" name="email" type="email" placeholder="you@example.com" />
+            </div>
+
+            <div>
+              <label for="amountPaid">Amount Paid (₦)</label>
+              <input id="amountPaid" name="amountPaid" type="number" min="0" step="100" placeholder="e.g. 250000" required />
+
+              <label for="paymentMethod">Payment Method</label>
+              <select id="paymentMethod" name="paymentMethod" required>
+                <option value="Transfer">Transfer</option>
+                <option value="Paystack">Paystack</option>
+                <option value="POS">POS</option>
+                <option value="Cash">Cash</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <label for="txRef">Transaction Reference</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="txRef" name="txRef" type="text" placeholder="Bank ref / POS slip / Note or Paystack ref" />
+                <button id="btn-verify-paystack" type="button" class="btn ghost" aria-label="Verify Paystack payment">Verify</button>
+              </div>
+              <small id="verify-result" class="muted" role="status" aria-live="polite"></small>
+
+              <label for="paymentDate">Payment Date</label>
+              <input id="paymentDate" name="paymentDate" type="date" required />
+
+              <label for="notes">Notes (optional)</label>
+              <textarea id="notes" name="notes" rows="3" placeholder="Any extra info"></textarea>
+
+              <div class="btn-row">
+                <button class="btn secondary" id="btn-paystack-card" type="button"><i class="fa-solid fa-credit-card"></i> Pay with Card</button>
+                <button class="btn primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send Confirmation</button>
+                <a class="btn secondary" id="btn-pay-wa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Send on WhatsApp</a>
+              </div>
+              <small id="pay-status" class="muted" role="status" aria-live="polite"></small>
+              
+              Payment Confirmation Barcode
+              <div id="payment-barcode-section" class="payment-barcode" style="display:none;">
+                <h4>Payment Confirmation</h4>
+                <div id="barcode-container"></div>
+                <p class="barcode-info">Your payment confirmation code: <strong id="confirmation-code"></strong></p>
+                <button id="btn-download-barcode" class="btn accent btn-fit" type="button"><i class="fa-solid fa-download"></i> Download Barcode</button>
+              </div>
+              
+              <p class="form-note">Tip: Add a screenshot of your payment when you message us on WhatsApp for faster verification.</p>
+            </div>
+          </div>
+        </form>
+      -->
+      </div>
+    </section>
+  </main>
+
+  
+    
+{% endblock %}
+
+{% block extra_js %}
+<!-- Pre-load Paystack -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<!-- Add loading indicator styles -->
+<style>
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #2c5530;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+.loading-text {
+    margin-top: 10px;
+    color: #2c5530;
+    font-weight: bold;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<!-- Add loading overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Initializing payment...</div>
+</div>
+
+<script src="{% static 'payment.js' %}"></script>
+<script>
+// Function to load Paystack script
+function loadPaystackScript() {
+    return new Promise((resolve, reject) => {
+        if (typeof PaystackPop !== 'undefined') {
+            console.log('Paystack already loaded');
+            resolve();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://js.paystack.co/v1/inline.js';
+        script.async = true;
+        script.onload = () => {
+            console.log('Paystack script loaded successfully');
+            resolve();
+        };
+        script.onerror = (error) => {
+            console.error('Failed to load Paystack script:', error);
+            reject(error);
+        };
+        document.head.appendChild(script);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Load Paystack first
+        await loadPaystackScript();
+        
+        // Then initialize payment handler
+        await PaymentHandler.init();
+    } catch (error) {
+        console.error('Initialization error:', error);
+        // You may surface this to the user if desired
+        // alert('Failed to initialize payment system. Please refresh and try again.');
+    }
+
+    // Add loading indicator with status updates
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = loadingOverlay.querySelector('.loading-text');
+    const originalStartPayment = PaymentHandler.startPayment;
+    
+    PaymentHandler.startPayment = async function(type) {
+        try {
+            loadingOverlay.style.display = 'flex';
+            loadingText.textContent = 'Validating details...';
+            
+            // Check customer info
+            if (!this.validateCustomerInfo()) {
+                throw new Error('Please fill in required information');
+            }
+            
+            loadingText.textContent = 'Initializing payment...';
+            const paystackReady = await this.setupPaystack();
+            if (!paystackReady) {
+                throw new Error('Payment system not ready');
+            }
+            
+            loadingText.textContent = 'Starting payment...';
+            await originalStartPayment.call(this, type);
+        } catch (error) {
+            console.error('Payment process error:', error);
+            alert(error.message);
+        } finally {
+            loadingOverlay.style.display = 'none';
+            loadingText.textContent = 'Initializing payment...';
+        }
+    };
+
+    // Update deposit and full amount display when quote is calculated
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+        quoteForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            PaymentHandler.getAmounts();
+        });
+    }
+});
+</script>
+{% endblock %}

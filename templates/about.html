@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us - Palmwine Merchants & Flames{% endblock %}
+
+{% block content %}
+    <section class="hero small">
+      <div class="hero-inner">
+        <h1><span class="display">About Us</span></h1>
+        <p class="tagline">Our story, roots, and the culture we champion.</p>
+        <nav class="subnav" aria-label="About page sections">
+          <a href="#heritage">Heritage</a>
+          <a href="#about">About</a>
+          <a href="#mission">Mission</a>
+        </nav>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <div class="container two-col">
+        <div class="section-header">
+          <h2>About Us</h2>
+          <p>Palmwine Merchants Co is an Afrocentric lifestyle and entertainment brand that celebrates palmwine, bushmeat and open-flame cuisine in creative and modern ways. The brand is rooted in African tradition but styled for a modern audience.</p>
+          <p>We seek to elevate palmwine beyond the local gourd or calabash into stylish presentations — bottles, calabashes, cocktails, and custom containers.</p>
+        </div>
+        <div class="card tone">
+          <h3>For B2B & Hospitality</h3>
+          <p>Looking to stock palmwine or host a themed activation? We supply restaurants, lounges, hotels, and event planners with premium palmwine formats and experiential service.</p>
+          <a class="btn secondary" href="{% url 'pw_website:contact' %}#contact">Request a Supplier Pack</a>
+        </div>
+       </div>
+      </div>
+    </section>
+
+    <section  class="section alt">
+     
+        <div class="section-header">
+          <h2>Our Mission</h2>
+          <p class="lead">Our mission is to celebrate the rich culture of palmwine and bushmeat in West Africa. We believe that by elevating these traditional foods and experiences, we can help to preserve and promote the unique heritage of the region.</p>
+        </div>
+      
+     
+        <div class="ticket-banner">
+          <div class="ticket-inner">
+            <div class="ticket-copy">
+              <h3>Join the Palmwine Circle</h3>
+              <p>Get culture drops, behind‑the‑scenes stories, and first dibs on intimate tastings and Bush Party invites.</p>
+            </div>
+            <a class="btn primary" href="https://forms.gle/htezsZS7s4qM4AdAA" target="_blank" rel="noopener">🌴 Become a Member</a>
+          </div>
+        </div>
+      </section> 
+    
+    <section id="heritage" class="section alt">
+      <div class="container two-col">
+        <div class="section-header">
+          <h2>Palmwine Heritage & Culture</h2>
+          <p>Palmwine is more than a beverage—it is a cultural touchstone across West Africa. From the skilled tappers who climb tall palms to collect fresh sap, to the sellers—called <em>elemu</em> in Yoruba—who serve it in decorated gourds, palmwine connects people, craft, and community.</p>
+          <ul class="bullets">
+            <li><strong>Traditional craft:</strong> Tappers make precise incisions and attach gourds to collect sap from the tree.</li>
+            <li><strong>Living fermentation:</strong> Reused gourds carry native yeasts/bacteria that jump‑start fermentation for the next batch.</li>
+            <li><strong>Everyday refreshment:</strong> Workers often enjoy palmwine during breaks—cooling relief in tropical heat.</li>
+            <li><strong>Art & memory:</strong> Palmwine tapping and sharing are frequently depicted in modern African art, reflecting its social importance.</li>
+          </ul>
+          <p class="form-note">Source: <a href="https://mellondiversifyingthefield.com/palm-wine-a-cultural-touchstone/" target="_blank" rel="noopener">Palm Wine: A Cultural Touchstone — Mellon Diversifying the Field</a>.</p>
+        </div>
+        <figure class="media-card">
+          <img src="{% static 'img/banner3.jpg' %}" alt="Palmwine heritage — gathering and celebration" loading="lazy" />
+        </figure>
+      </div>
+    </section>
+
+    <section id="glossary" class="section">
+      <div class="container">
+        <div class="section-header">
+        <h2>Glossary</h2>
+        <div  role="list">
+          <span class="chip" role="listitem"><strong>Elemu</strong> — Yoruba for palmwine seller</span>
+          <span class="chip" role="listitem"><strong>Gourd</strong> — Vessel used to collect/serve sap; carries native yeasts</span>
+          <span class="chip" role="listitem"><strong>Tapper</strong> — Person who climbs palms and harvests sap</span>
+          <span class="chip" role="listitem"><strong>Sap</strong> — Fresh palm tree juice that ferments into palmwine</span>
+        </div>
+        <div>
+      </div>
+    </section>
+    <section id="mission" class="section mission">
+      <div class="container">
+       <div class="section-header">
+        <h2>Our Mission</h2>
+        <blockquote>
+          “To become the leading Afrocentric lifestyle brand globally by elevating the heritage of palmwine and open‑flame cuisine—redefining natural refreshment for a new generation.”
+        </blockquote>
+        <p class="lead">We celebrate living traditions through modern, elevated experiences—from the way palmwine is sourced and served, to how communities gather around open flames, music, and food. Our commitment is cultural dignity, quality, and sustainability at every touchpoint.</p>
+       </div>
+
+        <div class="grid cards" aria-label="Mission pillars">
+          <div class="card">
+            <h3><i class="fa-solid fa-seedling" aria-hidden="true"></i> Heritage, Elevated</h3>
+            <p>Translate indigenous knowledge—tapping, fermentation, storytelling—into refined formats without diluting its essence.</p>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-fire" aria-hidden="true"></i> Flame & Flavor</h3>
+            <p>Champion open‑flame techniques and honest ingredients that deliver bold, memorable taste and atmosphere.</p>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-people-group" aria-hidden="true"></i> Community First</h3>
+            <p>Create spaces and events that bring people together—from Bush Parties to intimate tastings and cultural pop‑ups.</p>
+          </div>
+          <div class="card">
+            <h3><i class="fa-solid fa-leaf" aria-hidden="true"></i> Responsible Sourcing</h3>
+            <p>Work with local tappers and partners, promote safe harvesting, and reduce waste with reusable and recyclable formats.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

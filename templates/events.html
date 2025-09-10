@@ -1,0 +1,591 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Events - Palmwine Merchants & Flames{% endblock %}
+
+{% block extra_css %}
+<meta name="paystack-public-key" content="pk_test_897735f7b7e9ccd7e1c7ac14667dbdc90db1d26f" />
+<script src="https://js.paystack.co/v1/inline.js" defer></script>
+<style>
+.loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-indicator .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #2c5530;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+.loading-indicator .text {
+    color: #2c5530;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Verification modal layout fixes */
+#verification-modal .modal-content {
+    max-width: 760px;
+    width: calc(100% - 32px);
+    margin: 8vh auto;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* header sticks, body scrolls */
+}
+#verification-modal .modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: inherit; /* keep gradient/blur if any */
+}
+#verification-modal .modal-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 8px; /* room for scrollbar */
+}
+#verification-modal .modal-close {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 3;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+  <!-- Hanging promo sign -->
+  <div id="hang-sign" class="hang-sign" aria-hidden="true">
+    <a href="{% url 'pw_website:events' %}#upcoming" class="hs-body">
+      <img src="{% static 'img/tr_party1_logo.png' %}" alt="Palmwine Merchants Party" class="hs-logo" />
+      <div class="hs-text">
+        <strong>Next Bush Party</strong>
+        <span>Tap to get tickets</span>
+      </div>
+    </a>
+    <button class="hs-close" aria-label="Close">×</button>
+  </div>
+
+  <main>
+    <section class="hero small">
+      <div class="hero-inner">
+        <h1><span class="display">Events</span></h1>
+        <p class="tagline">Bush Party & themed experiences. Book your spot.</p>
+        <div class="badges" role="list">
+          <span class="badge" role="listitem"><i class="fa-solid fa-martini-glass-citrus" aria-hidden="true"></i> Palmwine Cocktails</span>
+          <span class="badge" role="listitem"><i class="fa-solid fa-music" aria-hidden="true"></i> Live DJs</span>
+          <span class="badge" role="listitem"><i class="fa-solid fa-fire" aria-hidden="true"></i> Sunset Grill</span>
+          <span class="badge" role="listitem"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i> Beach Vibes</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="why" class="section corner-leaves">
+      <div class="container">
+       <div class="section-header">
+        <h2>Why You'll Love It</h2>
+        <p class="lead">Palm trees, warm sand, glowing charcoal, and glasses clinking—our Bush Party blends culture and celebration. No stress, just pure vibes.</p>
+       </div>
+        <div class="icon-grid">
+          <div class="feat">
+            <i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i>
+            <h3>Palm Tree Energy</h3>
+            <p>Decor, music, and outfits that feel like a modern beach festival—Afrocentric and fresh.</p>
+          </div>
+          <div class="feat">
+            <i class="fa-solid fa-wine-bottle" aria-hidden="true"></i>
+            <h3>Signature Palmwine</h3>
+            <p>Classic calabash service meets bold cocktails—tasting flights and seasonal specials.</p>
+          </div>
+          <div class="feat">
+            <i class="fa-solid fa-drum" aria-hidden="true"></i>
+            <h3>Music & Movement</h3>
+            <p>Live DJs and rhythm-forward sets—Afrobeats, Highlife, and late-night grooves.</p>
+          </div>
+          <div class="feat">
+            <i class="fa-solid fa-leaf" aria-hidden="true"></i>
+            <h3>Flame & Suya</h3>
+            <p>Open-flame grills and small bites fired to perfection—smoky, spicy, unforgettable.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="events" class="section alt">
+      <div class="container two-col">
+        <div>
+          <h2>Bush Party & Themed Events</h2>
+          <p>Gatherings with music, storytelling, fashion, and heritage vibes—curated for the modern, premium crowd in Lagos and African cities worldwide.</p>
+          <ul class="bullets">
+            <li>Pop‑ups, launches, and private tastings</li>
+            <li>Corporate culture nights and diaspora community events</li>
+            <li>Custom cocktail bars and palmwine service</li>
+          </ul> <br>
+          <a class="btn primary" href="#upcoming">Upcoming Events</a>
+        </div>
+        <figure class="event-visual">
+          <img src="{% static 'img/tr_party_logo.png' %}" alt="Palmwine Merchants & Flames party lockup" />
+        </figure>
+      </div>
+    </section>
+
+    <section id="upcoming" class="section">
+      <div class="container">
+        <h2>Upcoming Events</h2>
+        <p class="lead">See what's next. Grab tickets early — limited slots.</p> <br>
+        <div class="grid cards">
+          <div class="card">
+            <h3>Bush Party — October Edition</h3>
+            <p><strong>Date:</strong> Sun, 26 Oct 2025 • 4pm</p>
+            <p><strong>Location:</strong> Lagos beachfront (details after purchase)</p>
+            <p>Beach vibes, suya flames, palmwine cocktails, and DJs till late.</p>
+            <p>Regular (15% off group of 5): <strong>₦5,000</strong><br><strong>Premium (Table for 5, Cocktail refill & Platter): ₦100,000</strong></p>
+            <div class="btn-row">
+              <button type="button" class="btn primary buy-ticket"
+                data-event-id="BUSH-PARTY-OCT-2025"
+                data-event-name="Bush Party — October Edition"
+                data-event-date="Sun, 26 Oct 2025 • 4pm"
+                data-event-location="Lagos beachfront"
+                data-tickets='[{"label":"Regular","price":5000},{"label":"Premium","price":100000}]'>
+                Buy Tickets
+              </button>
+              <a class="btn secondary" href="https://wa.me/2348039490349?text=Hi%20Palmwine%20Merchants%20—%20I%20have%20a%20question%20about%20the%20upcoming%20event" target="_blank" rel="noopener">WhatsApp</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ticket-banner corner-leaves" aria-label="Ticket callout">
+      <div class="container">
+        <div class="ticket-inner">
+          <div class="ticket-copy">
+            <h3>Join the next Bush Party</h3>
+            <p>Limited slots. Secure your spot and let's make memories under the palms.</p>
+          </div>
+          <button type="button" class="btn primary buy-ticket"
+            data-event-id="BUSH-PARTY-OCT-2025"
+            data-event-name="Bush Party — October Edition"
+            data-event-date="Sun, 26 Oct 2025 • 4pm"
+            data-event-location="Lagos beachfront"
+            data-tickets='[{"label":"Regular","price":5000},{"label":"Premium","price":100000}]'>
+            Buy Tickets
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tickets section removed in favor of modal checkout -->
+
+    <section id="gallery" class="section gallery">
+      <div class="container">
+        <h2>Moments & Vibes</h2>
+        <p>Scenes from our Bush Party and pop‑ups—sun, sand, palmwine and flames.</p>
+        <div class="gallery-wrap">
+          <button class="gal-nav gal-prev" aria-label="Previous">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <div class="gallery-grid" role="list" aria-label="Gallery slider">
+            <figure class="card">
+              <img src="{% static 'img/event1.png' %}" alt="Event photo 1" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Bar setup • Bush Party</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/event2.png' %}" alt="Event photo 2" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Suya & open‑flame</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/event3.png' %}" alt="Event photo 3" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Night vibes</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/event4.png' %}" alt="Event photo 4" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Dance floor</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/event5.png' %}" alt="Event photo 5" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Friends & flames</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/home_banner5.jpg' %}" alt="Bush Party vibes" class="event-image" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Bush Party vibes</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/home_banner7.jpg' %}" alt="Corporate event" class="event-image" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Cultural celebration</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/home_banner6.jpg' %}" alt="Palmwine tasting" class="event-image" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Palmwine service</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/img4.jpg' %}" alt="Flame-grilled delicacies" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Flame-grilled delicacies</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/img5.jpg' %}" alt="Event setup" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Event setup</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/img6.jpg' %}" alt="Premium experience" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Premium experience</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/img7.jpg' %}" alt="Beach party moments" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Beach party moments</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/img8.jpg' %}" alt="Live entertainment" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Live entertainment</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/img9.jpg' %}" alt="Cocktail crafting" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Cocktail crafting</figcaption>
+            </figure>
+            <figure class="card">
+              <img src="{% static 'img/img10.jpg' %}" alt="Sunset celebrations" loading="lazy" decoding="async" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 22vw" />
+              <figcaption>Sunset celebrations</figcaption>
+            </figure>
+          </div>
+          <button class="gal-nav gal-next" aria-label="Next">
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+          <div class="gal-dots" role="tablist" aria-label="Slide indicators"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- Enhanced Ticket Purchase Modal -->
+  <div id="ticket-modal" class="pricing-modal" aria-hidden="true" role="dialog" aria-label="Buy Tickets" aria-modal="true" tabindex="-1">
+    <div class="modal-backdrop modal-overlay" data-close="modal"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <div class="modal-icon">
+            <i class="fas fa-ticket-alt"></i>
+          </div>
+          <div>
+            <h3 id="tm-title">Buy Tickets</h3>
+            <p id="tm-sub" class="modal-subtitle"></p>
+          </div>
+        </div>
+        <button class="modal-close" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Event Info Section -->
+        <div class="event-info-card">
+          <div class="event-badge">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="tm-event-meta">Event Details</span>
+          </div>
+        </div>
+
+        <!-- Ticket Selection Section -->
+        <div class="ticket-selection-section">
+          <h4 class="section-title">
+            <i class="fas fa-list"></i>
+            Select Tickets
+          </h4>
+          <div id="tm-ticket-list" class="ticket-list"></div>
+          
+          <!-- Pricing Summary -->
+          <div class="pricing-summary">
+            <div class="discount-info" id="discount-info" style="display:none;">
+              <i class="fas fa-percentage"></i>
+              <span>15% Group Discount Applied (5+ tickets)</span>
+            </div>
+            <div class="total-section">
+              <span class="total-label">Total Amount:</span>
+              <span class="total-amount" id="tm-total-amt">₦0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Details Section -->
+        <div class="customer-details-section">
+          <h4 class="section-title">
+            <i class="fas fa-user"></i>
+            Your Details
+          </h4>
+          <form id="payment-form" class="enhanced-form">
+            {% csrf_token %}
+            <div class="form-row">
+              <div class="form-group">
+                <label for="payerName">
+                  <i class="fas fa-user"></i>
+                  Full Name
+                </label>
+                <input id="payerName" name="payerName" type="text" placeholder="Enter your full name" required />
+              </div>
+              <div class="form-group">
+                <label for="payPhone">
+                  <i class="fas fa-phone"></i>
+                  Phone Number
+                </label>
+                <input id="payPhone" name="phone" type="tel" placeholder="+234 xxx xxx xxxx" required />
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="payEmail">
+                  <i class="fas fa-envelope"></i>
+                  Email Address
+                </label>
+                <input id="payEmail" name="email" type="email" placeholder="your.email@example.com" required />
+              </div>
+            </div>
+
+            <!-- Hidden fields for admin -->
+            <div class="admin-fields" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="amountPaid">Amount</label>
+                  <input id="amountPaid" name="amountPaid" type="number" min="0" value="0" readonly />
+                </div>
+                <div class="form-group">
+                  <label for="paymentMethod">Method</label>
+                  <select id="paymentMethod" name="paymentMethod">
+                    <option value="Paystack">Paystack</option>
+                    <option value="Transfer">Transfer</option>
+                    <option value="POS">POS</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="txRef">Transaction Reference</label>
+                <input id="txRef" name="txRef" type="text" readonly />
+              </div>
+              <div class="form-group">
+                <label for="paymentDate">Payment Date</label>
+                <input id="paymentDate" name="paymentDate" type="date" />
+              </div>
+              <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="2"></textarea>
+              </div>
+            </div>
+
+            <input id="payQuoteId" name="quoteId" type="hidden" />
+            <small id="verify-result" class="muted" role="status" aria-live="polite"></small>
+          </form>
+        </div>
+
+        <!-- Payment Actions Section -->
+        <div class="payment-actions-section">
+          <div class="payment-methods">
+            <button class="btn payment-btn primary" id="btn-paystack-card" type="button">
+              <div class="btn-content">
+                <i class="fas fa-credit-card"></i>
+                <div class="btn-text">
+                  <span class="btn-title">Pay with Card</span>
+                  <span class="btn-subtitle">Secure payment via Paystack</span>
+                </div>
+              </div>
+            </button>
+            
+            <div class="payment-divider">
+              <span>or</span>
+            </div>
+            
+            <a id="btn-pay-wa" class="btn payment-btn secondary" href="#" target="_blank" rel="noopener">
+              <div class="btn-content">
+                <i class="fab fa-whatsapp"></i>
+                <div class="btn-text">
+                  <span class="btn-title">Pay via WhatsApp</span>
+                  <span class="btn-subtitle">Get payment details</span>
+                </div>
+              </div>
+            </a>
+          </div>
+          
+          <div class="security-info">
+            <i class="fas fa-shield-alt"></i>
+            <span>Your payment information is secure and encrypted</span>
+          </div>
+          
+          <small id="pay-status" class="muted" role="status" aria-live="polite"></small>
+        </div>
+
+        <!-- Payment barcode section -->
+        <div id="payment-barcode-section" class="payment-barcode" style="display:none">
+          <h4>Payment Confirmation Barcode</h4>
+          <div id="barcode-container"></div>
+          <p class="barcode-info">Confirmation Code: <strong id="confirmation-code"></strong></p>
+          <button id="btn-download-barcode" type="button" class="btn accent">Download Barcode</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket Verification Modal -->
+  <div id="verification-modal" class="pricing-modal" aria-hidden="true" role="dialog" aria-label="Ticket Verification" aria-modal="true" tabindex="-1">
+    <div class="modal-backdrop modal-overlay" data-close="modal"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <div class="modal-icon" style="background:linear-gradient(135deg, #28a745, #20c997);">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div>
+            <h3>Payment Successful!</h3>
+            <p class="modal-subtitle">Your tickets have been confirmed</p>
+          </div>
+        </div>
+        <button class="modal-close" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Success Message -->
+        <div class="success-message">
+          <div class="success-icon">
+            <i class="fas fa-ticket-alt"></i>
+          </div>
+          <h4>Tickets Confirmed!</h4>
+          <p>Your payment has been processed successfully. Use the QR code below to verify your tickets at the event.</p>
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="qr-code-section">
+          <h4 class="section-title">
+            <i class="fas fa-qrcode"></i>
+            Your Verification Code
+          </h4>
+          <div class="qr-code-container">
+            <canvas id="qr-canvas" width="200" height="200"></canvas>
+            <div class="verification-code">
+              <strong>Code: <span id="verification-code-text">Loading...</span></strong>
+            </div>
+          </div>
+          <div class="qr-actions" style="text-align:center;margin-top:10px;">
+            <button class="btn secondary" id="btn-download-qr" type="button">
+              <i class="fas fa-download"></i> Download Ticket
+            </button>
+          </div>
+          
+          <div class="qr-instructions">
+            <p><i class="fas fa-info-circle"></i> Show this QR code at the event entrance for verification</p>
+            <p><i class="fas fa-envelope"></i> A copy has been sent to your email address</p>
+          </div>
+        </div>
+
+        <!-- Order Details -->
+        <div class="order-details-section">
+          <h4 class="section-title">
+            <i class="fas fa-receipt"></i>
+            Order Summary
+          </h4>
+          <div class="order-summary">
+            <div class="order-row">
+              <span>Event:</span>
+              <span id="order-event-name">-</span>
+            </div>
+            <div class="order-row">
+              <span>Date:</span>
+              <span id="order-event-date">-</span>
+            </div>
+            <div class="order-row">
+              <span>Tickets:</span>
+              <span id="order-ticket-count">-</span>
+            </div>
+            <div class="order-row">
+              <span>Total Paid:</span>
+              <span id="order-total-amount">-</span>
+            </div>
+            <div class="order-row">
+              <span>Reference:</span>
+              <span id="order-reference">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Close Button -->
+        <div class="verification-actions" style="text-align:center; margin-top: 12px;">
+          <button class="btn primary modal-close" type="button" aria-label="Close verification modal">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-label="Gallery viewer">
+    <button class="lb-close" aria-label="Close">×</button>
+    <button class="lb-prev" aria-label="Previous image"><i class="fa-solid fa-chevron-left"></i></button>
+    <figure class="lb-frame">
+      <img class="lb-img" alt="Expanded gallery item" />
+      <figcaption class="lb-cap"></figcaption>
+    </figure>
+    <button class="lb-next" aria-label="Next image"><i class="fa-solid fa-chevron-right"></i></button>
+  </div>
+  <div class="confetti" aria-hidden="true"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="{% static 'payment-handler.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Modal close handlers
+  document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) {
+      if (e.target === this) {
+        const modal = this.closest('.pricing-modal');
+        if (modal) {
+          modal.setAttribute('aria-hidden', 'true');
+          modal.classList.remove('show');
+        }
+      }
+    });
+  });
+
+  // Group discount calculation
+  function updateGroupDiscount() {
+    const discountInfo = document.getElementById('discount-info');
+    let totalTickets = 0;
+    
+    document.querySelectorAll('.tm-qty input').forEach(input => {
+      totalTickets += parseInt(input.value) || 0;
+    });
+    
+    if (discountInfo) {
+      discountInfo.style.display = totalTickets >= 5 ? 'flex' : 'none';
+    }
+  }
+
+  // Listen for ticket quantity changes
+  document.addEventListener('input', function(e) {
+    if (e.target.matches('.tm-qty input')) {
+      updateGroupDiscount();
+    }
+  });
+});
+</script>
+{% endblock %}

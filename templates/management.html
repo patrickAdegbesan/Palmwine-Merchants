@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .booking-list {
+        margin: 20px 0;
+    }
+    .booking-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        padding: 20px;
+    }
+    .booking-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .booking-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #2c5530;
+    }
+    .booking-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    .detail-group {
+        margin-bottom: 10px;
+    }
+    .detail-label {
+        font-weight: 500;
+        color: #666;
+    }
+    .detail-value {
+        color: #333;
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .status-confirmed {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .status-completed {
+        background: #cce5ff;
+        color: #004085;
+    }
+    .actions {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+    }
+    .btn-action {
+        padding: 5px 15px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    .btn-confirm {
+        background: #2c5530;
+        color: white;
+    }
+    .btn-cancel {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-complete {
+        background: #007bff;
+        color: white;
+    }
+    .filters {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .search-box {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 250px;
+    }
+    .select-filter {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Booking Management</h1>
+
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filter-group">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search by name, quote ID...">
+        </div>
+        <div class="filter-group">
+            <select id="statusFilter" class="select-filter">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <select id="dateFilter" class="select-filter">
+                <option value="">All Dates</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="future">Future Events</option>
+                <option value="past">Past Events</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Bookings List -->
+    <div id="bookingsList" class="booking-list">
+        <!-- Bookings will be loaded here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN'
+    }).format(amount);
+};
+
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-NG', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+};
+
+function getStatusClass(status) {
+    return `status-${status.toLowerCase()}`;
+}
+
+function createBookingCard(booking) {
+    return `
+        <div class="booking-card" data-booking-id="${booking.id}">
+            <div class="booking-header">
+                <div class="booking-title">${booking.client_name} - ${booking.quote_id}</div>
+                <span class="status-badge ${getStatusClass(booking.status)}">${booking.status}</span>
+            </div>
+            <div class="booking-details">
+                <div class="detail-group">
+                    <div class="detail-label">Event Type</div>
+                    <div class="detail-value">${booking.event_type}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Event Date</div>
+                    <div class="detail-value">${formatDate(booking.event_date)}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Venue</div>
+                    <div class="detail-value">${booking.venue}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Guests</div>
+                    <div class="detail-value">${booking.guests}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Package</div>
+                    <div class="detail-value">${booking.package_type}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Total Amount</div>
+                    <div class="detail-value">${formatCurrency(booking.total)}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Contact</div>
+                    <div class="detail-value">
+                        ${booking.phone}<br>
+                        ${booking.email}
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                ${booking.status === 'pending' ? `
+                    <button class="btn-action btn-confirm" onclick="updateStatus('${booking.id}', 'confirmed')">Confirm</button>
+                    <button class="btn-action btn-cancel" onclick="updateStatus('${booking.id}', 'cancelled')">Cancel</button>
+                ` : ''}
+                ${booking.status === 'confirmed' ? `
+                    <button class="btn-action btn-complete" onclick="updateStatus('${booking.id}', 'completed')">Mark Complete</button>
+                    <button class="btn-action btn-cancel" onclick="updateStatus('${booking.id}', 'cancelled')">Cancel</button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+async function loadBookings(filters = {}) {
+    try {
+        const response = await fetch('/api/bookings/', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        const bookings = await response.json();
+        
+        let filteredBookings = bookings;
+        
+        // Apply filters
+        if (filters.search) {
+            const searchLower = filters.search.toLowerCase();
+            filteredBookings = filteredBookings.filter(booking => 
+                booking.client_name.toLowerCase().includes(searchLower) ||
+                booking.quote_id.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        if (filters.status) {
+            filteredBookings = filteredBookings.filter(booking => 
+                booking.status.toLowerCase() === filters.status.toLowerCase()
+            );
+        }
+        
+        if (filters.dateFilter) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            filteredBookings = filteredBookings.filter(booking => {
+                const bookingDate = new Date(booking.event_date);
+                switch(filters.dateFilter) {
+                    case 'today':
+                        return bookingDate.toDateString() === today.toDateString();
+                    case 'week':
+                        const weekStart = new Date(today);
+                        weekStart.setDate(today.getDate() - today.getDay());
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekStart.getDate() + 6);
+                        return bookingDate >= weekStart && bookingDate <= weekEnd;
+                    case 'month':
+                        return bookingDate.getMonth() === today.getMonth() && 
+                               bookingDate.getFullYear() === today.getFullYear();
+                    case 'future':
+                        return bookingDate >= today;
+                    case 'past':
+                        return bookingDate < today;
+                    default:
+                        return true;
+                }
+            });
+        }
+        
+        const bookingsHTML = filteredBookings.map(createBookingCard).join('');
+        document.getElementById('bookingsList').innerHTML = bookingsHTML;
+    } catch (error) {
+        console.error('Error loading bookings:', error);
+        document.getElementById('bookingsList').innerHTML = '<div class="alert alert-danger">Error loading bookings. Please try again.</div>';
+    }
+}
+
+async function updateStatus(bookingId, newStatus) {
+    try {
+        const response = await fetch(`/api/bookings/${bookingId}/status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (response.ok) {
+            loadBookings(getFilters()); // Reload with current filters
+        } else {
+            alert('Error updating booking status. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error updating status:', error);
+        alert('Error updating booking status. Please try again.');
+    }
+}
+
+function getFilters() {
+    return {
+        search: document.getElementById('searchInput').value,
+        status: document.getElementById('statusFilter').value,
+        dateFilter: document.getElementById('dateFilter').value
+    };
+}
+
+// Event listeners for filters
+document.getElementById('searchInput').addEventListener('input', () => {
+    loadBookings(getFilters());
+});
+
+document.getElementById('statusFilter').addEventListener('change', () => {
+    loadBookings(getFilters());
+});
+
+document.getElementById('dateFilter').addEventListener('change', () => {
+    loadBookings(getFilters());
+});
+
+// CSRF token helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Load bookings on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadBookings();
+});
+</script>
+{% endblock %}

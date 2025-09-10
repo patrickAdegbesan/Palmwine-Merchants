@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Menu • Palmwine Merchants{% endblock %}
+{% block content %}
+
+<main>
+    <section class="hero small">
+      <div class="hero-inner">
+        <h1><span class="display">Menu</span></h1>
+        <p class="tagline">Signature palmwine cocktails and open‑flame cuisine.</p>
+      </div>
+    </section>
+
+
+    <section id="cocktails" class="section alt corner-leaves">
+      <div class="container">
+        <div class="section-header">
+          
+          <h2>Palmwine Cocktails</h2>
+          <p class="section-intro">Masterfully crafted blends that marry traditional palmwine with exotic tropical juices, aromatic herbs, bold spices, and premium spirits. Each cocktail tells a story of heritage meets innovation.</p>
+        </div>
+        
+        <div class="cocktail-showcase">
+          <div class="featured-cocktail">
+            <div class="cocktail-visual">
+              <div class="cocktail-icon">🥥</div>
+              <div class="cocktail-accent"></div>
+            </div>
+            <div class="cocktail-details">
+              <h3>Elémí Botanika <span class="cocktail-tag">Herbalist's Choice</span></h3>
+              <p class="cocktail-desc">A sophisticated blend of fresh palmwine infused with aromatic herbs, zesty citrus notes, and artisanal bitters. Garnished with mint leaves and served over crushed ice.</p>
+              <div class="cocktail-notes">
+                <span class="note">🌿 Herbal</span>
+                <span class="note">🍋 Citrusy</span>
+                <span class="note">❄️ Refreshing</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid cocktail-grid">
+          <div class="cocktail-card premium">
+            <div class="cocktail-header">
+              <h3>Zestina <span class="price">₦2,500</span></h3>
+              <div class="cocktail-rating">⭐⭐⭐⭐⭐</div>
+            </div>
+            <p>Tropical paradise in a glass! Zesty pineapple, passion fruit, and lime dance with smooth palmwine. Bright, refreshing, and absolutely irresistible.</p>
+            <div class="cocktail-specs">
+              <span class="spec">🍍 Tropical</span>
+              <span class="spec">🌞 Energizing</span>
+            </div>
+          </div>
+          
+          <div class="cocktail-card signature">
+            <div class="cocktail-header">
+              <h3>PALMPOP <span class="price">₦2,200</span></h3>
+              <div class="cocktail-badge">Most Popular</div>
+            </div>
+            <p>The crowd favorite! Bubbly palmwine spritz with seasonal fruit accents, sparkling water, and a hint of honey. Light, effervescent, and perfect for celebrations.</p>
+            <div class="cocktail-specs">
+              <span class="spec">🫧 Bubbly</span>
+              <span class="spec">🍯 Sweet</span>
+            </div>
+          </div>
+          
+          <div class="cocktail-card spicy">
+            <div class="cocktail-header">
+              <h3>Pępęsweet <span class="price">₦2,800</span></h3>
+              <div class="heat-level">🌶️🌶️🌶️</div>
+            </div>
+            <p>For the adventurous! Sweet meets heat with peppered syrup, chilled palmwine, and a secret blend of Nigerian spices. Served with a salted rim.</p>
+            <div class="cocktail-specs">
+              <span class="spec">🔥 Spicy</span>
+              <span class="spec">🍯 Sweet Heat</span>
+            </div>
+          </div>
+          
+          <div class="cocktail-card fusion">
+            <div class="cocktail-header">
+              <h3>Shapa <span class="price">₦3,200</span></h3>
+              <div class="cocktail-badge">Party Starter</div>
+            </div>
+            <p>The ultimate fusion! Premium tequila meets fresh palmwine with tropical fruits and a splash of lime. Bold, exciting, and guaranteed to get the party started.</p>
+            <div class="cocktail-specs">
+              <span class="spec">🍹 Fusion</span>
+              <span class="spec">🎉 Party Vibes</span>
+            </div>
+          </div>
+          
+          <div class="cocktail-card seasonal">
+            <div class="cocktail-header">
+              <h3>Lagos Sunset <span class="price">₦2,600</span></h3>
+              <div class="cocktail-badge">New</div>
+            </div>
+            <p>Inspired by Lagos evenings! Palmwine with hibiscus tea, orange bitters, and a touch of ginger. Served with dried hibiscus petals for that perfect sunset color.</p>
+            <div class="cocktail-specs">
+              <span class="spec">🌅 Sunset Vibes</span>
+              <span class="spec">🌺 Floral</span>
+            </div>
+          </div>
+          
+          <div class="cocktail-card classic">
+            <div class="cocktail-header">
+              <h3>Heritage Pure <span class="price">₦1,800</span></h3>
+              <div class="cocktail-badge">Traditional</div>
+            </div>
+            <p>For purists who appreciate authenticity. Fresh palmwine served chilled with a slice of lime and traditional kola nut garnish. Simple, pure, perfect.</p>
+            <div class="cocktail-specs">
+              <span class="spec">🥥 Pure</span>
+              <span class="spec">🌿 Traditional</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="cocktail-cta">
+          <h3>🍹 Create Your Own Experience</h3>
+          <p>Want something unique? Our mixologists can craft custom cocktails based on your taste preferences!</p>
+          <a href="{% url 'pw_website:booking' %}" class="btn primary btn-fit">🎯 Book Custom Cocktail Session</a>
+        </div>
+      </div>
+    </section>
+
+        <div class="menu-cta">
+          <h2>Ready to Experience the Magic?</h2>
+          <p>Book your table now and embark on a culinary journey that celebrates the rich flavors and traditions of Nigeria.</p>
+          <div class="cta-buttons">
+            <a href="{% url 'pw_website:booking' %}" class="btn primary btn-fit">🍽️ Reserve Your Table</a>
+            <a href="{% url 'pw_website:contact' %}" class="btn secondary btn-fit">💬 Ask About Custom Menus</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

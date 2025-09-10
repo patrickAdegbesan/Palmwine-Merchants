@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Palmwine Merchants & Flames{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* 3D Button Styles */
+  .hero-ctas .btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .hero-ctas .btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
+  }
+  .hero-ctas .btn:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  /* Center the new simplified content */
+  .hero-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div id="announce" class="announce" role="region" aria-label="Announcement">
+    <div class="announce-inner">
+      <span class="spark">✦</span>
+      <div class="announce-scroller" aria-live="polite">
+        <div class="announce-row">
+          <span class="announce-text" data-short="Bush Party this month — limited slots!">  Bush Party returns this month — beach vibes, suya flames, palmwine cocktails. Limited slots!</span>
+          <a class="announce-link" href="https://wa.me/2348039490349?text=Hi%20Palmwine%20Merchants%20—%20please%20share%20details%20for%20the%20next%20Bush%20Party" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </div>
+      <button class="announce-close" aria-label="Close">×</button>
+    </div>
+  </div>
+  
+
+  <!-- Hanging promo sign -->
+  <div id="hang-sign" class="hang-sign" aria-hidden="true">
+    <a href="{% url 'pw_website:events' %}#upcoming" class="hs-body">
+      <img src="{% static 'img/tr_party1_logo.png' %}" alt="Palmwine Merchants Party" class="hs-logo" />
+      <div class="hs-text">
+        <strong>Next Bush Party</strong>
+        <span>Tap to get tickets</span>
+      </div>
+    </a>
+    <button class="hs-close" aria-label="Close">×</button>
+  </div>
+
+  <main id="home">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-inner">
+        <!-- The homepage is now simplified to these four main actions -->
+        <h1><span class="display">Palmwine Merchants & Flames</span></h1>
+        <p class="tagline">Lagos' hottest Afrocentric experience — authentic palmwine cocktails, flame-grilled delicacies, and unforgettable Bush Parties.</p>
+        <div class="hero-ctas">
+          <a class="btn primary" href="{% url 'pw_website:booking' %}">🚀 Get Palmwine Delivered To You</a>
+          <a class="btn secondary" href="{% url 'pw_website:booking' %}">🎉 Book The Ultimate Party Experience</a>
+          <a class="btn ghost" href="{% url 'pw_website:events' %}#cocktails">🍹 Unlock Our Secret Cocktail Menu</a>
+          <a class="btn accent" href="{% url 'pw_website:events' %}#upcoming">🔥 Secure Your Spot! Tickets Selling Fast</a>
+        </div>
+      </div>
+    </section>
+    <div id="wave" class="wave" aria-hidden="true"></div>
+
+    <!-- Highlights (lean home) -->
+    <section id="highlights" class="section alt corner-leaves">
+      <div class="container">
+       <div class="pricing-hero">
+        <h2>Why Choose Us?</h2>
+        <p class="lead">Lagos' #1 destination for authentic Afrocentric experiences that blend tradition with modern luxury.</p><br>
+         <!-- Three feature cards -->
+         
+        <div class="grid cards">
+          <a class="card" href="{% url 'pw_website:events' %}#upcoming">
+            <h3>🎉 Exclusive Bush Parties</h3>
+            <p>Beach vibes, live DJs, premium crowd. Only 150 spots available!</p>
+          </a>
+          <a class="card" href="{% url 'pw_website:events' %}#cocktails">
+            <h3>🍹 Award-Winning Cocktails</h3>
+            <p>Unique palmwine blends you won't find anywhere else.</p>
+          </a>
+          <a class="card" href="{% url 'pw_website:about' %}#about">
+            <h3>🔥 Authentic Experience</h3>
+            <p>Real heritage, modern presentation, unforgettable memories.</p>
+          </a>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- Compact CTA banner -->
+    <section class="ticket-banner" aria-label="Primary callout">
+      <div class="container">
+        <div class="ticket-inner">
+          <div class="ticket-copy">
+            <h3>🚨 Next Bush Party: Oct 26th, 2025</h3>
+            <p><strong>Regular (15% off group of 5): ₦5,000</strong><br><strong>Premium (Table for 5, Cocktail refill & Platter): ₦100,000</strong></p>
+          </div>
+          <div class="btn-row">
+            <a class="btn primary" href="{% url 'pw_website:events' %}#upcoming">🎫 Buy Tickets</a>
+            <a class="btn secondary" href="https://wa.me/2348039490349?text=Hi%20—%20I%20want%20VIP%20table%20for%20Bush%20Party" target="_blank" rel="noopener">Book VIP Table</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing CTA -->
+    <section id="pricing" class="section alt corner-leaves">
+      <div class="container">
+        <div class="pricing-hero">
+          <h2>Want Premium Palmwine for Your Event?</h2>
+          <p class="lead">Get instant quotes for bottles, kegs, or full event service. See exactly what you'll pay — no hidden fees, no surprises.</p>
+          <div class="pricing-cta">
+            <button id="btn-pricing-calculator" class="btn primary large">
+              <i class="fa-solid fa-calculator"></i> Get My Quote Now
+            </button>
+            <p class="cta-note">✓ Instant pricing • ✓ Visual product selection • ✓ Custom branding included</p>
+          </div>
+        </div>
+        
+        <!-- Product cards (match modal styling) -->
+        <div class="product-grid">
+          <div class="product-card hp-product-card" data-type="bottles" role="button" tabindex="0" aria-label="50CL Bottles pricing">
+            <img src="{% static 'img/home_banner5.jpg' %}" alt="50CL Bottles" class="product-image" />
+            <h5>50CL Bottles</h5>
+            <p class="product-price">₦2,000 each</p>
+            <small>Custom branding included</small>
+          </div>
+          <div class="product-card hp-product-card" data-type="kegs" role="button" tabindex="0" aria-label="25L Kegs pricing">
+            <img src="{% static 'img/25l_.jpg' %}" alt="25L Kegs" class="product-image" />
+            <h5>25L Kegs</h5>
+            <p class="product-price">₦25,000 each</p>
+            <small>Fresh palmwine • Perfect for gatherings</small>
+          </div>
+          <div class="product-card hp-product-card" data-type="service" role="button" tabindex="0" aria-label="Event Service pricing">
+            <img src="{% static 'img/img6.jpg' %}" alt="Event Service" class="product-image" />
+            <h5>Event Service</h5>
+            <p class="product-price">From ₦2,000/guest</p>
+            <small>Palmwine service or cocktails</small>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  
+  
+  <!-- Pricing Calculator Modal -->
+  <div id="pricing-modal" class="pricing-modal" aria-hidden="true" role="dialog" aria-label="Pricing Calculator" aria-modal="true" tabindex="-1">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Get Your Palmwine Quote</h3>
+        <button class="modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="product-selection">
+          <h4>What do you need?</h4>
+          <div class="product-grid">
+            <div class="product-card" data-type="bottles">
+              <img src="{% static 'img/home_banner5.jpg' %}" alt="50CL Bottles" class="product-image" />
+              <h5>50CL Bottles</h5>
+              <p class="product-price">₦2,000 each</p>
+              <small>Custom branding included</small>
+            </div>
+            <div class="product-card" data-type="kegs">
+              <img src="{% static 'img/25l_.jpg' %}" alt="25L Kegs" class="product-image" />
+              <h5>25L Kegs</h5>
+              <p class="product-price">₦25,000 each</p>
+              <small>Fresh palmwine • Perfect for gatherings</small>
+            </div>
+            <div class="product-card" data-type="service">
+              <img src="{% static 'img/img6.jpg' %}" alt="Event Service" class="product-image" />
+              <h5>Event Service</h5>
+              <p class="product-price">From ₦2,000/guest</p>
+              <small>Palmwine service or cocktails</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="calculator-section" id="bottles-calc" >
+          <h4>50CL Bottles Calculator</h4>
+          <div class="calc-input">
+            <label for="bottles-qty">Number of bottles:</label>
+            <input type="number" id="bottles-qty" min="1" value="1" />
+          </div>
+          <div class="calc-result">
+            <p>Subtotal: <strong id="bottles-subtotal">₦2,000</strong></p>
+            <p>VAT (7.5%): <strong id="bottles-vat">₦150</strong></p>
+            <p class="total">Total: <strong id="bottles-total">₦2,150</strong></p>
+          </div>
+        </div>
+
+        <div class="calculator-section" id="kegs-calc" >
+          <h4>25L Kegs Calculator</h4>
+          <div class="calc-input">
+            <label for="kegs-qty">Number of kegs:</label>
+            <input type="number" id="kegs-qty" min="1" value="1" />
+          </div>
+          <div class="calc-result">
+            <p>Subtotal: <strong id="kegs-subtotal">₦40,000</strong></p>
+            <p>VAT (7.5%): <strong id="kegs-vat">₦3,000</strong></p>
+            <p class="total">Total: <strong id="kegs-total">₦43,000</strong></p>
+          </div>
+        </div>
+
+        <div class="calculator-section" id="service-calc" >
+          <h4>Event Service Calculator</h4>
+          <div class="service-options">
+            <label><input type="radio" name="service-type" value="palmwine" checked /> Palmwine Service (₦2,000/guest)</label>
+            <label><input type="radio" name="service-type" value="cocktails" /> Palmwine Cocktails (₦3,500/guest)</label>
+          </div>
+          <div class="calc-input">
+            <label for="service-guests">Number of guests:</label>
+            <input type="number" id="service-guests" min="1" value="50" />
+          </div>
+          <div class="calc-result">
+            <p>Service: <strong id="service-subtotal">₦100,000</strong></p>
+            <p>Service & Logistics Fee: <strong>₦85,500</strong></p>
+            <p>VAT (7.5%): <strong id="service-vat">₦13,913</strong></p>
+            <p class="total">Total: <strong id="service-total">₦199,413</strong></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary" id="btn-whatsapp-quote">Share on WhatsApp</button>
+        <button class="btn primary" id="btn-book-now">Book Now</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}

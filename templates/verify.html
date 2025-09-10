@@ -1,0 +1,782 @@
+{% extends 'base.html' %}
+{% block title %}Verify Ticket • Palmwine Merchants{% endblock %}
+{% block content %}
+
+  <main class="section" id="verify">
+    <div class="container">
+      <h2>Verify Ticket</h2>
+      <p class="lead">Enter a confirmation code to verify ticket purchase and mark as verified at event entrance.</p>
+
+      <!-- QR Code Scanner Section -->
+      <div class="scanner-section" style="margin-bottom: 2rem;">
+        <button id="camera-btn" class="btn primary" onclick="toggleCamera()">
+          <i class="fa-solid fa-camera"></i> Scan QR Code
+        </button>
+        <div id="camera-container" style="display:none; margin-top: 1rem;">
+          <video id="camera-preview" width="300" height="200" style="border: 2px solid #ddd; border-radius: 8px;"></video>
+          <canvas id="camera-canvas" style="display:none;"></canvas>
+          <div style="margin-top: 0.5rem;">
+            <button class="btn secondary small" onclick="stopCamera()">Stop Camera</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider">
+        <span>OR</span>
+      </div>
+
+      <form class="enhanced-form" onsubmit="event.preventDefault(); verifyCode();">
+        <div class="form-group">
+          <label for="code"><i class="fa-solid fa-barcode"></i> Confirmation Code</label>
+          <input id="code" type="text" placeholder="e.g. PM-ABC123 or order reference" required />
+        </div>
+        <div class="form-actions">
+          <button id="verify-btn" class="btn secondary" type="submit">
+            <span class="btn-text">Verify Ticket</span>
+            <span class="btn-loading" style="display:none;">
+              <i class="fa-solid fa-spinner fa-spin"></i> Checking...
+            </span>
+          </button>
+          <button type="button" class="btn outline" onclick="clearForm()">Clear</button>
+        </div>
+      </form>
+
+      <!-- Bulk Verification Mode -->
+      <div class="bulk-mode-section" style="margin-top: 2rem;">
+        <button id="bulk-toggle" class="btn outline small" onclick="toggleBulkMode()">
+          <i class="fa-solid fa-list"></i> Bulk Verification Mode
+        </button>
+        <div id="bulk-container" style="display:none; margin-top: 1rem;">
+          <textarea id="bulk-codes" placeholder="Enter multiple ticket codes (one per line)" rows="5" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <div style="margin-top: 0.5rem;">
+            <button class="btn secondary" onclick="verifyBulkCodes()">Verify All</button>
+            <button class="btn outline" onclick="clearBulk()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="verify-result" class="verification-result" style="display:none"></div>
+      
+      <!-- Event Statistics Section -->
+      <div id="event-stats" class="event-stats-section" style="display:none; margin-top: 2rem;">
+        <h3>Event Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number" id="total-tickets">0</div>
+            <div class="stat-label">Total Tickets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="verified-tickets">0</div>
+            <div class="stat-label">Verified</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="unverified-tickets">0</div>
+            <div class="stat-label">Unverified</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="verification-rate">0%</div>
+            <div class="stat-label">Verification Rate</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    let currentEventId = null;
+
+    async function verifyCode() {
+      const el = document.getElementById('verify-result');
+      const btn = document.getElementById('verify-btn');
+      const code = (document.getElementById('code').value || '').trim();
+      
+      if (!code) return;
+
+      // Show loading state
+      btn.querySelector('.btn-text').style.display = 'none';
+      btn.querySelector('.btn-loading').style.display = 'inline-block';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('/api/verify-ticket/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ code: code })
+        });
+
+        const data = await response.json();
+
+        el.style.display = 'block';
+
+        if (data.valid) {
+          el.className = 'verification-result valid';
+          const info = data.ticket_info;
+          const isBulk = !!data.bulk;
+          const alreadyVerified = data.already_verified;
+          
+          // When verifying by order reference, show bulk counts
+          if (isBulk) {
+            const total = data.total_tickets || 0;
+            const verifiedNow = data.verified_now || 0;
+            const alreadyCount = data.already_verified_count || 0;
+            
+            el.innerHTML = `
+              <div class="result-card">
+                <div class="status-icon valid">✔</div>
+                <strong>Tickets Verified Successfully</strong>
+                <div class="ticket-details">
+                  <p><strong>Order Reference:</strong> ${data.order_reference}</p>
+                  <p><strong>Customer:</strong> ${info.customer_name}</p>
+                  <p><strong>Event:</strong> ${info.event_name}</p>
+                  <p><strong>Email:</strong> ${info.email}</p>
+                  <p><strong>Purchased:</strong> ${info.purchase_date}</p>
+                  ${info.amount ? `<p><strong>Amount:</strong> ₦${parseFloat(info.amount).toLocaleString()}</p>` : ''}
+                </div>
+                <div class="bulk-summary">
+                  <span class="success-count">✅ Verified Now: ${verifiedNow}</span>
+                  <span class="fail-count">⚠️ Already Verified: ${alreadyCount}</span>
+                  <span class="stat-number">🎟️ Total Tickets: ${total}</span>
+                </div>
+                <div class="success-note">All tickets for this order have been processed.</div>
+              </div>
+            `;
+          } else {
+            // Single ticket verification view
+            el.innerHTML = `
+              <div class="result-card">
+                <div class="status-icon valid">✔</div>
+                <strong>${alreadyVerified ? 'Already Verified Ticket' : 'Ticket Verified Successfully'}</strong>
+                <div class="ticket-details">
+                  <p><strong>Code:</strong> ${info.code}</p>
+                  <p><strong>Customer:</strong> ${info.customer_name}</p>
+                  <p><strong>Event:</strong> ${info.event_name}</p>
+                  ${info.event_location ? `<p><strong>Location:</strong> ${info.event_location}</p>` : ''}
+                  ${info.event_date ? `<p><strong>Event Date:</strong> ${info.event_date}</p>` : ''}
+                  <p><strong>Email:</strong> ${info.email}</p>
+                  <p><strong>Purchased:</strong> ${info.purchase_date}</p>
+                  ${info.verified_at ? `<p><strong>Verified:</strong> ${info.verified_at}</p>` : ''}
+                  <p><strong>Tickets Purchased:</strong> ${info.ticket_quantity || 1} ticket${(info.ticket_quantity || 1) > 1 ? 's' : ''}</p>
+                  ${info.order_reference ? `<p><strong>Order Reference:</strong> ${info.order_reference}</p>` : ''}
+                  ${info.amount ? `<p><strong>Amount:</strong> ₦${parseFloat(info.amount).toLocaleString()}</p>` : ''}
+                </div>
+                ${alreadyVerified ? 
+                  '<div class="warning-note">⚠️ This ticket was already verified previously</div>' : 
+                  '<div class="success-note">✅ Ticket has been marked as verified in the system</div>'
+                }
+              </div>
+            `;
+          }
+
+          // Always try to load event stats (use event name from response)
+          console.log('Attempting to load stats for event:', info.event_name);
+          loadEventStats(info.event_name);
+          
+          // Play appropriate sound based on verification status
+          if (alreadyVerified) {
+            playNotificationSound('already_verified');
+          } else {
+            playNotificationSound('success');
+          }
+        } else {
+          el.className = 'verification-result invalid';
+          el.innerHTML = `
+            <div class="result-card">
+              <div class="status-icon invalid">✖</div>
+              <strong>Invalid Ticket</strong>
+              <p>${data.error || 'Ticket not found in our system'}</p>
+              <p>Please check the confirmation code and try again.</p>
+            </div>
+          `;
+          // Play error sound for invalid tickets
+          playNotificationSound('error');
+        }
+      } catch (error) {
+        el.style.display = 'block';
+        el.className = 'verification-result invalid';
+        el.innerHTML = `
+          <div class="result-card">
+            <div class="status-icon invalid">✖</div>
+            <strong>Verification Error</strong>
+            <p>Unable to verify ticket. Please check your connection and try again.</p>
+          </div>
+        `;
+        
+        // Play error sound for network/system errors
+        playNotificationSound('error');
+      } finally {
+        // Reset button state
+        btn.querySelector('.btn-text').style.display = 'inline-block';
+        btn.querySelector('.btn-loading').style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+
+    async function loadEventStats(eventName) {
+      try {
+        // First get all events to find the matching one
+        const eventsResponse = await fetch('/api/events/');
+        if (!eventsResponse.ok) {
+          console.log('Failed to fetch events');
+          return;
+        }
+        
+        const events = await eventsResponse.json();
+        console.log('Available events:', events);
+        
+        const event = events.find(e => e.name.toLowerCase().includes(eventName.toLowerCase()));
+        if (!event) {
+          console.log('Event not found for name:', eventName);
+          // Show stats section anyway with zero values
+          document.getElementById('total-tickets').textContent = '0';
+          document.getElementById('verified-tickets').textContent = '0';
+          document.getElementById('unverified-tickets').textContent = '0';
+          document.getElementById('verification-rate').textContent = '0%';
+          document.getElementById('event-stats').style.display = 'block';
+          return;
+        }
+
+        const statsResponse = await fetch(`/api/event-stats/${event.id}/`);
+        if (!statsResponse.ok) {
+          console.log('Failed to fetch event stats');
+          return;
+        }
+        
+        const stats = await statsResponse.json();
+        console.log('Event stats:', stats);
+
+        // Update stats display
+        document.getElementById('total-tickets').textContent = stats.total_tickets || '0';
+        document.getElementById('verified-tickets').textContent = stats.verified_tickets || '0';
+        document.getElementById('unverified-tickets').textContent = stats.unverified_tickets || '0';
+        document.getElementById('verification-rate').textContent = (stats.verification_rate || 0) + '%';
+        
+        document.getElementById('event-stats').style.display = 'block';
+      } catch (error) {
+        console.error('Error loading event statistics:', error);
+        // Show stats section with error message
+        document.getElementById('total-tickets').textContent = 'N/A';
+        document.getElementById('verified-tickets').textContent = 'N/A';
+        document.getElementById('unverified-tickets').textContent = 'N/A';
+        document.getElementById('verification-rate').textContent = 'N/A';
+        document.getElementById('event-stats').style.display = 'block';
+      }
+    }
+
+    // QR Code Scanner Functions
+    let cameraStream = null;
+    let isScanning = false;
+
+    async function toggleCamera() {
+      const container = document.getElementById('camera-container');
+      const btn = document.getElementById('camera-btn');
+      
+      if (cameraStream) {
+        stopCamera();
+        return;
+      }
+
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } // Use back camera if available
+        });
+        
+        const video = document.getElementById('camera-preview');
+        video.srcObject = cameraStream;
+        video.play();
+        
+        container.style.display = 'block';
+        btn.innerHTML = '<i class="fa-solid fa-stop"></i> Stop Camera';
+        
+        // Start scanning for QR codes
+        startQRScanning();
+        
+      } catch (error) {
+        alert('Camera access denied or not available. Please use manual entry.');
+        console.error('Camera error:', error);
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      
+      document.getElementById('camera-container').style.display = 'none';
+      document.getElementById('camera-btn').innerHTML = '<i class="fa-solid fa-camera"></i> Scan QR Code';
+      isScanning = false;
+    }
+
+    function startQRScanning() {
+      // Simple QR scanning simulation - in production, use a QR library like jsQR
+      isScanning = true;
+      // For now, just show a message
+      setTimeout(() => {
+        if (isScanning) {
+          alert('QR scanning active. Point camera at QR code. (Note: Full QR library integration needed for production)');
+        }
+      }, 1000);
+    }
+
+    // Bulk verification functions
+    function toggleBulkMode() {
+      const container = document.getElementById('bulk-container');
+      const btn = document.getElementById('bulk-toggle');
+      
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+        btn.innerHTML = '<i class="fa-solid fa-times"></i> Close Bulk Mode';
+      } else {
+        container.style.display = 'none';
+        btn.innerHTML = '<i class="fa-solid fa-list"></i> Bulk Verification Mode';
+      }
+    }
+
+    async function verifyBulkCodes() {
+      const textarea = document.getElementById('bulk-codes');
+      const codes = textarea.value.split('\n').filter(code => code.trim());
+      
+      if (codes.length === 0) {
+        alert('Please enter at least one ticket code');
+        return;
+      }
+
+      let results = [];
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let code of codes) {
+        try {
+          const response = await fetch('/api/verify-ticket/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ code: code.trim() })
+          });
+
+          const data = await response.json();
+          
+          if (data.valid) {
+            successCount++;
+            results.push(`✅ ${code.trim()}: ${data.ticket_info.customer_name}`);
+          } else {
+            failCount++;
+            results.push(`❌ ${code.trim()}: ${data.error || 'Invalid'}`);
+          }
+        } catch (error) {
+          failCount++;
+          results.push(`❌ ${code.trim()}: Network error`);
+        }
+      }
+
+      // Display bulk results
+      const resultEl = document.getElementById('verify-result');
+      resultEl.style.display = 'block';
+      resultEl.className = 'verification-result bulk-results';
+      resultEl.innerHTML = `
+        <div class="result-card">
+          <h3>Bulk Verification Results</h3>
+          <div class="bulk-summary">
+            <span class="success-count">✅ ${successCount} Verified</span>
+            <span class="fail-count">❌ ${failCount} Failed</span>
+          </div>
+          <div class="bulk-details">
+            ${results.map(result => `<div class="bulk-item">${result}</div>`).join('')}
+          </div>
+        </div>
+      `;
+
+      // Play sound notification
+      playNotificationSound(successCount > 0 ? 'success' : 'error');
+    }
+
+    function clearBulk() {
+      document.getElementById('bulk-codes').value = '';
+    }
+
+    function clearForm() {
+      document.getElementById('code').value = '';
+      document.getElementById('verify-result').style.display = 'none';
+      document.getElementById('event-stats').style.display = 'none';
+    }
+
+    // Enhanced sound notifications
+    function playNotificationSound(type) {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        if (type === 'success') {
+          // Success: Pleasant ascending chord progression
+          playSuccessSound(audioContext);
+        } else if (type === 'error') {
+          // Error: Distinctive warning sound
+          playErrorSound(audioContext);
+        } else if (type === 'already_verified') {
+          // Already verified: Neutral notification
+          playWarningSound(audioContext);
+        }
+      } catch (error) {
+        console.log('Audio not supported or blocked');
+      }
+    }
+
+    function playSuccessSound(audioContext) {
+      // Create a pleasant success chord (C major triad)
+      const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
+      const duration = 0.6;
+      
+      frequencies.forEach((freq, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+        oscillator.type = 'sine';
+        
+        // Stagger the notes slightly for a pleasant effect
+        const startTime = audioContext.currentTime + (index * 0.05);
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      });
+    }
+
+    function playErrorSound(audioContext) {
+      // Create a distinctive error sound (descending minor chord)
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode1 = audioContext.createGain();
+      const gainNode2 = audioContext.createGain();
+      
+      oscillator1.connect(gainNode1);
+      oscillator2.connect(gainNode2);
+      gainNode1.connect(audioContext.destination);
+      gainNode2.connect(audioContext.destination);
+      
+      // First tone: 400Hz for 0.2s
+      oscillator1.frequency.setValueAtTime(400, audioContext.currentTime);
+      oscillator1.type = 'square';
+      gainNode1.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+      
+      // Second tone: 300Hz starting at 0.15s
+      oscillator2.frequency.setValueAtTime(300, audioContext.currentTime + 0.15);
+      oscillator2.type = 'square';
+      gainNode2.gain.setValueAtTime(0, audioContext.currentTime + 0.15);
+      gainNode2.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.17);
+      gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+      
+      oscillator1.start(audioContext.currentTime);
+      oscillator1.stop(audioContext.currentTime + 0.2);
+      oscillator2.start(audioContext.currentTime + 0.15);
+      oscillator2.stop(audioContext.currentTime + 0.4);
+    }
+
+    function playWarningSound(audioContext) {
+      // Create a neutral warning sound for already verified tickets
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(550, audioContext.currentTime + 0.1);
+      oscillator.type = 'triangle';
+      
+      gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ctrl/Cmd + Enter to verify
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        verifyCode();
+      }
+      
+      // Escape to clear
+      if (e.key === 'Escape') {
+        clearForm();
+      }
+      
+      // F1 for camera
+      if (e.key === 'F1') {
+        e.preventDefault();
+        toggleCamera();
+      }
+    });
+
+    // Auto-focus on code input
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('code').focus();
+    });
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  </script>
+
+  <style>
+    .verification-result {
+      margin-top: 1.5rem;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .verification-result.valid {
+      background: linear-gradient(135deg, #d4edda, #c3e6cb);
+      border: 2px solid #28a745;
+    }
+
+    .verification-result.invalid {
+      background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+      border: 2px solid #dc3545;
+    }
+
+    .result-card {
+      text-align: center;
+    }
+
+    .status-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .status-icon.valid {
+      color: #28a745;
+    }
+
+    .status-icon.invalid {
+      color: #dc3545;
+    }
+
+    .ticket-details {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+
+    .ticket-details p {
+      margin: 0.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    .success-note, .warning-note {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .success-note {
+      background: rgba(40, 167, 69, 0.1);
+      color: #155724;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+
+    .warning-note {
+      background: rgba(255, 193, 7, 0.1);
+      color: #856404;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .event-stats-section {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-loading {
+      color: #6c757d;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 1.5rem 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #ddd;
+    }
+
+    .divider span {
+      background: white;
+      padding: 0 1rem;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .scanner-section {
+      text-align: center;
+    }
+
+    .bulk-results {
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      border: 2px solid #2196f3;
+    }
+
+    .bulk-summary {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+      font-weight: bold;
+    }
+
+    .success-count {
+      color: #28a745;
+    }
+
+    .fail-count {
+      color: #dc3545;
+    }
+
+    .bulk-details {
+      max-height: 300px;
+      overflow-y: auto;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+    }
+
+    .bulk-item {
+      padding: 0.25rem 0;
+      border-bottom: 1px solid #eee;
+      font-size: 0.9rem;
+    }
+
+    .bulk-item:last-child {
+      border-bottom: none;
+    }
+
+    .btn.small {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .btn.outline {
+      background: transparent;
+      border: 2px solid #6c757d;
+      color: #6c757d;
+    }
+
+    .btn.outline:hover {
+      background: #6c757d;
+      color: white;
+    }
+
+    .help-text {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    .keyboard-shortcuts {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .shortcut {
+      background: #e9ecef;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .ticket-details {
+        font-size: 0.8rem;
+      }
+
+      .bulk-summary {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      #camera-preview {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+  </style>
+{% endblock %}
