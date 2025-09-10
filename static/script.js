@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const totalEl = document.getElementById('qq-total');
   const breakdownEl = document.getElementById('qq-breakdown');
 
-  const RATES = { palmwine: 2500, cocktails: 3500 };
+  const RATES = { palmwine: 2500, cocktails: 4000 };
   const TAX = 0.075; // align with BUSINESS.taxRate
   const FIXED = 85_500; // fixed service & logistics fee
   const fmt = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
@@ -849,8 +849,8 @@ if (row && scroller && text){
   // Pricing template (example defaults — tweak to your offerings)
   const PRICING = {
     packages: {
-      palmwine: { label: 'Palmwine Service', perGuest: 2_000 },
-      cocktails:{ label: 'Palmwine Cocktails', perGuest: 3_500 }
+      palmwine: { label: 'Palmwine Service', perGuest: 2_500 },
+      cocktails:{ label: 'Palmwine Cocktails', perGuest: 4_000 }
     },
     fees: {
       // Fixed service charge & logistics fee applied to automated packages
