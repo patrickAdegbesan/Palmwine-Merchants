@@ -568,8 +568,20 @@ def verify_ticket_api(request):
     """API endpoint for ticket verification"""
     try:
         data = json.loads(request.body)
+        print(f"DEBUG: Raw request data: {data}")
+        
         # Accept either 'ticket_id' or 'code' (used by frontend)
         ticket_id = data.get('ticket_id') or data.get('code') or data.get('qrData')
+        
+        # If ticket_id is a string containing JSON, try to parse it
+        if isinstance(ticket_id, str) and '{' in ticket_id:
+            try:
+                json_data = json.loads(ticket_id)
+                ticket_id = json_data.get('code')
+            except json.JSONDecodeError:
+                pass
+                
+        print(f"DEBUG: Final ticket_id to verify: {ticket_id}")
         
         if not ticket_id:
             return JsonResponse({
@@ -580,17 +592,41 @@ def verify_ticket_api(request):
         
         try:
             ticket = Ticket.objects.get(ticket_id=ticket_id)
+            
+            # For debugging:
+            print(f"DEBUG: Current ticket state - verified: {ticket.verified}, verified_at: {ticket.verified_at}, verified_by: {ticket.verified_by}")
+            
             # Prefer the stored quantity as the source of truth
             total_tickets = ticket.quantity or 1
             
-            print(f"Debug - Ticket: {ticket.ticket_id}, Amount: {ticket.amount_paid}, Event Price: {ticket.event.price_per_ticket if ticket.event else 'None'}, Stored Quantity: {ticket.quantity}, Calculated Quantity: {total_tickets}")
+            # Reset verification if requested
+            reset_verification = data.get('reset_verification', False)
             
-            if ticket.verified:
+            if reset_verification:
+                # Reset verification status
+                ticket.verified = False
+                ticket.verified_at = None
+                ticket.verified_by = None
+                ticket.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Verification status reset successfully',
+                    'ticket_info': {
+                        'code': ticket.ticket_id,
+                        'verified': False,
+                        'verified_at': None
+                    }
+                })
+                
+            # Check verification status
+            # Only consider a ticket verified if both verified=True AND verified_at has a value
+            if ticket.verified and ticket.verified_at:
+                verification_time = ticket.verified_at.strftime('%Y-%m-%d %H:%M:%S')
                 return JsonResponse({
                     'success': True,
                     'valid': True,
                     'already_verified': True,
-                    'message': 'Ticket already verified',
+                    'message': f'Ticket was already verified on {verification_time} by {ticket.verified_by or "System"}',
                     'ticket_info': {
                         'code': ticket.ticket_id,
                         'customer_name': ticket.customer_name,
@@ -600,15 +636,30 @@ def verify_ticket_api(request):
                         'email': ticket.customer_email,
                         'amount': float(ticket.amount_paid) if ticket.amount_paid else 0,
                         'purchase_date': ticket.purchase_date.isoformat() if ticket.purchase_date else '',
-                        'verified_at': ticket.verified_at.isoformat() if ticket.verified_at else None,
+                        'verified_at': ticket.verified_at.isoformat(),
                         'verified_by': ticket.verified_by,
                         'ticket_quantity': total_tickets,
                         'order_reference': ticket.order_reference
                     }
                 })
+                
+            # If we reach here, the ticket is not verified or has inconsistent state
+            # Fix any inconsistent state
+            if ticket.verified and not ticket.verified_at:
+                ticket.verified = False
+            elif not ticket.verified and ticket.verified_at:
+                ticket.verified_at = None
+                ticket.verified_by = None
+            ticket.save()
             
-            # Verify the ticket
-            ticket.verify_ticket(verified_by=request.user.username if request.user.is_authenticated else 'System')
+            # Set both verified flags and timestamps
+            ticket.verified = True
+            ticket.verified_at = timezone.now()
+            ticket.verified_by = request.user.username if request.user.is_authenticated else 'System'
+            ticket.save()
+            
+            # For debugging:
+            print(f"DEBUG: Updated ticket state - verified: {ticket.verified}, verified_at: {ticket.verified_at}, verified_by: {ticket.verified_by}")
             
             return JsonResponse({
                 'success': True,
@@ -624,7 +675,8 @@ def verify_ticket_api(request):
                     'email': ticket.customer_email,
                     'amount': float(ticket.amount_paid) if ticket.amount_paid else 0,
                     'purchase_date': ticket.purchase_date.isoformat() if ticket.purchase_date else '',
-                    'verified_at': ticket.verified_at.isoformat() if ticket.verified_at else None,
+                    'verified_at': ticket.verified_at.isoformat(),
+                    'verified_by': ticket.verified_by,
                     'ticket_quantity': total_tickets,
                     'order_reference': ticket.order_reference
                 }
@@ -634,10 +686,17 @@ def verify_ticket_api(request):
             return JsonResponse({
                 'success': False,
                 'valid': False,
-                'error': 'Invalid ticket ID'
+                'message': f'Invalid ticket ID: {ticket_id}'
             }, status=404)
             
+    except json.JSONDecodeError as e:
+        return JsonResponse({
+            'success': False,
+            'valid': False,
+            'message': 'Invalid JSON data'
+        }, status=400)
     except Exception as e:
+        print(f"ERROR in verify_ticket_api: {str(e)}")
         return JsonResponse({
             'success': False,
             'valid': False,
@@ -702,23 +761,40 @@ def tickets_api(request, ticket_id=None):
 
 
 @require_http_methods(["GET"])
-def event_stats_api(request):
+def event_stats_api(request, event_id=None):
     """API endpoint for event statistics"""
     try:
-        total_events = Event.objects.filter(is_active=True).count()
-        upcoming_events = Event.objects.filter(is_active=True, date__gte=timezone.now()).count()
-        total_tickets = Ticket.objects.count()
-        verified_tickets = Ticket.objects.filter(verified=True).count()
-        
-        return JsonResponse({
-            'total_events': total_events,
-            'upcoming_events': upcoming_events,
-            'total_tickets': total_tickets,
-            'verified_tickets': verified_tickets,
-            'verification_rate': round((verified_tickets / total_tickets * 100) if total_tickets > 0 else 0, 1)
-        })
+        if event_id:
+            # Get stats for specific event
+            event = get_object_or_404(Event, id=event_id)
+            total_tickets = Ticket.objects.filter(event=event).count()
+            verified_tickets = Ticket.objects.filter(event=event, verified=True).count()
+            
+            return JsonResponse({
+                'event_name': event.name,
+                'event_date': event.date.isoformat(),
+                'total_tickets': total_tickets,
+                'verified_tickets': verified_tickets,
+                'unverified_tickets': total_tickets - verified_tickets,
+                'verification_rate': round((verified_tickets / total_tickets * 100) if total_tickets > 0 else 0, 1)
+            })
+        else:
+            # Get overall stats
+            total_events = Event.objects.filter(is_active=True).count()
+            upcoming_events = Event.objects.filter(is_active=True, date__gte=timezone.now()).count()
+            total_tickets = Ticket.objects.count()
+            verified_tickets = Ticket.objects.filter(verified=True).count()
+            
+            return JsonResponse({
+                'total_events': total_events,
+                'upcoming_events': upcoming_events,
+                'total_tickets': total_tickets,
+                'verified_tickets': verified_tickets,
+                'verification_rate': round((verified_tickets / total_tickets * 100) if total_tickets > 0 else 0, 1)
+            })
         
     except Exception as e:
+        print(f"Error in event_stats_api: {str(e)}")
         return JsonResponse({
             'success': False,
             'message': 'Error fetching statistics'

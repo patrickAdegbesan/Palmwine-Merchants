@@ -79,7 +79,7 @@
       <div class="container">
        <div class="pricing-hero">
         <h2>Why Choose Us?</h2>
-        <p class="lead">Lagos' #1 destination for authentic Afrocentric experiences that blend tradition with modern luxury.</p><br>
+        <p class="lead" style="text-align: center;">Lagos' #1 destination for authentic Afrocentric experiences that blend tradition with modern luxury.</p><br>
          <!-- Three feature cards -->
          
         <div class="grid cards">
@@ -121,7 +121,7 @@
       <div class="container">
         <div class="pricing-hero">
           <h2>Want Premium Palmwine for Your Event?</h2>
-          <p class="lead">Get instant quotes for bottles, kegs, or full event service. See exactly what you'll pay — no hidden fees, no surprises.</p>
+          <p class="lead" style="text-align: center;">Get instant quotes for bottles, kegs, or full event service. See exactly what you'll pay — no hidden fees, no surprises.</p>
           <div class="pricing-cta">
             <button id="btn-pricing-calculator" class="btn primary large">
               <i class="fa-solid fa-calculator"></i> Get My Quote Now
@@ -138,11 +138,17 @@
             <p class="product-price">₦2,000 each</p>
             <small>Custom branding included</small>
           </div>
-          <div class="product-card hp-product-card" data-type="kegs" role="button" tabindex="0" aria-label="25L Kegs pricing">
-            <img src="{% static 'img/25l_.jpg' %}" alt="25L Kegs" class="product-image" />
-            <h5>25L Kegs</h5>
-            <p class="product-price">₦25,000 each</p>
+          <div class="product-card hp-product-card" data-type="kegs" role="button" tabindex="0" aria-label="5L Kegs pricing">
+            <img src="{% static 'img/25l_.jpg' %}" alt="5L Kegs" class="product-image" />
+            <h5>5L Kegs</h5>
+            <p class="product-price">₦14,000 each</p>
             <small>Fresh palmwine • Perfect for gatherings</small>
+          </div>
+          <div class="product-card hp-product-card" data-type="kegs" role="button" tabindex="0" aria-label="25L Kegs pricing">
+            <img src="{% static 'img/25l.png' %}" alt="25L Kegs" class="product-image" />
+            <h5>25L Kegs</h5>
+            <p class="product-price">₦40,000 each</p>
+            <small>Good for events and parties</small>
           </div>
           <div class="product-card hp-product-card" data-type="service" role="button" tabindex="0" aria-label="Event Service pricing">
             <img src="{% static 'img/img6.jpg' %}" alt="Event Service" class="product-image" />
@@ -176,10 +182,16 @@
               <small>Custom branding included</small>
             </div>
             <div class="product-card" data-type="kegs">
-              <img src="{% static 'img/25l_.jpg' %}" alt="25L Kegs" class="product-image" />
-              <h5>25L Kegs</h5>
-              <p class="product-price">₦25,000 each</p>
+              <img src="{% static 'img/25l_.jpg' %}" alt="5L Kegs" class="product-image" />
+              <h5>5L Kegs</h5>
+              <p class="product-price">₦14,000 each</p>
               <small>Fresh palmwine • Perfect for gatherings</small>
+            </div>
+            <div class="product-card" data-type="kegs">
+              <img src="{% static 'img/25l.png' %}" alt="25L Kegs" class="product-image" />
+              <h5>25L Kegs</h5>
+              <p class="product-price">₦40,000 each</p>
+              <small>Good for events and parties</small>
             </div>
             <div class="product-card" data-type="service">
               <img src="{% static 'img/img6.jpg' %}" alt="Event Service" class="product-image" />
@@ -204,10 +216,14 @@
         </div>
 
         <div class="calculator-section" id="kegs-calc" >
-          <h4>25L Kegs Calculator</h4>
+          <h4>5L & 25L Kegs Calculator</h4>
           <div class="calc-input">
             <label for="kegs-qty">Number of kegs:</label>
             <input type="number" id="kegs-qty" min="1" value="1" />
+            <select id="keg-size">
+              <option value="5">5L Keg (₦14,000)</option>
+              <option value="25" selected>25L Keg (₦40,000)</option>
+            </select>
           </div>
           <div class="calc-result">
             <p>Subtotal: <strong id="kegs-subtotal">₦40,000</strong></p>

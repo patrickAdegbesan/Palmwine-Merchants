@@ -6,15 +6,24 @@
     <div class="container">
       <h2>Verify Ticket</h2>
       <p class="lead">Enter a confirmation code to verify ticket purchase and mark as verified at event entrance.</p>
-
-      <!-- QR Code Scanner Section -->
+        <!-- QR Code Scanner Section -->
       <div class="scanner-section" style="margin-bottom: 2rem;">
         <button id="camera-btn" class="btn primary" onclick="toggleCamera()">
           <i class="fa-solid fa-camera"></i> Scan QR Code
         </button>
         <div id="camera-container" style="display:none; margin-top: 1rem;">
-          <video id="camera-preview" width="300" height="200" style="border: 2px solid #ddd; border-radius: 8px;"></video>
-          <canvas id="camera-canvas" style="display:none;"></canvas>
+          <div class="camera-wrapper">
+            <video id="camera-preview" width="300" height="200"></video>
+            <canvas id="camera-canvas" style="display:none;"></canvas>
+            <div class="viewfinder">
+              <div class="viewfinder-line top"></div>
+              <div class="viewfinder-line right"></div>
+              <div class="viewfinder-line bottom"></div>
+              <div class="viewfinder-line left"></div>
+              <div class="scanning-line"></div>
+            </div>
+            <div id="scan-feedback" class="scan-feedback">Point camera at QR code</div>
+          </div>
           <div style="margin-top: 0.5rem;">
             <button class="btn secondary small" onclick="stopCamera()">Stop Camera</button>
           </div>
@@ -84,6 +93,7 @@
 {% endblock %}
 
 {% block extra_js %}
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script>
     let currentEventId = null;
 
@@ -100,13 +110,27 @@
       btn.disabled = true;
 
       try {
+        // First, check if the code is a JSON string
+        let ticketData = code;
+        try {
+          if (code.includes('{') && code.includes('}')) {
+            ticketData = JSON.parse(code.replace(/'/g, '"'));
+            ticketData = ticketData.code || code;
+          }
+        } catch (e) {
+          console.log('Code is not JSON format, using as is');
+        }
+
         const response = await fetch('/api/verify-ticket/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken')
           },
-          body: JSON.stringify({ code: code })
+          body: JSON.stringify({ 
+            code: ticketData,
+            timestamp: new Date().toISOString()  // Add timestamp to prevent caching
+          })
         });
 
         const data = await response.json();
@@ -313,14 +337,111 @@
     }
 
     function startQRScanning() {
-      // Simple QR scanning simulation - in production, use a QR library like jsQR
+      const video = document.getElementById('camera-preview');
+      const canvas = document.getElementById('camera-canvas');
+      const context = canvas.getContext('2d');
+      const feedback = document.getElementById('scan-feedback');
       isScanning = true;
-      // For now, just show a message
-      setTimeout(() => {
-        if (isScanning) {
-          alert('QR scanning active. Point camera at QR code. (Note: Full QR library integration needed for production)');
+
+      let scanAttempts = 0;
+      const SCAN_FEEDBACK_INTERVAL = 30; // Update feedback every 30 frames
+
+      // Function to process each frame
+      function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA && isScanning) {
+          // Set canvas size to match video feed
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          // Draw current video frame to canvas
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Get image data for QR code processing
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          
+          // Process image data with jsQR
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          
+          if (code && code.data) {
+            // QR code found! Stop scanning and process the data
+            console.log("Found QR code:", code.data);
+            
+            // Stop camera and prevent multiple scans
+            stopCamera();
+            isScanning = false;
+            
+            let ticketCode = '';
+            
+            // Try to parse the QR code data
+            try {
+              let parsedData = code.data;
+              
+              // Replace single quotes with double quotes if the data looks like JSON
+              if (typeof parsedData === 'string' && parsedData.includes('{') && parsedData.includes('code')) {
+                console.log("Converting single quotes to double quotes");
+                // Replace single quotes with double quotes, but only for JSON structure
+                parsedData = parsedData.replace(/'/g, '"');
+                console.log("Converted data:", parsedData);
+                
+                // Now try to parse as JSON
+                parsedData = JSON.parse(parsedData);
+                console.log("Successfully parsed JSON:", parsedData);
+                
+                // Extract the code from the parsed data
+                if (parsedData.code) {
+                  console.log("Found ticket code in parsed data:", parsedData.code);
+                  ticketCode = parsedData.code;
+                }
+              }
+              
+              // If we couldn't get a ticket code, use the original data
+              if (!ticketCode) {
+                console.log("Using original QR data as ticket code");
+                ticketCode = code.data;
+              }
+              
+            } catch (e) {
+              console.log("Error parsing QR data:", e);
+              // If the data contains a code field, try to extract it directly
+              if (code.data.includes("'code': '")) {
+                const match = code.data.match(/'code': '([^']+)'/);
+                if (match && match[1]) {
+                  console.log("Extracted code using regex:", match[1]);
+                  ticketCode = match[1];
+                } else {
+                  ticketCode = code.data;
+                }
+              } else {
+                ticketCode = code.data;
+              }
+            }
+            
+            console.log("Final ticket code to verify:", ticketCode);
+            document.getElementById('code').value = ticketCode;
+            
+            // Verify the ticket
+            verifyCode();
+            return;
+          }
+          
+          // Update feedback message periodically
+          scanAttempts++;
+          if (scanAttempts % SCAN_FEEDBACK_INTERVAL === 0) {
+            feedback.textContent = 'Scanning for QR code...';
+          }
+
+          // Continue scanning if no QR code found
+          if (isScanning) {
+            requestAnimationFrame(tick);
+          }
+        } else if (isScanning) {
+          feedback.textContent = 'Getting camera ready...';
+          requestAnimationFrame(tick);
         }
-      }, 1000);
+      }
+      
+      // Start the scanning loop
+      requestAnimationFrame(tick);
     }
 
     // Bulk verification functions
@@ -546,6 +667,101 @@
   </script>
 
   <style>
+    /* Camera and QR Scanner Styles */
+    .camera-wrapper {
+      position: relative;
+      width: 300px;
+      height: 200px;
+      margin: 0 auto;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #camera-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .viewfinder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      box-shadow: 0 0 0 5000px rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+    }
+
+    .viewfinder-line {
+      position: absolute;
+      background: #2196f3;
+    }
+
+    .viewfinder-line.top {
+      top: 0;
+      left: 0;
+      width: 40px;
+      height: 2px;
+    }
+
+    .viewfinder-line.right {
+      top: 0;
+      right: 0;
+      width: 2px;
+      height: 40px;
+    }
+
+    .viewfinder-line.bottom {
+      bottom: 0;
+      right: 0;
+      width: 40px;
+      height: 2px;
+    }
+
+    .viewfinder-line.left {
+      bottom: 0;
+      left: 0;
+      width: 2px;
+      height: 40px;
+    }
+
+    .scanning-line {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: #2196f3;
+      top: 50%;
+      animation: scan 2s linear infinite;
+    }
+
+    @keyframes scan {
+      0% {
+        transform: translateY(-50px);
+      }
+      50% {
+        transform: translateY(50px);
+      }
+      100% {
+        transform: translateY(-50px);
+      }
+    }
+
+    .scan-feedback {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: white;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 5px;
+      font-size: 14px;
+      border-radius: 4px;
+    }
+
     .verification-result {
       margin-top: 1.5rem;
       border-radius: 8px;

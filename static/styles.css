@@ -395,7 +395,8 @@ img{max-width:100%;height:auto;display:block}
 }
 .section.alt{background:#f8fffe}
 .section h2{text-align:center;font-size:clamp(1.8rem,3.2vw,2.6rem);font-weight:800;margin-bottom:20px}
-.lead{font-size:1.1rem;color:var(--muted);margin:0 0 28px;max-width:720px}
+#verify .lead{text-align:center}
+.lead{font-size:1.1rem;color:var(--muted);max-width:720px;text-align:center;margin-left:auto;margin-right:auto}
 .grid{display:grid;gap:18px}
 .grid.cards{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 /* Moments thumbs strip */
@@ -515,7 +516,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 .media-card img{border-radius:14px;box-shadow:var(--shadow)}
 
 /* Contact */
-.lead{color:var(--muted)}
+.lead{color:var(--muted);}
 .contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:12px 0 20px}
 .contact-item{display:flex;align-items:center;gap:10px;background:#fff;padding:12px 14px;border-radius:10px;color:var(--teal);text-decoration:none;font-weight:700;box-shadow:var(--shadow);transition:transform .12s ease, box-shadow .2s ease;overflow:hidden}
 .contact-item:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(0,0,0,.12)}
@@ -1200,7 +1201,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 }
 @media (max-width:720px){
   .nav-toggle{display:block;color:var(--teal)}
-  .site-nav{position:fixed;inset:60px 10px auto 10px;right:10px;background-color: linear-gradient(transparent 55%, rgba(0,0,0,.28));background:url(img/manu1.jpeg) center/cover no-repeat ; border-radius:12px;box-shadow:var(--shadow);padding:12px;display:none;flex-direction:column;transform:translateY(-8px);opacity:0;transition:transform .18s ease, opacity .18s ease}
+  .site-nav{position:fixed;inset:60px 10px auto 10px;right:10px;background-color: linear-gradient(transparent 55%, rgba(0,0,0,.28));background:black; border-radius:12px;box-shadow:var(--shadow);padding:12px;display:none;flex-direction:column;transform:translateY(-8px);opacity:0;transition:transform .18s ease, opacity .18s ease}
   .site-nav.open{display:flex;transform:translateY(0);opacity:1}
 }
 

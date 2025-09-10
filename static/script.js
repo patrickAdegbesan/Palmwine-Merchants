@@ -2330,13 +2330,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Kegs calculator
   const kegsQty = document.getElementById('kegs-qty');
+  const kegSize = document.getElementById('keg-size');
   const kegsSubtotal = document.getElementById('kegs-subtotal');
   const kegsVat = document.getElementById('kegs-vat');
   const kegsTotal = document.getElementById('kegs-total');
 
   function updateKegsCalc() {
     const qty = parseInt(kegsQty?.value || 1);
-    const subtotal = qty * 25000;
+    const size = parseInt(kegSize?.value || 25);
+    const pricePerKeg = size === 5 ? 14000 : 40000;
+    const subtotal = qty * pricePerKeg;
     const vat = Math.round(subtotal * 0.075);
     const total = subtotal + vat;
 
@@ -2346,6 +2349,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   kegsQty?.addEventListener('input', updateKegsCalc);
+  kegSize?.addEventListener('change', updateKegsCalc);
 
   // Service calculator
   const serviceGuests = document.getElementById('service-guests');
