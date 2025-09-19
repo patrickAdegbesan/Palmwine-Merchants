@@ -4,9 +4,26 @@
 {% block extra_css %}
 <style>
     .dashboard {
-        padding: 20px;
-        background: #f8f9fa;
+        padding: 15px;
+        background: #f5f7f9;
         min-height: 100vh;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    /* Section Header Styles */
+    .section-header {
+        margin-bottom: 15px;
+    }
+    .section-title {
+        font-size: 1.6rem;
+        color: #2c5530;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    .section-desc {
+        color: #6c757d;
+        font-size: 0.95rem;
+        margin: 0;
     }
 
     /* Improved Stats Cards */
@@ -41,32 +58,221 @@
         letter-spacing: 1px;
     }
 
-    /* Quick Stats Section */
-    .quick-stats {
+    /* Stats Cards - Enhanced */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
         display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    
+    .stats-icon {
+        background-color: rgba(44, 85, 48, 0.1);
+        color: #2c5530;
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .stats-info {
+        flex-grow: 1;
+    }
+    
+    .stats-info h4 {
+        font-size: 1.5rem;
+        margin: 0 0 5px 0;
+        color: #2c5530;
+        font-weight: 700;
+    }
+    
+    .stats-info p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    /* Ticket Summary Cards */
+    .ticket-summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 20px;
-        margin: 20px 0;
+        margin-bottom: 25px;
+    }
+    
+    .ticket-summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .ticket-summary-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .bg-success {
+        background-color: #28a745;
+    }
+    
+    .bg-warning {
+        background-color: #ffc107;
+    }
+    
+    .bg-info {
+        background-color: #17a2b8;
+    }
+    
+    .ticket-summary-content {
+        flex-grow: 1;
+    }
+    
+    .ticket-summary-content h4 {
+        font-size: 1.5rem;
+        margin: 0 0 5px 0;
+        font-weight: 700;
+    }
+    
+    .ticket-summary-content p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    /* Notification System */
+    .notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        z-index: 9999;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        max-width: 350px;
+    }
+    
+    .notification.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .notification-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+    
+    .notification-success .notification-icon {
+        background-color: #28a745;
+    }
+    
+    .notification-error .notification-icon {
+        background-color: #dc3545;
+    }
+    
+    .notification-info .notification-icon {
+        background-color: #17a2b8;
+    }
+    
+    .notification-content {
+        flex-grow: 1;
+        font-size: 0.95rem;
+    }
+    
+    /* Scan Ticket Feature */
+    .scan-ticket-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-top: 25px;
+        overflow: hidden;
+    }
+    
+    .scan-ticket-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .scan-ticket-header h4 {
+        margin: 0 0 5px 0;
+        color: #2c5530;
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .scan-ticket-header p {
+        margin: 0;
+        color: #777;
+        font-size: 0.9rem;
+    }
+    
+    .scan-ticket-content {
+        padding: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
         flex-wrap: wrap;
     }
-    .stat-item {
-        background: white;
-        padding: 15px 25px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        flex: 1;
-        min-width: 200px;
-        text-align: center;
+    
+    .scan-ticket-input {
+        display: flex;
+        gap: 10px;
+        flex-grow: 1;
     }
-    .stat-item .stat-label {
-        color: #666;
-        font-size: 0.9em;
-        display: block;
-        margin-bottom: 5px;
+    
+    .scan-ticket-input input {
+        flex-grow: 1;
     }
-    .stat-item .stat-value {
-        color: #2c5530;
-        font-size: 1.5em;
-        font-weight: bold;
+    
+    .qr-scanner-container {
+        width: 100%;
+        height: 300px;
+        background: #f8f9fa;
+        border-top: 1px solid #eee;
     }
 
     /* Enhanced Table Styling */
@@ -282,21 +488,208 @@
         100% { transform: rotate(360deg); }
     }
     
-    /* Navigation */
-    .nav-tabs {
+    /* Navigation - Enhanced Tabs with Slider */
+    .custom-tabs {
         border-bottom: 2px solid #2c5530;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        gap: 5px;
+        padding-bottom: 0;
+        position: relative;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
-    .nav-tabs .nav-link {
-        color: #666;
-        border: none;
-        padding: 10px 20px;
-        margin-right: 5px;
-        border-radius: 4px 4px 0 0;
+    .custom-tabs::-webkit-scrollbar {
+        display: none;
     }
-    .nav-tabs .nav-link.active {
-        background: #2c5530;
+    .custom-tabs .nav-item {
+        margin-bottom: -2px;
+        flex-shrink: 0;
+    }
+    .custom-tabs .nav-link {
+        color: #555;
+        border: 2px solid transparent;
+        padding: 12px 25px;
+        border-radius: 8px 8px 0 0;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #f3f3f3;
+        white-space: nowrap;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .custom-tabs .nav-link i {
+        font-size: 1.1rem;
+    }
+    .custom-tabs .nav-link:hover {
+        color: #2c5530;
+        background-color: #f9f9f9;
+        border-color: #2c5530 #2c5530 transparent;
+    }
+    .custom-tabs .nav-link.active {
+        background: white;
+        color: #2c5530;
+        border-color: #2c5530 #2c5530 white;
+        box-shadow: 0 -3px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Slide Content Container */
+    .tab-content-slider {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        cursor: grab;
+        user-select: none;
+    }
+    
+    .tab-content-slider:active {
+        cursor: grabbing;
+    }
+    
+    .tab-slides-container {
+        display: flex;
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        width: 300%; /* 3 tabs = 300% */
+        will-change: transform;
+    }
+    
+    .tab-slide {
+        width: 33.333%; /* Each slide takes 1/3 of the container */
+        flex-shrink: 0;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        min-height: 400px; /* Ensure consistent height */
+    }
+    
+    .tab-slide.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Slide Animation Effects */
+    .tab-slide-enter {
+        animation: slideInFromRight 0.4s ease-out;
+    }
+    
+    .tab-slide-exit {
+        animation: slideOutToLeft 0.4s ease-out;
+    }
+    
+    @keyframes slideInFromRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOutToLeft {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+    }
+
+    /* Navigation Arrows */
+    .tab-nav-arrows {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        display: none;
+    }
+    
+    .tab-nav-arrow {
+        background: rgba(44, 85, 48, 0.9);
         color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .tab-nav-arrow:hover {
+        background: rgba(44, 85, 48, 1);
+        transform: scale(1.1);
+    }
+    
+    .tab-nav-arrow.prev {
+        left: 10px;
+    }
+    
+    .tab-nav-arrow.next {
+        right: 10px;
+    }
+    
+    .tab-nav-arrows.show {
+        display: block;
+    }
+
+    /* Touch/Swipe indicators */
+    .tab-swipe-hint {
+        text-align: center;
+        padding: 10px;
+        color: #6c757d;
+        font-size: 0.9rem;
+        background: rgba(108, 117, 125, 0.05);
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    
+    .tab-swipe-hint i {
+        margin: 0 5px;
+        color: #2c5530;
+    }
+
+    /* Progress indicator */
+    .tab-progress {
+        height: 3px;
+        background: #e9ecef;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 15px;
+    }
+    
+    .tab-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #2c5530, #3d7744);
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transform: translateX(-66.666%); /* Start at first tab */
+        width: 33.333%;
+    }
+    
+    /* Screen reader only content */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
     
     /* Cards */
@@ -332,75 +725,272 @@
         opacity: 0.9;
     }
     
-    /* Tables */
-    .table-responsive {
-        margin-top: 20px;
-    }
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .table th {
-        background: #f8f9fa;
-        padding: 12px;
-        text-align: left;
-        font-weight: 600;
-    }
-    .table td {
-        padding: 12px;
-        border-top: 1px solid #dee2e6;
+    /* Data Cards and Tables - Enhanced */
+    .data-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+        overflow: hidden;
     }
     
-    /* Filters and Search */
-    .filters {
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+    }
+    
+    .custom-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .custom-table th {
+        background: #f8f9fa;
+        color: #444;
+        font-weight: 600;
+        padding: 15px;
+        text-align: left;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 2px solid #e9ecef;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .custom-table td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+        font-size: 0.95rem;
+        color: #333;
+    }
+    
+    .custom-table tr:hover td {
+        background-color: #f9fcf9;
+    }
+    
+    .custom-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 30px 20px;
         display: flex;
-        gap: 15px;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state h4 {
+        font-size: 1.2rem;
+        color: #555;
+        margin: 0;
+    }
+    
+    .empty-state p {
+        color: #888;
+        margin-bottom: 15px;
+    }
+    
+    /* Filters and Search - Enhanced */
+    .filters-card {
+        background: white;
+        border-radius: 10px;
+        padding: 16px 20px;
         margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .filters-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-wrapper {
+        position: relative;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #aaa;
+    }
+    
+    .search-box {
+        padding: 12px 15px 12px 38px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        width: 100%;
+        transition: all 0.3s;
+        font-size: 0.95rem;
+    }
+    
+    .search-box:focus {
+        border-color: #2c5530;
+        box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.1);
+        outline: none;
+    }
+    
+    .filter-controls {
+        display: flex;
+        gap: 12px;
         flex-wrap: wrap;
         align-items: center;
     }
-    .filter-group {
+    
+    .filter-item {
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 5px;
     }
-    .search-box {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        width: 250px;
-    }
-    .filter-select {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: white;
+    
+    .filter-item label {
+        font-size: 0.85rem;
+        color: #666;
+        font-weight: 500;
     }
     
-    /* Actions */
+    .filter-select {
+        padding: 10px 30px 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23555' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: calc(100% - 10px) center;
+        min-width: 150px;
+        font-size: 0.95rem;
+    }
+    
+    .filter-select:focus {
+        border-color: #2c5530;
+        box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.1);
+        outline: none;
+    }
+    
+    /* Enhanced Buttons */
     .btn-action {
-        padding: 6px 12px;
-        border-radius: 4px;
+        padding: 10px 16px;
+        border-radius: 8px;
         border: none;
         cursor: pointer;
-        font-weight: 500;
-        margin-right: 5px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        line-height: 1.2;
     }
+    
+    .btn-action i {
+        font-size: 1rem;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-action:active {
+        transform: translateY(0);
+    }
+    
     .btn-primary {
         background: #2c5530;
         color: white;
     }
+    
+    .btn-primary:hover {
+        background: #386c3e;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+    
     .btn-danger {
         background: #dc3545;
         color: white;
     }
+    
+    .btn-danger:hover {
+        background: #c82333;
+    }
+    
     .btn-warning {
         background: #ffc107;
-        color: #000;
+        color: #212529;
     }
+    
+    .btn-warning:hover {
+        background: #e0a800;
+    }
+    
     .btn-success {
         background: #28a745;
         color: white;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+    }
+    
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-info:hover {
+        background: #138496;
+    }
+    
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .btn-lg {
+        padding: 12px 20px;
+        font-size: 1.1rem;
+    }
+    
+    .btn-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-icon i {
+        font-size: 1.2rem;
     }
     
     /* Status badges */
@@ -462,6 +1052,68 @@
         justify-content: flex-end;
         gap: 10px;
     }
+    
+    /* Mobile Responsive Styles for Slider */
+    @media (max-width: 768px) {
+        .custom-tabs .nav-link {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .custom-tabs .nav-link i {
+            font-size: 1rem;
+        }
+        
+        .tab-slide {
+            padding: 15px;
+        }
+        
+        .tab-swipe-hint {
+            font-size: 0.8rem;
+            padding: 8px;
+        }
+        
+        .tab-nav-arrow {
+            width: 35px;
+            height: 35px;
+        }
+        
+        .section-header {
+            margin-bottom: 10px;
+        }
+        
+        .stats-cards {
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .custom-tabs {
+            gap: 2px;
+        }
+        
+        .custom-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+        
+        .custom-tabs .nav-link span {
+            display: none; /* Hide text, show only icons */
+        }
+        
+        .tab-slide {
+            padding: 10px;
+        }
+        
+        .dashboard {
+            padding: 10px;
+        }
+        
+        .tab-nav-arrows {
+            display: none; /* Hide arrows on very small screens */
+        }
+    }
 </style>
 {% endblock %}
 
@@ -497,138 +1149,343 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <ul class="nav nav-tabs" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link active" data-toggle="tab" href="#bookings">Bookings</a>
+    <!-- Navigation Tabs - Enhanced with Slider -->
+    <div class="tab-swipe-hint" role="status" aria-live="polite">
+        <i class="fas fa-hand-pointer"></i>
+        Swipe or click tabs to navigate
+        <i class="fas fa-arrows-alt-h"></i>
+    </div>
+    
+    <ul class="nav nav-tabs custom-tabs" role="tablist" aria-label="Dashboard sections">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" data-tab="bookings" href="#bookings" role="tab" 
+               aria-selected="true" aria-controls="bookings-panel" tabindex="0">
+                <i class="fas fa-calendar-check"></i> 
+                <span>Bookings</span>
+            </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#events">Events</a>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" data-tab="events" href="#events" role="tab" 
+               aria-selected="false" aria-controls="events-panel" tabindex="-1">
+                <i class="fas fa-glass-cheers"></i> 
+                <span>Events</span>
+            </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#tickets">Tickets</a>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" data-tab="tickets" href="#tickets" role="tab" 
+               aria-selected="false" aria-controls="tickets-panel" tabindex="-1">
+                <i class="fas fa-ticket-alt"></i> 
+                <span>Tickets</span>
+            </a>
         </li>
     </ul>
 
-    <!-- Tab Content -->
-    <div class="tab-content">
-        <!-- Bookings Tab -->
-        <div class="tab-pane fade show active" id="bookings">
-            <div class="filters">
-                <button class="btn-action btn-primary" onclick="showAddBookingModal()">Add Booking</button>
-                <input type="text" id="bookingSearch" class="search-box" placeholder="Search bookings...">
-                <select id="bookingStatusFilter" class="filter-select">
-                    <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="completed">Completed</option>
-                </select>
-                <select id="bookingDateFilter" class="filter-select">
-                    <option value="">All Dates</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="future">Future</option>
-                </select>
-            </div>
-            <div class="table-responsive">
-                <table class="table" id="bookingsTable">
-                    <thead>
-                        <tr>
-                            <th>Quote ID</th>
-                            <th>Client</th>
-                            <th>Event Type</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Total</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bookingsTableBody"></tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Progress Indicator -->
+    <div class="tab-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3" 
+         aria-label="Tab navigation progress">
+        <div class="tab-progress-bar"></div>
+    </div>
 
-        <!-- Events Tab -->
-        <div class="tab-pane fade" id="events">
-            <div class="filters">
-                <button class="btn-action btn-primary" onclick="showAddEventModal()">Add Event</button>
-                <input type="text" id="eventSearch" class="search-box" placeholder="Search events...">
-                <select id="eventTypeFilter" class="filter-select">
-                    <option value="">All Types</option>
-                    <option value="bush_party">Bush Party</option>
-                    <option value="corporate">Corporate Event</option>
-                    <option value="private">Private Event</option>
-                    <option value="wedding">Wedding</option>
-                    <option value="festival">Festival</option>
-                </select>
-            </div>
-            <div class="table-responsive">
-                <table class="table" id="eventsTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Date</th>
-                            <th>Location</th>
-                            <th>Capacity</th>
-                            <th>Available</th>
-                            <th>Price</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="eventsTableBody"></tbody>
-                </table>
-            </div>
+    <!-- Tab Content with Slider -->
+    <div class="tab-content-slider" role="region" aria-live="polite" aria-label="Dashboard content">
+        <!-- Navigation Arrows -->
+        <div class="tab-nav-arrows">
+            <button class="tab-nav-arrow prev" aria-label="Go to previous tab" type="button">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="tab-nav-arrow next" aria-label="Go to next tab" type="button">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
         
-        <!-- Quick Stats for Events -->
-        <div class="quick-stats">
-            <div class="stat-item">
-                <span class="stat-label">Total Events</span>
-                <span class="stat-value" id="totalEventsCount">0</span>
+        <div class="tab-slides-container" id="tabSlidesContainer">
+            <!-- Bookings Tab - Slide 1 -->
+            <div class="tab-slide active" data-tab="bookings" role="tabpanel" 
+                 id="bookings-panel" aria-labelledby="bookings-tab">
+            <div class="section-header">
+                <h3 class="section-title">Manage Bookings</h3>
+                <p class="section-desc">View and manage all client bookings and reservations</p>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Upcoming Events</span>
-                <span class="stat-value" id="upcomingEventsCount">0</span>
+            
+            <div class="filters-card">
+                <div class="filters-row">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="bookingSearch" class="search-box" placeholder="Search bookings...">
+                    </div>
+                    
+                    <div class="filter-controls">
+                        <div class="filter-item">
+                            <label for="bookingStatusFilter">Status:</label>
+                            <select id="bookingStatusFilter" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="cancelled">Cancelled</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="bookingDateFilter">Date Range:</label>
+                            <select id="bookingDateFilter" class="filter-select">
+                                <option value="">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="future">Future</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn-action btn-primary" onclick="showAddBookingModal()">
+                            <i class="fas fa-plus"></i> Add New Booking
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Total Capacity</span>
-                <span class="stat-value" id="totalCapacity">0</span>
+            
+            <div class="data-card">
+                <div class="table-responsive">
+                    <table class="table custom-table" id="bookingsTable">
+                        <thead>
+                            <tr>
+                                <th>Quote ID</th>
+                                <th>Client</th>
+                                <th>Event Type</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="bookingsEmptyState" style="display: none;">
+                    <i class="fas fa-calendar-day empty-icon"></i>
+                    <h4>No Bookings Found</h4>
+                    <p>There are no bookings matching your filters</p>
+                    <button class="btn-action btn-primary" onclick="showAddBookingModal()">Add Your First Booking</button>
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Available Tickets</span>
-                <span class="stat-value" id="availableTickets">0</span>
+            </div>
+
+            <!-- Events Tab - Slide 2 -->
+            <div class="tab-slide" data-tab="events" role="tabpanel" 
+                 id="events-panel" aria-labelledby="events-tab">
+            <div class="section-header">
+                <h3 class="section-title">Event Management</h3>
+                <p class="section-desc">Create and manage your upcoming events</p>
+            </div>
+            
+            <!-- Quick Stats for Events - Improved UI -->
+            <div class="stats-cards">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h4 id="totalEventsCount">0</h4>
+                        <p>Total Events</p>
+                    </div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h4 id="upcomingEventsCount">0</h4>
+                        <p>Upcoming Events</p>
+                    </div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h4 id="totalCapacity">0</h4>
+                        <p>Total Capacity</p>
+                    </div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h4 id="availableTickets">0</h4>
+                        <p>Available Tickets</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filters-card">
+                <div class="filters-row">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="eventSearch" class="search-box" placeholder="Search events...">
+                    </div>
+                    
+                    <div class="filter-controls">
+                        <div class="filter-item">
+                            <label for="eventTypeFilter">Event Type:</label>
+                            <select id="eventTypeFilter" class="filter-select">
+                                <option value="">All Types</option>
+                                <option value="bush_party">Bush Party</option>
+                                <option value="corporate">Corporate Event</option>
+                                <option value="private">Private Event</option>
+                                <option value="wedding">Wedding</option>
+                                <option value="festival">Festival</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn-action btn-primary" onclick="showAddEventModal()">
+                            <i class="fas fa-plus"></i> Create New Event
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-card">
+                <div class="table-responsive">
+                    <table class="table custom-table" id="eventsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Location</th>
+                                <th>Capacity</th>
+                                <th>Available</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="eventsEmptyState" style="display: none;">
+                    <i class="fas fa-calendar-plus empty-icon"></i>
+                    <h4>No Events Found</h4>
+                    <p>Create your first event to get started</p>
+                    <button class="btn-action btn-primary" onclick="showAddEventModal()">Create New Event</button>
+                </div>
+            </div>
+            </div>
+
+            <!-- Tickets Tab - Slide 3 -->
+            <div class="tab-slide" data-tab="tickets" role="tabpanel" 
+                 id="tickets-panel" aria-labelledby="tickets-tab">
+            <div class="section-header">
+                <h3 class="section-title">Ticket Management</h3>
+                <p class="section-desc">Track and manage all event tickets</p>
+            </div>
+            
+            <div class="ticket-summary-cards">
+                <div class="ticket-summary-card">
+                    <div class="ticket-summary-icon bg-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="ticket-summary-content">
+                        <h4 id="verifiedTicketsCount">0</h4>
+                        <p>Verified Tickets</p>
+                    </div>
+                </div>
+                <div class="ticket-summary-card">
+                    <div class="ticket-summary-icon bg-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="ticket-summary-content">
+                        <h4 id="unverifiedTicketsCount">0</h4>
+                        <p>Pending Verification</p>
+                    </div>
+                </div>
+                <div class="ticket-summary-card">
+                    <div class="ticket-summary-icon bg-info">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="ticket-summary-content">
+                        <h4 id="ticketRevenueTotal">₦0</h4>
+                        <p>Ticket Revenue</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filters-card">
+                <div class="filters-row">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="ticketSearch" class="search-box" placeholder="Search by ID, customer name or email...">
+                    </div>
+                    
+                    <div class="filter-controls">
+                        <div class="filter-item">
+                            <label for="ticketStatusFilter">Status:</label>
+                            <select id="ticketStatusFilter" class="filter-select">
+                                <option value="">All Status</option>
+                                <option value="verified">Verified</option>
+                                <option value="unverified">Unverified</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="ticketEventFilter">Event:</label>
+                            <select id="ticketEventFilter" class="filter-select">
+                                <option value="">All Events</option>
+                                <!-- Will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <button class="btn-action btn-primary" onclick="showAddTicketModal()">
+                            <i class="fas fa-plus"></i> Issue New Ticket
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-card">
+                <div class="table-responsive">
+                    <table class="table custom-table" id="ticketsTable">
+                        <thead>
+                            <tr>
+                                <th>Ticket ID</th>
+                                <th>Event</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Purchase Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="ticketsEmptyState" style="display: none;">
+                    <i class="fas fa-ticket-alt empty-icon"></i>
+                    <h4>No Tickets Found</h4>
+                    <p>No tickets match your search criteria</p>
+                    <button class="btn-action btn-primary" onclick="showAddTicketModal()">Issue New Ticket</button>
+                </div>
+            </div>
+            
+    <!-- Scan Ticket Feature -->
+    <div class="scan-ticket-card">
+        <div class="scan-ticket-header">
+            <h4><i class="fas fa-qrcode"></i> Scan Ticket</h4>
+            <p>Quickly verify tickets at the entrance</p>
+        </div>
+        <div class="scan-ticket-content">
+            <div class="scan-ticket-input">
+                <input type="text" id="ticketIdInput" class="form-control" placeholder="Enter ticket ID or scan QR code">
+                <button class="btn-action btn-primary" onclick="verifyTicketById()">Verify</button>
+            </div>
+            <div class="scan-ticket-camera-toggle">
+                <button class="btn-action btn-secondary" onclick="toggleQRScanner()">
+                    <i class="fas fa-camera"></i> Toggle Camera
+                </button>
             </div>
         </div>
-
-        <!-- Tickets Tab -->
-        <div class="tab-pane fade" id="tickets">
-            <div class="filters">
-                <button class="btn-action btn-primary" onclick="showAddTicketModal()">Add Ticket</button>
-                <input type="text" id="ticketSearch" class="search-box" placeholder="Search tickets...">
-                <select id="ticketStatusFilter" class="filter-select">
-                    <option value="">All Status</option>
-                    <option value="verified">Verified</option>
-                    <option value="unverified">Unverified</option>
-                </select>
-            </div>
-            <div class="table-responsive">
-                <table class="table" id="ticketsTable">
-                    <thead>
-                        <tr>
-                            <th>Ticket ID</th>
-                            <th>Event</th>
-                            <th>Customer</th>
-                            <th>Status</th>
-                            <th>Purchase Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ticketsTableBody"></tbody>
-                </table>
+        <div id="qrScanner" class="qr-scanner-container" style="display: none;"></div>
+    </div>
             </div>
         </div>
     </div>
@@ -776,29 +1633,397 @@
 
 {% block extra_js %}
 <script>
-// Utility functions
-const formatCurrency = (amount) => {
+// Utility functions - declared first to avoid hoisting issues
+function formatCurrency(amount) {
     return new Intl.NumberFormat('en-NG', {
         style: 'currency',
         currency: 'NGN'
     }).format(amount);
-};
+}
 
-const formatDate = (dateString) => {
+function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('en-NG', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
-};
+}
+
+// Global variables
+let refreshInterval;
+
+// Debounce function for search inputs
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// CSRF token helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Enhanced Tab Slider Functionality
+class TabSlider {
+    constructor() {
+        this.currentTab = 0;
+        this.tabs = ['bookings', 'events', 'tickets'];
+        this.container = document.getElementById('tabSlidesContainer');
+        this.progressBar = document.querySelector('.tab-progress-bar');
+        this.navLinks = document.querySelectorAll('.custom-tabs .nav-link');
+        this.slides = document.querySelectorAll('.tab-slide');
+        this.arrows = {
+            prev: document.querySelector('.tab-nav-arrow.prev'),
+            next: document.querySelector('.tab-nav-arrow.next')
+        };
+        this.startX = 0;
+        this.currentX = 0;
+        this.isDragging = false;
+        this.threshold = 50;
+        
+        this.init();
+    }
+    
+    init() {
+        this.setupEventListeners();
+        this.updateSlider();
+        this.showArrowsOnHover();
+    }
+    
+    setupEventListeners() {
+        // Tab click events
+        this.navLinks.forEach((link, index) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.goToTab(index);
+            });
+        });
+        
+        // Arrow navigation
+        if (this.arrows.prev) {
+            this.arrows.prev.addEventListener('click', () => this.prevTab());
+        }
+        if (this.arrows.next) {
+            this.arrows.next.addEventListener('click', () => this.nextTab());
+        }
+        
+        // Touch events for swipe
+        this.container.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+        this.container.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+        this.container.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+        
+        // Mouse events for desktop dragging
+        this.container.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.container.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.container.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+        this.container.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') this.prevTab();
+            if (e.key === 'ArrowRight') this.nextTab();
+        });
+        
+        // Prevent context menu on long touch
+        this.container.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+    
+    showArrowsOnHover() {
+        const slider = document.querySelector('.tab-content-slider');
+        const arrows = document.querySelector('.tab-nav-arrows');
+        
+        if (slider && arrows) {
+            slider.addEventListener('mouseenter', () => {
+                arrows.classList.add('show');
+            });
+            
+            slider.addEventListener('mouseleave', () => {
+                arrows.classList.remove('show');
+            });
+        }
+    }
+    
+    handleTouchStart(e) {
+        this.startX = e.touches[0].clientX;
+        this.isDragging = true;
+        this.container.style.transition = 'none';
+        this.container.style.transform = this.container.style.transform.replace('scale(1)', '');
+        
+        // Add touch feedback
+        this.container.style.filter = 'brightness(0.95)';
+    }
+    
+    handleTouchMove(e) {
+        if (!this.isDragging) return;
+        
+        this.currentX = e.touches[0].clientX;
+        const diffX = this.startX - this.currentX;
+        const currentTransform = -(this.currentTab * 33.333);
+        const dragPercentage = (diffX / this.container.offsetWidth) * 33.333;
+        const newTransform = currentTransform - dragPercentage;
+        
+        // Add resistance at boundaries
+        let clampedTransform = newTransform;
+        if (newTransform > 0) {
+            clampedTransform = newTransform * 0.3; // Resistance at start
+        } else if (newTransform < -66.666) {
+            clampedTransform = -66.666 + (newTransform + 66.666) * 0.3; // Resistance at end
+        }
+        
+        this.container.style.transform = `translateX(${clampedTransform}%)`;
+        e.preventDefault();
+    }
+    
+    handleTouchEnd(e) {
+        if (!this.isDragging) return;
+        
+        const diffX = this.startX - this.currentX;
+        const velocity = Math.abs(diffX) / 100; // Simple velocity calculation
+        const adjustedThreshold = this.threshold / (1 + velocity); // Lower threshold for fast swipes
+        
+        // Remove touch feedback
+        this.container.style.filter = '';
+        
+        if (Math.abs(diffX) > adjustedThreshold) {
+            if (diffX > 0 && this.currentTab < this.tabs.length - 1) {
+                this.nextTab();
+            } else if (diffX < 0 && this.currentTab > 0) {
+                this.prevTab();
+            } else {
+                this.updateSlider();
+            }
+        } else {
+            this.updateSlider();
+        }
+        
+        this.isDragging = false;
+        this.container.style.transition = '';
+    }
+    
+    handleMouseDown(e) {
+        if (e.button !== 0) return; // Only left mouse button
+        this.startX = e.clientX;
+        this.isDragging = true;
+        this.container.style.cursor = 'grabbing';
+        this.container.style.transition = 'none';
+        e.preventDefault();
+    }
+    
+    handleMouseMove(e) {
+        if (!this.isDragging) return;
+        
+        this.currentX = e.clientX;
+        const diffX = this.startX - this.currentX;
+        const currentTransform = -(this.currentTab * 33.333);
+        const newTransform = currentTransform - (diffX / this.container.offsetWidth * 33.333);
+        
+        // Limit dragging to valid range
+        const minTransform = -66.666;
+        const maxTransform = 0;
+        const clampedTransform = Math.max(minTransform, Math.min(maxTransform, newTransform));
+        
+        this.container.style.transform = `translateX(${clampedTransform}%)`;
+    }
+    
+    handleMouseUp(e) {
+        if (!this.isDragging) return;
+        
+        const diffX = this.startX - this.currentX;
+        
+        if (Math.abs(diffX) > this.threshold) {
+            if (diffX > 0 && this.currentTab < this.tabs.length - 1) {
+                this.nextTab();
+            } else if (diffX < 0 && this.currentTab > 0) {
+                this.prevTab();
+            } else {
+                this.updateSlider();
+            }
+        } else {
+            this.updateSlider();
+        }
+        
+        this.isDragging = false;
+        this.container.style.cursor = '';
+        this.container.style.transition = '';
+    }
+    
+    goToTab(index) {
+        if (index >= 0 && index < this.tabs.length && index !== this.currentTab) {
+            const prevTab = this.currentTab;
+            this.currentTab = index;
+            
+            // Add haptic feedback for supported devices
+            if ('vibrate' in navigator) {
+                navigator.vibrate(10); // Short vibration
+            }
+            
+            // Announce tab change for screen readers
+            this.announceTabChange(this.tabs[index]);
+            
+            this.updateSlider();
+            this.loadTabContent();
+            
+            // Add slide animation classes
+            this.slides[prevTab].classList.add('tab-slide-exit');
+            this.slides[index].classList.add('tab-slide-enter');
+            
+            setTimeout(() => {
+                this.slides.forEach(slide => {
+                    slide.classList.remove('tab-slide-enter', 'tab-slide-exit');
+                });
+            }, 400);
+        }
+    }
+    
+    announceTabChange(tabName) {
+        // Create a live region announcement for screen readers
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'sr-only';
+        announcement.textContent = `Switched to ${tabName} tab`;
+        document.body.appendChild(announcement);
+        
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    }
+    
+    nextTab() {
+        if (this.currentTab < this.tabs.length - 1) {
+            this.currentTab++;
+            this.updateSlider();
+            this.loadTabContent();
+        }
+    }
+    
+    prevTab() {
+        if (this.currentTab > 0) {
+            this.currentTab--;
+            this.updateSlider();
+            this.loadTabContent();
+        }
+    }
+    
+    updateSlider() {
+        // Update slider position
+        const translateX = -(this.currentTab * 33.333);
+        this.container.style.transform = `translateX(${translateX}%)`;
+        
+        // Update progress bar
+        const progressTranslate = -(66.666 - (this.currentTab * 33.333));
+        this.progressBar.style.transform = `translateX(${progressTranslate}%)`;
+        
+        // Update progress bar ARIA attributes
+        const progressBar = document.querySelector('.tab-progress');
+        progressBar.setAttribute('aria-valuenow', this.currentTab + 1);
+        
+        // Update active states and ARIA attributes
+        this.navLinks.forEach((link, index) => {
+            const isActive = index === this.currentTab;
+            link.classList.toggle('active', isActive);
+            link.setAttribute('aria-selected', isActive.toString());
+            link.setAttribute('tabindex', isActive ? '0' : '-1');
+        });
+        
+        this.slides.forEach((slide, index) => {
+            const isActive = index === this.currentTab;
+            slide.classList.toggle('active', isActive);
+            slide.setAttribute('aria-hidden', (!isActive).toString());
+        });
+        
+        // Update arrow states
+        if (this.arrows.prev) {
+            const isDisabled = this.currentTab === 0;
+            this.arrows.prev.style.opacity = isDisabled ? '0.5' : '1';
+            this.arrows.prev.disabled = isDisabled;
+            this.arrows.prev.setAttribute('aria-disabled', isDisabled.toString());
+        }
+        if (this.arrows.next) {
+            const isDisabled = this.currentTab === this.tabs.length - 1;
+            this.arrows.next.style.opacity = isDisabled ? '0.5' : '1';
+            this.arrows.next.disabled = isDisabled;
+            this.arrows.next.setAttribute('aria-disabled', isDisabled.toString());
+        }
+    }
+    
+    loadTabContent() {
+        const currentTabName = this.tabs[this.currentTab];
+        
+        switch(currentTabName) {
+            case 'bookings':
+                loadBookings();
+                break;
+            case 'events':
+                loadEvents();
+                break;
+            case 'tickets':
+                loadTickets();
+                break;
+        }
+    }
+}
+
+// Initialize slider when DOM is loaded
+let tabSlider;
+document.addEventListener('DOMContentLoaded', function() {
+    tabSlider = new TabSlider();
+    
+    // Load initial content
+    loadDashboardStats();
+    loadBookings();
+    
+    // Start auto-refresh
+    startAutoRefresh();
+});
+
+// Auto-refresh functionality
+function startAutoRefresh() {
+    refreshInterval = setInterval(() => {
+        if (tabSlider) {
+            const activeTab = tabSlider.tabs[tabSlider.currentTab];
+            switch(activeTab) {
+                case 'bookings':
+                    loadBookings();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+                case 'tickets':
+                    loadTickets();
+                    break;
+            }
+        }
+    }, 30000); // Refresh every 30 seconds
+}
 
 // Modal functions
 function showModal(modalId) {
-    document.getElementById(modalId).classList.add('show');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('show');
+    }
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+    }
 }
 
 // Dashboard stats
@@ -830,9 +2055,15 @@ async function loadDashboardStats() {
     }
 }
 
-// Bookings
+// Bookings - Enhanced with empty state handling
 async function loadBookings(filters = {}) {
     try {
+        const bookingsTableBody = document.getElementById('bookingsTableBody');
+        const emptyState = document.getElementById('bookingsEmptyState');
+        
+        // Show loading state
+        bookingsTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+        
         const response = await fetch('/api/bookings/');
         let bookings = await response.json();
 
@@ -841,7 +2072,8 @@ async function loadBookings(filters = {}) {
             const search = filters.search.toLowerCase();
             bookings = bookings.filter(b => 
                 b.client_name.toLowerCase().includes(search) ||
-                b.quote_id.toLowerCase().includes(search)
+                b.quote_id.toLowerCase().includes(search) ||
+                (b.email && b.email.toLowerCase().includes(search))
             );
         }
 
@@ -872,34 +2104,63 @@ async function loadBookings(filters = {}) {
             });
         }
 
-        // Update table
-        const tbody = document.getElementById('bookingsTableBody');
-        tbody.innerHTML = bookings.map(booking => `
-            <tr>
-                <td>${booking.quote_id}</td>
-                <td>${booking.client_name}</td>
-                <td>${booking.event_type}</td>
-                <td>${formatDate(booking.event_date)}</td>
-                <td><span class="status-badge status-${booking.status.toLowerCase()}">${booking.status}</span></td>
-                <td>${formatCurrency(booking.total)}</td>
-                <td>
-                    <button class="btn-action btn-warning" onclick="editBooking('${booking.id}')">Edit</button>
-                    <button class="btn-action btn-danger" onclick="deleteBooking('${booking.id}')">Delete</button>
-                    ${booking.status === 'pending' ? `
-                        <button class="btn-action btn-success" onclick="updateBookingStatus('${booking.id}', 'confirmed')">Confirm</button>
-                    ` : ''}
-                </td>
-            </tr>
-        `).join('');
+        // Check if we have bookings to display
+        if (bookings.length === 0) {
+            bookingsTableBody.innerHTML = '';
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+            
+            // Update table with enhanced UI
+            bookingsTableBody.innerHTML = bookings.map(booking => `
+                <tr>
+                    <td><strong>${booking.quote_id}</strong></td>
+                    <td>
+                        <div class="client-info">
+                            <div class="client-name">${booking.client_name}</div>
+                            ${booking.email ? `<small class="text-muted">${booking.email}</small>` : ''}
+                        </div>
+                    </td>
+                    <td><span class="badge bg-secondary">${booking.event_type.replace('_', ' ')}</span></td>
+                    <td>
+                        <div>${formatDate(booking.event_date)}</div>
+                        <small class="text-muted">${booking.venue}</small>
+                    </td>
+                    <td><span class="status-badge status-${booking.status.toLowerCase()}">${booking.status}</span></td>
+                    <td><strong>${formatCurrency(booking.total)}</strong></td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <button class="btn-action btn-icon btn-warning" onclick="editBooking('${booking.id}')" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action btn-icon btn-danger" onclick="deleteBooking('${booking.id}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            ${booking.status === 'pending' ? `
+                                <button class="btn-action btn-icon btn-success" onclick="updateBookingStatus('${booking.id}', 'confirmed')" title="Confirm">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
     } catch (error) {
         console.error('Error loading bookings:', error);
+        document.getElementById('bookingsTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error loading bookings. Please try again.</td></tr>';
     }
 }
 
-// Events
+// Events - Enhanced with empty state handling and progress bars
 async function loadEvents(filters = {}) {
     try {
-        document.getElementById('eventsTableBody').classList.add('loading');
+        const eventsTableBody = document.getElementById('eventsTableBody');
+        const emptyState = document.getElementById('eventsEmptyState');
+        
+        // Show loading state
+        eventsTableBody.innerHTML = '<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+        
         const response = await fetch('/api/events/');
         let events = await response.json();
 
@@ -909,7 +2170,8 @@ async function loadEvents(filters = {}) {
             events = events.filter(e => 
                 e.name.toLowerCase().includes(search) ||
                 e.location.toLowerCase().includes(search) ||
-                e.event_type.toLowerCase().includes(search)
+                e.event_type.toLowerCase().includes(search) ||
+                (e.description && e.description.toLowerCase().includes(search))
             );
         }
 
@@ -924,66 +2186,127 @@ async function loadEvents(filters = {}) {
         const totalCapacity = events.reduce((sum, e) => sum + e.max_capacity, 0);
         const availableTickets = events.reduce((sum, e) => sum + e.tickets_available, 0);
 
-        // Update stats
-        document.getElementById('totalEventsCount').textContent = totalEvents;
-        document.getElementById('upcomingEventsCount').textContent = upcomingEvents;
-        document.getElementById('totalCapacity').textContent = totalCapacity.toLocaleString();
-        document.getElementById('availableTickets').textContent = availableTickets.toLocaleString();
+        // Update stats with animation
+        animateCounter('totalEventsCount', totalEvents);
+        animateCounter('upcomingEventsCount', upcomingEvents);
+        animateCounter('totalCapacity', totalCapacity);
+        animateCounter('availableTickets', availableTickets);
 
-        // Update table
-        const tbody = document.getElementById('eventsTableBody');
-        tbody.innerHTML = events.map(event => {
-            const eventDate = new Date(event.date);
-            const isUpcoming = eventDate >= now;
-            const availablePercentage = ((event.tickets_available / event.max_capacity) * 100).toFixed(0);
-            const statusClass = isUpcoming ? 'status-confirmed' : 'status-completed';
-            const statusText = isUpcoming ? 'Upcoming' : 'Past';
+        // Check if we have events to display
+        if (events.length === 0) {
+            eventsTableBody.innerHTML = '';
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+            
+            // Update table with enhanced UI
+            eventsTableBody.innerHTML = events.map(event => {
+                const eventDate = new Date(event.date);
+                const isUpcoming = eventDate >= now;
+                const availablePercentage = ((event.tickets_available / event.max_capacity) * 100).toFixed(0);
+                const soldPercentage = 100 - availablePercentage;
+                const statusClass = isUpcoming ? 'status-confirmed' : 'status-completed';
+                const statusText = isUpcoming ? 'Upcoming' : 'Past';
+                
+                // Calculate how soon the event is
+                let timeUntil = '';
+                if (isUpcoming) {
+                    const diffDays = Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24));
+                    if (diffDays === 0) timeUntil = 'Today!';
+                    else if (diffDays === 1) timeUntil = 'Tomorrow';
+                    else if (diffDays <= 7) timeUntil = `In ${diffDays} days`;
+                    else if (diffDays <= 30) timeUntil = `In ${Math.ceil(diffDays/7)} weeks`;
+                    else timeUntil = `In ${Math.ceil(diffDays/30)} months`;
+                }
 
-            return `
-                <tr>
-                    <td>
-                        <div class="event-name">${event.name}</div>
-                        <small class="text-muted">${event.description || ''}</small>
-                    </td>
-                    <td><span class="badge bg-info">${event.event_type.replace('_', ' ').toUpperCase()}</span></td>
-                    <td>
-                        <div>${formatDate(event.date)}</div>
-                        <small class="text-muted">${eventDate.toLocaleTimeString()}</small>
-                    </td>
-                    <td>${event.location}</td>
-                    <td>${event.max_capacity.toLocaleString()}</td>
-                    <td>
-                        <div class="availability-bar">
-                            <div class="progress">
-                                <div class="progress-bar bg-success" style="width: ${availablePercentage}%"></div>
+                return `
+                    <tr>
+                        <td>
+                            <div class="event-name font-weight-bold">${event.name}</div>
+                            <small class="text-muted">${event.description ? (event.description.length > 80 ? event.description.substring(0, 80) + '...' : event.description) : ''}</small>
+                        </td>
+                        <td><span class="badge bg-info py-2 px-3">${event.event_type.replace('_', ' ').toUpperCase()}</span></td>
+                        <td>
+                            <div>${formatDate(event.date)}</div>
+                            <small class="text-muted">${eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                            ${isUpcoming ? `<small class="text-success font-weight-bold">${timeUntil}</small>` : ''}
+                        </td>
+                        <td>
+                            <div>${event.location}</div>
+                        </td>
+                        <td>${event.max_capacity.toLocaleString()}</td>
+                        <td>
+                            <div class="availability-wrapper">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: ${soldPercentage}%" aria-valuenow="${soldPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small>${event.tickets_available} available</small>
+                                    <small>${soldPercentage}% sold</small>
+                                </div>
                             </div>
-                            <small>${event.tickets_available} available</small>
-                        </div>
-                    </td>
-                    <td>${formatCurrency(event.price_per_ticket)}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>
-                        <button class="btn-action btn-warning" onclick="editEvent('${event.id}')" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action btn-primary" onclick="viewEventDetails('${event.id}')" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-action btn-danger" onclick="deleteEvent('${event.id}')" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
+                        </td>
+                        <td><strong>${formatCurrency(event.price_per_ticket)}</strong></td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button class="btn-action btn-icon btn-warning" onclick="editEvent('${event.id}')" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <!-- View button removed per request -->
+                                <button class="btn-action btn-icon btn-danger" onclick="deleteEvent('${event.id}')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Also populate the ticket event filter
+            const ticketEventFilter = document.getElementById('ticketEventFilter');
+            if (ticketEventFilter) {
+                ticketEventFilter.innerHTML = '<option value="">All Events</option>' + 
+                    events.map(event => `<option value="${event.id}">${event.name}</option>`).join('');
+            }
+        }
     } catch (error) {
         console.error('Error loading events:', error);
+        document.getElementById('eventsTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error loading events. Please try again.</td></tr>';
     }
 }
 
-// Tickets
+// Counter animation function
+function animateCounter(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    const current = parseInt(element.textContent.replace(/,/g, '')) || 0;
+    const increment = Math.ceil(Math.abs(targetValue - current) / 20);
+    
+    let value = current;
+    const interval = setInterval(() => {
+        if (current < targetValue) {
+            value = Math.min(value + increment, targetValue);
+        } else {
+            value = Math.max(value - increment, targetValue);
+        }
+        
+        element.textContent = value.toLocaleString();
+        
+        if (value === targetValue) {
+            clearInterval(interval);
+        }
+    }, 20);
+}
+
+// Tickets - Enhanced with empty state and ticket verification
 async function loadTickets(filters = {}) {
     try {
+        const ticketsTableBody = document.getElementById('ticketsTableBody');
+        const emptyState = document.getElementById('ticketsEmptyState');
+        
+        // Show loading state
+        ticketsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+        
         const response = await fetch('/api/tickets/');
         let tickets = await response.json();
 
@@ -992,7 +2315,8 @@ async function loadTickets(filters = {}) {
             const search = filters.search.toLowerCase();
             tickets = tickets.filter(t => 
                 t.ticket_id.toLowerCase().includes(search) ||
-                t.customer_name.toLowerCase().includes(search)
+                t.customer_name.toLowerCase().includes(search) ||
+                (t.customer_email && t.customer_email.toLowerCase().includes(search))
             );
         }
 
@@ -1001,28 +2325,196 @@ async function loadTickets(filters = {}) {
                 filters.status === 'verified' ? t.verified : !t.verified
             );
         }
+        
+        if (filters.eventId) {
+            tickets = tickets.filter(t => t.event && t.event.id === filters.eventId);
+        }
+        
+        // Calculate ticket statistics
+        const verifiedTickets = tickets.filter(t => t.verified).length;
+        const unverifiedTickets = tickets.filter(t => !t.verified).length;
+        const totalRevenue = tickets.reduce((sum, t) => sum + (t.price || 0), 0);
+        
+        // Update ticket summary cards with animation
+        document.getElementById('verifiedTicketsCount').textContent = verifiedTickets;
+        document.getElementById('unverifiedTicketsCount').textContent = unverifiedTickets;
+        document.getElementById('ticketRevenueTotal').textContent = formatCurrency(totalRevenue);
 
-        // Update table
-        const tbody = document.getElementById('ticketsTableBody');
-        tbody.innerHTML = tickets.map(ticket => `
-            <tr>
-                <td>${ticket.ticket_id}</td>
-                <td>${ticket.event?.name || 'N/A'}</td>
-                <td>${ticket.customer_name}</td>
-                <td><span class="status-badge status-${ticket.verified ? 'verified' : 'unverified'}">${ticket.verified ? 'Verified' : 'Unverified'}</span></td>
-                <td>${formatDate(ticket.purchased_at)}</td>
-                <td>
-                    <button class="btn-action btn-warning" onclick="editTicket('${ticket.id}')">Edit</button>
-                    <button class="btn-action btn-danger" onclick="deleteTicket('${ticket.id}')">Delete</button>
-                    ${!ticket.verified ? `
-                        <button class="btn-action btn-success" onclick="verifyTicket('${ticket.id}')">Verify</button>
-                    ` : ''}
-                </td>
-            </tr>
-        `).join('');
+        // Check if we have tickets to display
+        if (tickets.length === 0) {
+            ticketsTableBody.innerHTML = '';
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+            
+            // Update table with enhanced UI
+            ticketsTableBody.innerHTML = tickets.map(ticket => {
+                const purchaseDate = new Date(ticket.purchased_at);
+                const verificationClass = ticket.verified ? 'verified' : 'unverified';
+                const verificationStatus = ticket.verified ? 'Verified' : 'Unverified';
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="ticket-id font-monospace">${ticket.ticket_id}</div>
+                        </td>
+                        <td>${ticket.event?.name || 'N/A'}</td>
+                        <td>
+                            <div>${ticket.customer_name}</div>
+                            ${ticket.customer_email ? `<small class="text-muted">${ticket.customer_email}</small>` : ''}
+                        </td>
+                        <td>
+                            <span class="status-badge status-${verificationClass}">
+                                ${ticket.verified ? '<i class="fas fa-check-circle me-1"></i>' : '<i class="fas fa-clock me-1"></i>'}
+                                ${verificationStatus}
+                            </span>
+                        </td>
+                        <td>
+                            <div>${formatDate(ticket.purchased_at)}</div>
+                            <small class="text-muted">${purchaseDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button class="btn-action btn-icon btn-warning" onclick="editTicket('${ticket.id}')" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-action btn-icon btn-danger" onclick="deleteTicket('${ticket.id}')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                ${!ticket.verified ? `
+                                    <button class="btn-action btn-icon btn-success" onclick="verifyTicket('${ticket.id}')" title="Verify">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                ` : ''}
+                                <!-- View button removed per request -->
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
     } catch (error) {
         console.error('Error loading tickets:', error);
+        document.getElementById('ticketsTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error loading tickets. Please try again.</td></tr>';
     }
+}
+
+// Helper to read cookies (used for CSRF token)
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+}
+
+// Ticket verification function
+function verifyTicket(ticketId) {
+    // This would typically make an API call to mark a ticket as verified
+    // For now, let's simulate it with a timeout and UI update
+    const button = event.currentTarget;
+    const originalContent = button.innerHTML;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+    
+    setTimeout(() => {
+        // In a real application, you would make an API call here
+        // For demo purposes, we're just updating the UI
+        const statusElement = button.closest('tr').querySelector('.status-badge');
+        statusElement.classList.remove('status-unverified');
+        statusElement.classList.add('status-verified');
+        statusElement.innerHTML = '<i class="fas fa-check-circle me-1"></i> Verified';
+        
+        // Remove the verify button
+        button.parentElement.removeChild(button);
+        
+        // Update ticket stats
+        const verifiedCount = document.getElementById('verifiedTicketsCount');
+        const unverifiedCount = document.getElementById('unverifiedTicketsCount');
+        
+        verifiedCount.textContent = (parseInt(verifiedCount.textContent) + 1).toString();
+        unverifiedCount.textContent = Math.max(0, parseInt(unverifiedCount.textContent) - 1).toString();
+        
+        // Show success notification
+        showNotification('Ticket verified successfully!', 'success');
+    }, 800);
+}
+
+// Function to verify ticket by ID from the scan feature
+function verifyTicketById() {
+    const ticketIdInput = document.getElementById('ticketIdInput');
+    const ticketId = ticketIdInput.value.trim();
+    
+    if (!ticketId) {
+        showNotification('Please enter a valid ticket ID', 'error');
+        return;
+    }
+    
+    // In a real app, this would search for the ticket and verify it
+    // For now, let's simulate with a timeout
+    showNotification('Verifying ticket...', 'info');
+    
+    setTimeout(() => {
+        // Simulate verification result
+        const found = Math.random() > 0.3; // 70% chance of success for demo
+        
+        if (found) {
+            showNotification('Ticket verified successfully!', 'success');
+        } else {
+            showNotification('Ticket not found or already verified', 'error');
+        }
+        
+        ticketIdInput.value = '';
+        ticketIdInput.focus();
+    }, 1000);
+}
+
+// Toggle QR scanner function
+function toggleQRScanner() {
+    const scanner = document.getElementById('qrScanner');
+    if (scanner.style.display === 'none') {
+        scanner.style.display = 'block';
+        // In a real app, you would initialize a QR scanner library here
+        scanner.innerHTML = '<div class="text-center py-5 px-3"><p>QR Scanner would initialize here</p><p class="text-muted">In a real app, this would access your camera and scan QR codes</p></div>';
+    } else {
+        scanner.style.display = 'none';
+    }
+}
+
+// Function to show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-icon">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        </div>
+        <div class="notification-content">${message}</div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // Remove after delay
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Function to view ticket details
+function viewTicketDetails(ticketId) {
+    // This would typically open a modal with ticket details
+    console.log('Viewing ticket details for:', ticketId);
+    // Add your implementation here
 }
 
 // Event handlers
@@ -1131,81 +2623,721 @@ function viewEventDetails(eventId) {
     // Add your implementation here
 }
 
-// Refresh data periodically
-let refreshInterval;
-function startAutoRefresh() {
-    refreshInterval = setInterval(() => {
-        const activeTab = document.querySelector('.nav-tabs .active').getAttribute('href');
-        switch(activeTab) {
-            case '#bookings':
-                loadBookings();
-                break;
-            case '#events':
-                loadEvents();
-                break;
-            case '#tickets':
-                loadTickets();
-                break;
-        }
-    }, 60000); // Refresh every minute
-}
-
 function stopAutoRefresh() {
     clearInterval(refreshInterval);
 }
 
-// Initialize dashboard
+// Missing function implementations
+function deleteTicket(ticketId) {
+    if (!confirm('Are you sure you want to delete this ticket?')) {
+        return;
+    }
+    
+    fetch(`/api/tickets/${ticketId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Ticket deleted successfully', 'success');
+            loadTickets(); // Refresh the tickets list
+            return;
+        }
+        return response.json().then(body => Promise.reject(body));
+    })
+    .catch(error => {
+        console.error('Error deleting ticket:', error);
+        const message = (error && error.error) ? error.error : 'Error deleting ticket';
+        showNotification(message, 'error');
+    });
+}
+
+function editBooking(bookingId) {
+    console.log('Editing booking:', bookingId);
+    
+    // Create modal for booking editing
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Booking</h5>
+                    <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="booking-edit-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading booking information...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Fetch current booking data
+    fetch(`/api/bookings/${bookingId}/`)
+        .then(response => response.json())
+        .then(booking => {
+            modal.querySelector('.modal-body').innerHTML = `
+                <form id="editBookingForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Client Name</label>
+                                <input type="text" class="form-control" id="clientName" value="${booking.client_name || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" value="${booking.email || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="phone" value="${booking.phone || ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Event Date</label>
+                                <input type="date" class="form-control" id="eventDate" value="${booking.event_date ? booking.event_date.split('T')[0] : ''}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Event Type</label>
+                                <input type="text" class="form-control" id="eventType" value="${booking.event_type || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Guest Count</label>
+                                <input type="number" class="form-control" id="guestCount" value="${booking.guest_count || 0}" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Total Amount</label>
+                                <input type="number" class="form-control" id="total" value="${booking.total || 0}" step="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-control" id="status" required>
+                                    <option value="pending" ${booking.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="confirmed" ${booking.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                    <option value="cancelled" ${booking.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                    <option value="completed" ${booking.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Special Requirements</label>
+                        <textarea class="form-control" id="specialRequirements" rows="3">${booking.special_requirements || ''}</textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            // Add form submission handler
+            document.getElementById('editBookingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    client_name: document.getElementById('clientName').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    event_date: document.getElementById('eventDate').value,
+                    event_type: document.getElementById('eventType').value,
+                    guest_count: parseInt(document.getElementById('guestCount').value),
+                    total: parseFloat(document.getElementById('total').value),
+                    status: document.getElementById('status').value,
+                    special_requirements: document.getElementById('specialRequirements').value
+                };
+                
+                fetch(`/api/bookings/${bookingId}/`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success || data.id) {
+                        showNotification('Booking updated successfully', 'success');
+                        loadBookings(); // Refresh bookings list
+                        modal.remove();
+                    } else {
+                        showNotification('Failed to update booking', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating booking:', error);
+                    showNotification('Error updating booking', 'error');
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error loading booking data:', error);
+            modal.querySelector('.modal-body').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Failed to load booking data. Please try again.
+                </div>
+            `;
+        });
+}
+
+function editEvent(eventId) {
+    console.log('Editing event:', eventId);
+    
+    // Create modal for event editing
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Event</h5>
+                    <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="event-edit-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading event information...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Fetch current event data
+    fetch(`/api/events/${eventId}/`)
+        .then(response => response.json())
+        .then(event => {
+            modal.querySelector('.modal-body').innerHTML = `
+                <form id="editEventForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Event Name</label>
+                                <input type="text" class="form-control" id="name" value="${event.name || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Event Date</label>
+                                <input type="datetime-local" class="form-control" id="date" value="${event.date ? new Date(event.date).toISOString().slice(0, 16) : ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" value="${event.location || ''}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Price per Ticket</label>
+                                <input type="number" class="form-control" id="pricePerTicket" value="${event.price_per_ticket || 0}" step="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Max Capacity</label>
+                                <input type="number" class="form-control" id="maxCapacity" value="${event.max_capacity || 0}" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-control" id="status" required>
+                                    <option value="upcoming" ${event.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+                                    <option value="ongoing" ${event.status === 'ongoing' ? 'selected' : ''}>Ongoing</option>
+                                    <option value="completed" ${event.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="cancelled" ${event.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="3">${event.description || ''}</textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            // Add form submission handler
+            document.getElementById('editEventForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    name: document.getElementById('name').value,
+                    date: document.getElementById('date').value,
+                    location: document.getElementById('location').value,
+                    price_per_ticket: parseFloat(document.getElementById('pricePerTicket').value),
+                    max_capacity: parseInt(document.getElementById('maxCapacity').value),
+                    status: document.getElementById('status').value,
+                    description: document.getElementById('description').value
+                };
+                
+                fetch(`/api/events/${eventId}/`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success || data.id) {
+                        showNotification('Event updated successfully', 'success');
+                        loadEvents(); // Refresh events list
+                        modal.remove();
+                    } else {
+                        showNotification('Failed to update event', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating event:', error);
+                    showNotification('Error updating event', 'error');
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error loading event data:', error);
+            modal.querySelector('.modal-body').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Failed to load event data. Please try again.
+                </div>
+            `;
+        });
+}
+
+function deleteEvent(eventId) {
+    if (!confirm('Are you sure you want to delete this event?')) {
+        return;
+    }
+    
+    fetch(`/api/events/${eventId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Event deleted successfully', 'success');
+            loadEvents(); // Refresh the events list
+            return;
+        }
+        return response.json().then(body => Promise.reject(body));
+    })
+    .catch(error => {
+        console.error('Error deleting event:', error);
+        const message = (error && error.error) ? error.error : 'Error deleting event';
+        showNotification(message, 'error');
+    });
+}
+
+function deleteBooking(bookingId) {
+    if (!confirm('Are you sure you want to delete this booking?')) {
+        return;
+    }
+    
+    fetch(`/api/bookings/${bookingId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Booking deleted successfully', 'success');
+            loadBookings(); // Refresh the bookings list
+            return;
+        }
+        return response.json().then(body => Promise.reject(body));
+    })
+    .catch(error => {
+        console.error('Error deleting booking:', error);
+        const message = (error && error.error) ? error.error : 'Error deleting booking';
+        showNotification(message, 'error');
+    });
+}
+
+function viewTicketDetails(ticketId) {
+    // Redirect to the ticket details page (separate template)
+    // This keeps the dashboard actions focused on edit/delete and avoids duplicate modals
+    if (!ticketId) return;
+    window.location.href = `/tickets/${ticketId}/`;
+}
+
+function toggleTicketIdVisibility(ticketId) {
+    const maskedElement = document.getElementById('maskedTicketId');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (maskedElement.textContent.includes('*')) {
+        // Show full ID
+        maskedElement.textContent = ticketId;
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        // Hide ID with masks
+        const maskedId = ticketId.length > 6 ? 
+            ticketId.substring(0, 3) + '*'.repeat(ticketId.length - 6) + ticketId.substring(ticketId.length - 3) :
+            '*'.repeat(7);
+        maskedElement.textContent = maskedId;
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+function editTicket(ticketId) {
+    console.log('Editing ticket:', ticketId);
+    
+    // Create modal for ticket editing
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Ticket</h5>
+                    <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="ticket-edit-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading ticket information...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Fetch current ticket data
+    fetch(`/api/tickets/${ticketId}/`)
+        .then(response => response.json())
+        .then(ticket => {
+            modal.querySelector('.modal-body').innerHTML = `
+                <form id="editTicketForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Customer Name</label>
+                                <input type="text" class="form-control" id="customerName" value="${ticket.customer_name || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Customer Email</label>
+                                <input type="email" class="form-control" id="customerEmail" value="${ticket.customer_email || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Customer Phone</label>
+                                <input type="tel" class="form-control" id="customerPhone" value="${ticket.customer_phone || ''}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" value="${ticket.quantity || 1}" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-control" id="status" required>
+                                    <option value="unverified" ${ticket.status === 'unverified' ? 'selected' : ''}>Unverified</option>
+                                    <option value="verified" ${ticket.status === 'verified' ? 'selected' : ''}>Verified</option>
+                                    <option value="cancelled" ${ticket.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Amount</label>
+                                <input type="number" class="form-control" id="amount" value="${ticket.amount || 0}" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            // Add form submission handler
+            document.getElementById('editTicketForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Basic client-side validation
+                const customerName = document.getElementById('customerName').value.trim();
+                const customerEmail = document.getElementById('customerEmail').value.trim();
+                const quantity = parseInt(document.getElementById('quantity').value);
+                const amount = parseFloat(document.getElementById('amount').value);
+
+                const errors = [];
+                if (!customerName) errors.push('Customer name is required');
+                if (!customerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customerEmail)) errors.push('A valid email is required');
+                if (!Number.isInteger(quantity) || quantity < 1) errors.push('Quantity must be at least 1');
+                if (isNaN(amount) || amount < 0) errors.push('Amount must be a valid number');
+
+                const footer = modal.querySelector('.modal-footer');
+                // Remove previous inline errors
+                const existingError = modal.querySelector('.inline-error');
+                if (existingError) existingError.remove();
+
+                if (errors.length) {
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'inline-error alert alert-danger';
+                    errDiv.style.margin = '0 15px 10px 15px';
+                    errDiv.innerHTML = `<ul style="margin:0;padding-left:18px">${errors.map(e => `<li>${e}</li>`).join('')}</ul>`;
+                    footer.insertAdjacentElement('beforebegin', errDiv);
+                    return;
+                }
+
+                const submitBtn = footer.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                const originalBtnHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<div class="loading"></div> Saving...';
+
+                const formData = {
+                    customer_name: customerName,
+                    customer_email: customerEmail,
+                    customer_phone: document.getElementById('customerPhone').value.trim(),
+                    quantity: quantity,
+                    status: document.getElementById('status').value,
+                    amount: amount
+                };
+
+                fetch(`/api/tickets/${ticketId}/`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                    if (response.ok) return response.json();
+                    return response.json().then(body => Promise.reject(body));
+                })
+                .then(data => {
+                    showNotification('Ticket updated successfully', 'success');
+                    loadTickets(); // Refresh tickets list
+                    modal.remove();
+                })
+                .catch(error => {
+                    console.error('Error updating ticket:', error);
+                    showNotification('Error updating ticket', 'error');
+                    // Show server-side error message if provided
+                    if (error && error.error) {
+                        const errDiv = document.createElement('div');
+                        errDiv.className = 'inline-error alert alert-danger';
+                        errDiv.style.margin = '0 15px 10px 15px';
+                        errDiv.textContent = error.error || 'Failed to update ticket';
+                        footer.insertAdjacentElement('beforebegin', errDiv);
+                    }
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error loading ticket data:', error);
+            modal.querySelector('.modal-body').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Failed to load ticket data. Please try again.
+                </div>
+            `;
+        });
+}
+
+function verifyTicket(ticketId) {
+    fetch(`/api/tickets/${ticketId}/`, {
+        method: 'PUT',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'verified' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success || data.id) {
+            showNotification('Ticket verified successfully', 'success');
+            loadTickets(); // Refresh tickets list
+        } else {
+            showNotification('Failed to verify ticket', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error verifying ticket:', error);
+        showNotification('Error verifying ticket', 'error');
+    });
+}
+
+function downloadTicket(ticketId) {
+    window.open(`/api/download-ticket/${ticketId}/`, '_blank');
+}
+
+function updateBookingStatus(bookingId, status) {
+    fetch(`/api/bookings/${bookingId}/status/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Booking ${status} successfully`, 'success');
+            loadBookings(); // Refresh the bookings list
+        } else {
+            showNotification('Failed to update booking status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating booking status:', error);
+        showNotification('Error updating booking status', 'error');
+    });
+}
+
+// Initialize dashboard with enhanced features
 document.addEventListener('DOMContentLoaded', () => {
-    // Load initial data
-    Promise.all([
-        loadDashboardStats(),
-        loadBookings(),
-        loadEvents(),
-        loadTickets()
-    ]).catch(error => {
-        console.error('Error loading dashboard:', error);
-        showError('Failed to load dashboard data. Please try again.', 'bookingsTableBody');
+    // Add event listener for tab changes
+    document.querySelectorAll('.nav-tabs .nav-link').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all tabs and panes
+            document.querySelectorAll('.nav-tabs .nav-link').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => {
+                p.classList.remove('show', 'active');
+            });
+            
+            // Add active class to selected tab
+            this.classList.add('active');
+            
+            // Show selected pane
+            const targetId = this.getAttribute('href').substring(1);
+            const targetPane = document.getElementById(targetId);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+            
+            // Load data for the selected tab
+            switch(targetId) {
+                case 'bookings':
+                    loadBookings();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+                case 'tickets':
+                    loadTickets();
+                    break;
+            }
+        });
     });
 
-    // Initialize Bootstrap tabs with loading indicators
-    $('.nav-tabs a').on('click', function(e) {
-        e.preventDefault();
-        $(this).tab('show');
-        
-        const targetId = $(this).attr('href').substring(1);
-        document.getElementById(targetId).classList.add('loading');
-        
-        switch(targetId) {
-            case 'bookings':
-                loadBookings();
-                break;
-            case 'events':
-                loadEvents();
-                break;
-            case 'tickets':
-                loadTickets();
-                break;
-        }
+    // Load initial data with better error handling
+    Promise.all([
+        loadDashboardStats().catch(error => {
+            console.error('Error loading dashboard stats:', error);
+            showNotification('Failed to load dashboard statistics', 'error');
+        }),
+        loadBookings().catch(error => {
+            console.error('Error loading bookings:', error);
+            document.getElementById('bookingsTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error loading bookings</td></tr>';
+        }),
+        loadEvents().catch(error => {
+            console.error('Error loading events:', error);
+            document.getElementById('eventsTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error loading events</td></tr>';
+        }),
+        loadTickets().catch(error => {
+            console.error('Error loading tickets:', error);
+            document.getElementById('ticketsTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error loading tickets</td></tr>';
+        })
+    ]);
+
+    // Add event listeners for filter controls
+    document.getElementById('bookingSearch').addEventListener('input', debounce((e) => {
+        loadBookings({ search: e.target.value });
+    }, 300));
+    
+    document.getElementById('bookingStatusFilter').addEventListener('change', (e) => {
+        loadBookings({ status: e.target.value });
     });
+    
+    document.getElementById('bookingDateFilter').addEventListener('change', (e) => {
+        loadBookings({ dateFilter: e.target.value });
+    });
+    
+    document.getElementById('eventSearch').addEventListener('input', debounce((e) => {
+        loadEvents({ search: e.target.value });
+    }, 300));
+    
+    document.getElementById('eventTypeFilter').addEventListener('change', (e) => {
+        loadEvents({ type: e.target.value });
+    });
+    
+    document.getElementById('ticketSearch').addEventListener('input', debounce((e) => {
+        loadTickets({ search: e.target.value });
+    }, 300));
+    
+    document.getElementById('ticketStatusFilter').addEventListener('change', (e) => {
+        loadTickets({ status: e.target.value });
+    });
+    
+    // Add event listener for ticket event filter if it exists
+    const ticketEventFilter = document.getElementById('ticketEventFilter');
+    if (ticketEventFilter) {
+        ticketEventFilter.addEventListener('change', (e) => {
+            loadTickets({ eventId: e.target.value });
+        });
+    }
 
     // Start auto-refresh
     startAutoRefresh();
-});
+    
+    // Show welcome notification
+    setTimeout(() => {
+        showNotification('Welcome to your Dashboard', 'info');
+    }, 1000);
 
-// CSRF token helper
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+    // Listen for requests to open the edit ticket modal from other pages/components
+    window.addEventListener('openEditTicketModal', function(e) {
+        const ticketId = e.detail && e.detail.ticketId;
+        if (ticketId) {
+            // If the editTicket function exists, call it
+            if (typeof editTicket === 'function') {
+                editTicket(ticketId);
+            } else {
+                // Fallback navigation
+                window.location.href = `/tickets/${ticketId}/edit/`;
             }
         }
-    }
-    return cookieValue;
-}
+    });
+});
 </script>
 {% endblock %}

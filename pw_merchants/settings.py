@@ -166,3 +166,11 @@ if EMAIL_LOGGING:
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Login/Logout redirects
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
+LOGIN_URL = '/login/'
+
+# CSRF
+CSRF_FAILURE_VIEW = 'pw_website.views.csrf_failure'

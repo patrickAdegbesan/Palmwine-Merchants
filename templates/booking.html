@@ -1,4 +1,16 @@
-{% extends 'base.html' %}
+{% extends    <section class="hero small">
+      <div class="hero-inner">
+        <h1><span class="display">Get an Instant Quote</span></h1>
+        <p class="tagline">Enter your event details. We'll calculate line items, tax, delivery and deposit — ready to print or share.</p>
+      </div>
+    </section>
+
+    <section class="section" id="quote" style="padding: 40px 16px;">
+      <div class="container">
+        <h2>Booking Details</h2>
+        <p class="lead">Tell us about your event. Prices are estimates — we'll confirm on WhatsApp.</p>
+
+        <form id="quote-form" class="form" autocomplete="on">%}
 {% load static %}
 
 {% block title %}Book Your Experience - Palmwine Merchants & Flames{% endblock %}
@@ -145,85 +157,8 @@
 
           <p class="form-note">This is an estimate. Availability is not guaranteed until deposit is received. Prices may vary with final brief and logistics.</p>
         </div>
-
-        <hr class="print-hide" style="margin:28px 0;border:0;border-top:1px solid #eee" />
-
-        <!-- Removed booking section to be displayed only after customer computes quote and clicks 'Make Payment' -->
-        <!-- 
-        <h2 class="print-hide">Payment Confirmation</h2>
-        <p class="lead print-hide">Secure your date by paying deposit or full amount, then send us your confirmation. Use the WhatsApp button for the fastest response. If you used the quote above, click "Use last quote" to autofill the reference.</p>
-
-        <form id="payment-form" class="form print-hide" data-formspree="">
-          <div class="two-col" style="align-items:flex-start">
-            <div>
-              <label for="payQuoteId">Quote / Invoice ID</label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input id="payQuoteId" name="quoteId" type="text" placeholder="e.g. PMF-20250827-1234" required />
-                <button id="use-quote" type="button" class="btn ghost" aria-label="Use last quote id">Use last quote</button>
-              </div>
-
-              <label for="payerName">Payer Full Name</label>
-              <input id="payerName" name="payerName" type="text" placeholder="Your name" required />
-
-              <label for="payPhone">Phone (WhatsApp)</label>
-              <input id="payPhone" name="phone" type="tel" inputmode="tel" placeholder="e.g. +234 803 123 4567" required />
-
-              <label for="payEmail">Email (optional)</label>
-              <input id="payEmail" name="email" type="email" placeholder="you@example.com" />
-            </div>
-
-            <div>
-              <label for="amountPaid">Amount Paid (₦)</label>
-              <input id="amountPaid" name="amountPaid" type="number" min="0" step="100" placeholder="e.g. 250000" required />
-
-              <label for="paymentMethod">Payment Method</label>
-              <select id="paymentMethod" name="paymentMethod" required>
-                <option value="Transfer">Transfer</option>
-                <option value="Paystack">Paystack</option>
-                <option value="POS">POS</option>
-                <option value="Cash">Cash</option>
-                <option value="Other">Other</option>
-              </select>
-
-              <label for="txRef">Transaction Reference</label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input id="txRef" name="txRef" type="text" placeholder="Bank ref / POS slip / Note or Paystack ref" />
-                <button id="btn-verify-paystack" type="button" class="btn ghost" aria-label="Verify Paystack payment">Verify</button>
-              </div>
-              <small id="verify-result" class="muted" role="status" aria-live="polite"></small>
-
-              <label for="paymentDate">Payment Date</label>
-              <input id="paymentDate" name="paymentDate" type="date" required />
-
-              <label for="notes">Notes (optional)</label>
-              <textarea id="notes" name="notes" rows="3" placeholder="Any extra info"></textarea>
-
-              <div class="btn-row">
-                <button class="btn secondary" id="btn-paystack-card" type="button"><i class="fa-solid fa-credit-card"></i> Pay with Card</button>
-                <button class="btn primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send Confirmation</button>
-                <a class="btn secondary" id="btn-pay-wa" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Send on WhatsApp</a>
-              </div>
-              <small id="pay-status" class="muted" role="status" aria-live="polite"></small>
-              
-              Payment Confirmation Barcode
-              <div id="payment-barcode-section" class="payment-barcode" style="display:none;">
-                <h4>Payment Confirmation</h4>
-                <div id="barcode-container"></div>
-                <p class="barcode-info">Your payment confirmation code: <strong id="confirmation-code"></strong></p>
-                <button id="btn-download-barcode" class="btn accent btn-fit" type="button"><i class="fa-solid fa-download"></i> Download Barcode</button>
-              </div>
-              
-              <p class="form-note">Tip: Add a screenshot of your payment when you message us on WhatsApp for faster verification.</p>
-            </div>
-          </div>
-        </form>
-      -->
       </div>
     </section>
-  </main>
-
-  
-    
 {% endblock %}
 
 {% block extra_js %}

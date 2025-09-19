@@ -339,27 +339,81 @@ def bookings_api(request, booking_id=None):
                 'created_at': booking.created_at.isoformat()
             }
             return JsonResponse(data)
-    bookings = Booking.objects.all().order_by('-created_at')
-    data = [{
-        'id': str(booking.id),
-        'quote_id': booking.quote_id,
-        'client_name': booking.client_name,
-        'phone': booking.phone,
-        'email': booking.email,
-        'event_type': booking.event_type,
-        'event_date': booking.event_date.isoformat(),
-        'venue': booking.venue,
-        'guests': booking.guests,
-        'package_type': booking.package_type,
-        'subtotal': float(booking.subtotal),
-        'delivery_cost': float(booking.delivery_cost),
-        'tax': float(booking.tax),
-        'total': float(booking.total),
-        'deposit_required': float(booking.deposit_required),
-        'status': booking.status,
-        'created_at': booking.created_at.isoformat()
-    } for booking in bookings]
-    return JsonResponse(data, safe=False)
+        else:
+            bookings = Booking.objects.all().order_by('-created_at')
+            data = [{
+                'id': str(booking.id),
+                'quote_id': booking.quote_id,
+                'client_name': booking.client_name,
+                'phone': booking.phone,
+                'email': booking.email,
+                'event_type': booking.event_type,
+                'event_date': booking.event_date.isoformat(),
+                'venue': booking.venue,
+                'guests': booking.guests,
+                'package_type': booking.package_type,
+                'subtotal': float(booking.subtotal),
+                'delivery_cost': float(booking.delivery_cost),
+                'tax': float(booking.tax),
+                'total': float(booking.total),
+                'deposit_required': float(booking.deposit_required),
+                'status': booking.status,
+                'created_at': booking.created_at.isoformat()
+            } for booking in bookings]
+            return JsonResponse(data, safe=False)
+    
+    elif request.method == "PUT":
+        try:
+            booking = get_object_or_404(Booking, id=booking_id)
+            data = json.loads(request.body)
+            
+            # Update booking fields
+            booking.client_name = data.get('client_name', booking.client_name)
+            booking.email = data.get('email', booking.email)
+            booking.phone = data.get('phone', booking.phone)
+            if 'event_date' in data:
+                booking.event_date = datetime.fromisoformat(data['event_date'])
+            booking.event_type = data.get('event_type', booking.event_type)
+            booking.guests = data.get('guest_count', booking.guests)
+            booking.total = data.get('total', booking.total)
+            booking.status = data.get('status', booking.status)
+            booking.special_requirements = data.get('special_requirements', booking.special_requirements)
+            
+            booking.save()
+            return JsonResponse({
+                'success': True,
+                'id': str(booking.id),
+                'message': 'Booking updated successfully'
+            })
+        except Booking.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Booking not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
+    
+    elif request.method == "DELETE":
+        try:
+            booking = get_object_or_404(Booking, id=booking_id)
+            booking.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Booking deleted successfully'
+            })
+        except Booking.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Booking not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
 
 
 @csrf_exempt
@@ -709,55 +763,136 @@ def verify_ticket_api(request):
 def tickets_api(request, ticket_id=None):
     """API endpoint for ticket CRUD operations"""
     if request.method == 'GET':
-        tickets = Ticket.objects.select_related('event').order_by('-purchase_date')
-        data = [{
-            'id': str(t.id),
-            'ticket_id': t.ticket_id,
-            'event': {
-                'id': str(t.event.id),
-                'name': t.event.name,
-                'date': t.event.date.isoformat(),
-                'location': t.event.location,
-            } if t.event else None,
-            'customer_name': t.customer_name,
-            'customer_email': t.customer_email,
-            'verified': t.verified,
-            'purchased_at': t.purchase_date.isoformat(),
-            'verified_at': t.verified_at.isoformat() if t.verified_at else None,
-        } for t in tickets]
-        return JsonResponse(data, safe=False)
+        if ticket_id:
+            # Get single ticket
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            data = {
+                'id': str(ticket.id),
+                'ticket_id': ticket.ticket_id,
+                'event': {
+                    'id': str(ticket.event.id),
+                    'name': ticket.event.name,
+                    'date': ticket.event.date.isoformat(),
+                    'location': ticket.event.location,
+                } if ticket.event else None,
+                'customer_name': ticket.customer_name,
+                'customer_email': ticket.customer_email,
+                'customer_phone': ticket.phone,
+                'quantity': 1,  # Default quantity
+                'amount': float(ticket.amount_paid),
+                'status': 'verified' if ticket.verified else 'unverified',
+                'purchased_at': ticket.purchase_date.isoformat(),
+                'verified_at': ticket.verified_at.isoformat() if ticket.verified_at else None,
+            }
+            return JsonResponse(data)
+        else:
+            # Get all tickets
+            tickets = Ticket.objects.select_related('event').order_by('-purchase_date')
+            data = [{
+                'id': str(t.id),
+                'ticket_id': t.ticket_id,
+                'event': {
+                    'id': str(t.event.id),
+                    'name': t.event.name,
+                    'date': t.event.date.isoformat(),
+                    'location': t.event.location,
+                } if t.event else None,
+                'customer_name': t.customer_name,
+                'customer_email': t.customer_email,
+                'verified': t.verified,
+                'purchased_at': t.purchase_date.isoformat(),
+                'verified_at': t.verified_at.isoformat() if t.verified_at else None,
+            } for t in tickets]
+            return JsonResponse(data, safe=False)
 
-    # POST
-    try:
-        data = json.loads(request.body or b"{}")
-        event_id = (data.get('event') or '').strip()
-        if not event_id:
-            return JsonResponse({ 'success': False, 'message': 'Missing event id' }, status=400)
+    elif request.method == 'POST':
         try:
-            ev = Event.objects.get(id=event_id)
-        except Event.DoesNotExist:
-            return JsonResponse({ 'success': False, 'message': 'Invalid event id' }, status=404)
+            data = json.loads(request.body or b"{}")
+            event_id = (data.get('event') or '').strip()
+            if not event_id:
+                return JsonResponse({ 'success': False, 'message': 'Missing event id' }, status=400)
+            try:
+                ev = Event.objects.get(id=event_id)
+            except Event.DoesNotExist:
+                return JsonResponse({ 'success': False, 'message': 'Invalid event id' }, status=404)
 
-        ticket_id = (data.get('ticket_id') or '').strip() or f"PMF-{uuid.uuid4().hex[:8].upper()}"
-        t = Ticket.objects.create(
-            ticket_id=ticket_id,
-            event=ev,
-            customer_name=(data.get('customer_name') or '').strip(),
-            customer_email=(data.get('customer_email') or '').strip(),
-            phone=(data.get('phone') or '').strip(),
-            amount_paid=data.get('amount_paid') or 0,
-        )
-        return JsonResponse({
-            'id': str(t.id),
-            'ticket_id': t.ticket_id,
-            'event': { 'id': str(ev.id), 'name': ev.name },
-            'customer_name': t.customer_name,
-            'customer_email': t.customer_email,
-            'verified': t.verified,
-            'purchased_at': t.purchase_date.isoformat(),
-        })
-    except Exception as e:
-        return JsonResponse({ 'success': False, 'message': 'Invalid JSON' }, status=400)
+            ticket_id = (data.get('ticket_id') or '').strip() or f"PMF-{uuid.uuid4().hex[:8].upper()}"
+            t = Ticket.objects.create(
+                ticket_id=ticket_id,
+                event=ev,
+                customer_name=(data.get('customer_name') or '').strip(),
+                customer_email=(data.get('customer_email') or '').strip(),
+                phone=(data.get('phone') or '').strip(),
+                amount_paid=data.get('amount_paid') or 0,
+            )
+            return JsonResponse({
+                'id': str(t.id),
+                'ticket_id': t.ticket_id,
+                'event': { 'id': str(ev.id), 'name': ev.name },
+                'customer_name': t.customer_name,
+                'customer_email': t.customer_email,
+                'verified': t.verified,
+                'purchased_at': t.purchase_date.isoformat(),
+            })
+        except Exception as e:
+            return JsonResponse({ 'success': False, 'message': 'Invalid JSON' }, status=400)
+    
+    elif request.method == 'PUT':
+        try:
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            data = json.loads(request.body)
+            
+            # Update ticket fields
+            ticket.customer_name = data.get('customer_name', ticket.customer_name)
+            ticket.customer_email = data.get('customer_email', ticket.customer_email)
+            ticket.phone = data.get('customer_phone', ticket.phone)
+            ticket.amount_paid = data.get('amount', ticket.amount_paid)
+            
+            # Handle status update
+            status = data.get('status')
+            if status == 'verified':
+                ticket.verified = True
+                if not ticket.verified_at:
+                    ticket.verified_at = timezone.now()
+            elif status == 'unverified':
+                ticket.verified = False
+                ticket.verified_at = None
+            
+            ticket.save()
+            return JsonResponse({
+                'success': True,
+                'id': str(ticket.id),
+                'message': 'Ticket updated successfully'
+            })
+        except Ticket.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Ticket not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
+    
+    elif request.method == 'DELETE':
+        try:
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            ticket.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Ticket deleted successfully'
+            })
+        except Ticket.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Ticket not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
 
 
 @require_http_methods(["GET"])
@@ -1257,5 +1392,147 @@ def store_ticket(request):
     except Exception as e:
         # Surface the error to help debug why the request failed
         return JsonResponse({ 'success': False, 'message': 'Store failed', 'error': str(e) }, status=400)
+
+
+# Password Reset Views
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.contrib import messages
+from django.contrib.auth import authenticate, login
+
+from django.views.decorators.csrf import csrf_protect
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
+
+@csrf_protect
+@never_cache
+def forgot_password(request):
+    """Handle password reset request"""
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        
+        if not email:
+            messages.error(request, 'Please provide an email address.')
+            return render(request, 'auth/forgot_password.html')
+        
+        try:
+            # Try to find user by email first, then by username if email is not found
+            user = None
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                # If no user found by email, try finding by username
+                # (in case someone enters their username in the email field)
+                try:
+                    user = User.objects.get(username=email)
+                except User.DoesNotExist:
+                    pass
+            
+            if user and user.email:
+                # Generate password reset token
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                
+                # Create reset link
+                reset_link = request.build_absolute_uri(f'/password-reset/{uid}/{token}/')
+                
+                # Prepare email content
+                subject = 'Password Reset - Palmwine Merchants'
+                message = render_to_string('auth/password_reset_email.html', {
+                    'user': user,
+                    'reset_link': reset_link,
+                    'site_name': 'Palmwine Merchants Dashboard',
+                })
+                
+                # Send email using the same method as ticket emails
+                try:
+                    # Use EmailMessage like the ticket system
+                    from_email = settings.DEFAULT_FROM_EMAIL
+                    email = EmailMessage(
+                        subject=subject,
+                        body=message,
+                        from_email=from_email,
+                        to=[user.email],
+                        reply_to=['info@palmwinemerchants.com']
+                    )
+                    
+                    # Set content type to HTML
+                    email.content_subtype = "html"
+                    
+                    # Send the email
+                    email.send(fail_silently=False)
+                    
+                    messages.success(request, f'Password reset link has been sent to {user.email}')
+                    return redirect('pw_website:login')
+                except Exception as e:
+                    messages.error(request, 'Failed to send email. Please try again later.')
+            else:
+                # User found but no email address, or user not found
+                if user and not user.email:
+                    messages.error(request, 'No email address is associated with this account. Please contact support.')
+                else:
+                    # Don't reveal whether the email/username exists or not for security
+                    messages.success(request, f'If an account with {email} exists and has an email address, a password reset link has been sent.')
+                    return redirect('pw_website:login')
+                
+        except Exception as e:
+            messages.error(request, 'An error occurred. Please try again later.')
+            
+    return render(request, 'auth/forgot_password.html')
+
+@csrf_protect
+@never_cache
+def password_reset_confirm(request, uidb64, token):
+    """Handle password reset confirmation"""
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    
+    if user and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            try:
+                password1 = request.POST.get('password1', '').strip()
+                password2 = request.POST.get('password2', '').strip()
+                
+                if not password1 or not password2:
+                    messages.error(request, 'Please fill in both password fields.')
+                elif password1 != password2:
+                    messages.error(request, 'Passwords do not match.')
+                elif len(password1) < 8:
+                    messages.error(request, 'Password must be at least 8 characters long.')
+                else:
+                    # Reset password
+                    user.set_password(password1)
+                    user.save()
+                    
+                    messages.success(request, 'Your password has been reset successfully. You can now log in with your new password.')
+                    return redirect('pw_website:login')
+            except Exception as e:
+                messages.error(request, 'An error occurred. Please try refreshing the page and try again.')
+        
+        return render(request, 'auth/password_reset_confirm.html', {
+            'validlink': True,
+            'user': user
+        })
+    else:
+        messages.error(request, 'The password reset link is invalid or has expired.')
+        return render(request, 'auth/password_reset_confirm.html', {'validlink': False})
+
+def dashboard_redirect(request):
+    """Redirect to dashboard with authentication check"""
+    if not request.user.is_authenticated:
+        return redirect('pw_website:login')
+    return redirect('pw_website:dashboard')
+
+def csrf_failure(request, reason=""):
+    """Custom CSRF failure view"""
+    messages.error(request, 'Security token expired. Please try again with a fresh page.')
+    return redirect('pw_website:forgot_password')
 
 
