@@ -2131,7 +2131,7 @@ if (row && scroller && text){
   if (btnFull && !btnFull.dataset.init){ btnFull.addEventListener('click', ()=> startPay('full')); btnFull.dataset.init = '1'; }
 })();
 
-// Hanging sign: delayed show, auto-hide, close with 1-day dismissal (index.html and events.html only)
+// Enhanced hanging sign with amusement features
 (function(){
   const sign = document.getElementById('hang-sign');
   if (!sign) return; // only on pages with the sign
@@ -2143,15 +2143,59 @@ if (row && scroller && text){
   const HANGING_SIGN_KEY = 'hangingSignDismissedAt';
   const DAY_MS = 24 * 60 * 60 * 1000;
   const SIGN_DELAY = 1200;
-  const SIGN_AUTO_HIDE = 10000;
+  const SIGN_AUTO_HIDE = 15000; // Extended to 15s for more engagement
+
+  // Fun messages to rotate through
+  const funMessages = [
+    'GET TICKETS NOW! 🔥',
+    'DON\'T MISS OUT! 🎉',
+    'PARTY TIME! 🎵',
+    'LIMITED SPOTS! ⚡',
+    'BOOK YOUR SPOT! 🎪',
+    'JOIN THE FUN! 🍹'
+  ];
+  let messageIndex = 0;
 
   function hideSign(){
     sign.classList.remove('visible');
     sign.setAttribute('aria-hidden', 'true');
   }
+  
   function showSign(){
     sign.classList.add('visible');
     sign.setAttribute('aria-hidden', 'false');
+    // Add entrance sound effect
+    playEntranceSound();
+  }
+
+  // Rotate through fun messages
+  function updateMessage(){
+    const textSpan = sign.querySelector('.hs-text span');
+    if (textSpan) {
+      textSpan.textContent = funMessages[messageIndex];
+      messageIndex = (messageIndex + 1) % funMessages.length;
+    }
+  }
+
+  // Add wiggle effect on hover
+  function addInteractivity(){
+    const body = sign.querySelector('.hs-body');
+    const text = sign.querySelector('.hs-text');
+    
+    if (body) {
+      body.addEventListener('mouseenter', ()=>{
+        // Extra bounce effect
+        sign.style.animationDuration = '1s';
+        text.style.transform = 'translateY(0) scale(1.1)';
+        // Change message on hover
+        updateMessage();
+      });
+      
+      body.addEventListener('mouseleave', ()=>{
+        sign.style.animationDuration = '3.2s';
+        text.style.transform = 'translateY(0) scale(1)';
+      });
+    }
   }
 
   // Skip if dismissed within 1 day
@@ -2161,12 +2205,42 @@ if (row && scroller && text){
     return;
   }
 
-  // Delayed show
+  // Delayed show with entrance effect
   let autoTimer = 0;
+  let messageTimer = 0;
+  let pulseTimer = 0;
   setTimeout(()=>{
     showSign();
-    // Auto-hide after 10s (does not persist)
-    autoTimer = window.setTimeout(()=>{ hideSign(); }, SIGN_AUTO_HIDE);
+    addInteractivity();
+    
+    // Auto-change message every 3 seconds for amusement
+    messageTimer = setInterval(updateMessage, 3000);
+    
+    // Attention pulse every 7 seconds to catch eye
+    pulseTimer = setInterval(()=>{
+      if (sign.classList.contains('visible')) {
+        sign.style.animation = 'enhancedSwing 3.2s ease-in-out infinite, attentionPulse 2s ease-out';
+        const textSpan = sign.querySelector('.hs-text span');
+        if (textSpan) {
+          textSpan.style.animation = 'textGlow 1.5s ease-out';
+        }
+        
+        // Reset animations after pulse
+        setTimeout(()=>{
+          sign.style.animation = 'enhancedSwing 3.2s ease-in-out infinite, glow 4s ease-in-out infinite alternate';
+          if (textSpan) {
+            textSpan.style.animation = '';
+          }
+        }, 2000);
+      }
+    }, 7000);
+    
+    // Auto-hide after 15s (does not persist)
+    autoTimer = window.setTimeout(()=>{ 
+      hideSign();
+      if (messageTimer) clearInterval(messageTimer);
+      if (pulseTimer) clearInterval(pulseTimer);
+    }, SIGN_AUTO_HIDE);
   }, SIGN_DELAY);
 
   // Close button persists for 1 day
@@ -2176,15 +2250,117 @@ if (row && scroller && text){
       hideSign();
       localStorage.setItem(HANGING_SIGN_KEY, String(Date.now()));
       if (autoTimer) { clearTimeout(autoTimer); autoTimer = 0; }
+      if (messageTimer) { clearInterval(messageTimer); messageTimer = 0; }
+      if (pulseTimer) { clearInterval(pulseTimer); pulseTimer = 0; }
     });
   }
 
-  // Optional: clicking the CTA also hides it (no persistence)
+  // Enhanced CTA click behavior
   const cta = sign.querySelector('.hs-body');
   if (cta){
-    cta.addEventListener('click', ()=>{ hideSign(); });
+    cta.addEventListener('click', ()=>{ 
+      hideSign();
+      // Add celebration effect before navigation
+      showCelebrationEffect();
+    });
   }
 })();
+
+// Sound effects for enhanced amusement
+function playEntranceSound() {
+  try {
+    // Create a simple audio context for a cheerful notification sound
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    // Cheerful bell-like sound
+    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+    oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
+    
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.3);
+  } catch (e) {
+    // Fail silently if audio context not supported
+  }
+}
+
+function playTicketSound() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    // Excited "ding" sound for ticket clicks
+    oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.05);
+    
+    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+    
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.2);
+  } catch (e) {
+    // Fail silently
+  }
+}
+
+function showCelebrationEffect() {
+  // Create temporary celebration elements
+  const celebration = document.createElement('div');
+  celebration.style.cssText = `
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 9999;
+  `;
+  
+  // Add confetti-like elements
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.textContent = ['🎉', '🎊', '🎈', '🎪', '🔥'][Math.floor(Math.random() * 5)];
+    particle.style.cssText = `
+      position: absolute;
+      font-size: ${Math.random() * 20 + 15}px;
+      left: ${Math.random() * 100}%;
+      top: -20px;
+      animation: fall 2s linear forwards;
+      animation-delay: ${Math.random() * 0.5}s;
+    `;
+    celebration.appendChild(particle);
+  }
+  
+  document.body.appendChild(celebration);
+  
+  // Clean up after animation
+  setTimeout(() => {
+    if (celebration.parentNode) {
+      celebration.parentNode.removeChild(celebration);
+    }
+  }, 3000);
+}
+
+// Add CSS for celebration animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fall {
+    to {
+      transform: translateY(100vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+`;
+document.head.appendChild(style);
 
 // Pricing Calculator Modal (homepage only)
 document.addEventListener('DOMContentLoaded', function() {

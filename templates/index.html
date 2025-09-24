@@ -45,13 +45,13 @@
   </div>
   
 
-  <!-- Hanging promo sign -->
+  <!-- Enhanced Hanging promo sign -->
   <div id="hang-sign" class="hang-sign" aria-hidden="true">
-    <a href="{% url 'pw_website:events' %}#upcoming" class="hs-body">
+    <a href="{% url 'pw_website:events' %}#upcoming" class="hs-body" onclick="playTicketSound()">
       <img src="{% static 'img/tr_party1_logo.png' %}" alt="Palmwine Merchants Party" class="hs-logo" />
       <div class="hs-text">
         <strong>Next Bush Party</strong>
-        <span>Tap to get tickets</span>
+        <span>GET TICKETS NOW!</span>
       </div>
     </a>
     <button class="hs-close" aria-label="Close">×</button>

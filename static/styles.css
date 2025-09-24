@@ -161,6 +161,51 @@ img{max-width:100%;height:auto;display:block}
 .site-nav a[aria-current="page"]::after{transform:scaleX(1);background:linear-gradient(100deg,var(--flame),var(--sun))}
 .site-nav a.cta{background:linear-gradient(135deg,var(--flame),#ff7a4f);color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 8px 18px rgba(255,87,51,.28);transition:transform .15s ease, box-shadow .2s ease, filter .2s ease}
 .site-nav a.cta:hover{filter:brightness(1.05);box-shadow:0 10px 26px rgba(255,87,51,.36);transform:translateY(-1px)}
+
+/* Enhanced Get Tickets button in navigation */
+.site-nav a.nav-tickets{
+  background:linear-gradient(135deg, #ff3e1f, #ff6b47, #ffaa47);
+  background-size: 200% 200%;
+  color:#fff;
+  padding:12px 16px;
+  border-radius:12px;
+  font-weight:900;
+  font-size:0.9rem;
+  letter-spacing:0.5px;
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow:0 8px 20px rgba(255,62,31,.35), 
+             0 0 20px rgba(255,62,31,0.2),
+             inset 0 1px 0 rgba(255,255,255,0.3);
+  animation: navTicketPulse 3s ease-in-out infinite, navGradientShift 4s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.site-nav a.nav-tickets::before{
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s ease;
+}
+
+.site-nav a.nav-tickets:hover{
+  filter:brightness(1.1) saturate(1.2);
+  box-shadow:0 12px 30px rgba(255,62,31,.45), 
+             0 0 30px rgba(255,62,31,0.4);
+  transform:translateY(-2px) scale(1.02);
+}
+
+.site-nav a.nav-tickets:hover::before{
+  left: 100%;
+}
+
+.site-nav a.nav-tickets i{
+  margin-right: 6px;
+  animation: ticketSpin 2s ease-in-out infinite;
+}
+
 .site-nav #tickets-top{color:var(--flame)}
 
 .nav-toggle{display:none;border:0;background:transparent;font-size:26px}
@@ -1474,6 +1519,23 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   .nav-toggle{display:block;color:var(--teal)}
   .site-nav{position:fixed;inset:60px 10px auto 10px;right:10px;background-color: linear-gradient(transparent 55%, rgba(0,0,0,.28));background:black; border-radius:12px;box-shadow:var(--shadow);padding:12px;display:none;flex-direction:column;transform:translateY(-8px);opacity:0;transition:transform .18s ease, opacity .18s ease}
   .site-nav.open{display:flex;transform:translateY(0);opacity:1}
+  
+  /* Enhanced mobile tickets button */
+  .site-nav a.nav-tickets{
+    margin-top: 8px;
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-weight: 900;
+    text-align: center;
+    border-radius: 15px;
+    animation: navTicketPulse 2s ease-in-out infinite, navGradientShift 3s ease-in-out infinite;
+    box-shadow:0 10px 25px rgba(255,62,31,.4), 
+               0 0 25px rgba(255,62,31,0.3);
+  }
+  
+  .site-nav a.nav-tickets:hover{
+    transform: scale(1.05);
+  }
 }
 
 /* Small phones */
@@ -1560,7 +1622,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   .invoice .form-note{ position:relative; z-index:1 }
 }
 
-/* Hanging promo sign */
+/* Enhanced Hanging promo sign with amusement factor */
 .hang-sign{
   position:fixed; top:12px; right:14px; left:auto;
   transform:none;
@@ -1571,11 +1633,28 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 .hang-sign.visible{
   opacity:1;
   pointer-events:auto;
+  animation: signEntrance 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
+
+/* Add sparkle effect around the sign */
 .hang-sign::before{
-  /* Disable CSS rope — image already contains rope */
-  content:""; display:none;
+  content:"✨";
+  position:absolute;
+  top:-20px; right:-20px;
+  font-size:24px;
+  animation: sparkle 2s infinite, float 3s ease-in-out infinite;
+  z-index:1;
 }
+
+.hang-sign::after{
+  content:"🎫";
+  position:absolute;
+  top:-15px; left:-25px;
+  font-size:20px;
+  animation: sparkle 2.5s infinite 0.5s, float 3.5s ease-in-out infinite 0.7s;
+  z-index:1;
+}
+
 .hang-sign .hs-body{
   display:flex; flex-direction:column; align-items:center; gap:3px;
   background:transparent; color:inherit; text-decoration:none;
@@ -1584,52 +1663,205 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   transform-origin: top center;
   width:max-content;
   position:relative; cursor:pointer;
+  transition: transform 0.3s ease, filter 0.3s ease;
 }
-/* Only the image drops in */
+
+.hang-sign .hs-body:hover{
+  transform: scale(1.05);
+  filter: brightness(1.1) saturate(1.2);
+}
+
+/* Enhanced image with glow effect */
 .hang-sign .hs-logo{
-  width:220px; height:auto; border-radius:0; box-shadow:none;
-  /* Drop-shadow follows PNG transparency; looks cleaner than a box shadow */
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.18));
+  width:220px; height:auto; border-radius:0; 
+  /* Enhanced drop shadow with glow */
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.18)) 
+          drop-shadow(0 0 20px rgba(255, 223, 112, 0.3))
+          drop-shadow(0 0 40px rgba(255, 62, 31, 0.2));
   transform:translateY(-140%);
   transition:transform .6s cubic-bezier(.2,.8,.2,1), filter .25s ease;
   transform-origin:top center;
 }
-.hang-sign.visible .hs-logo{ transform:translateY(0); animation:hsSwing 3.2s ease-in-out infinite; }
 
-/* Tiny caption chip to indicate it's clickable */
+.hang-sign.visible .hs-logo{ 
+  transform:translateY(0); 
+  animation:enhancedSwing 3.2s ease-in-out infinite, glow 4s ease-in-out infinite alternate;
+}
+
+/* Enhanced bouncy call-to-action chip with pulsing effect */
 .hang-sign .hs-text{
   position:absolute; right:4px; top:calc(100% + 4px);
   display:inline-flex; align-items:center; gap:6px;
-  padding:6px 10px; border-radius:999px;
-  background:rgba(255, 0, 0, 0.788); color:#fff;
-  box-shadow:0 6px 16px rgba(0,0,0,.18);
-  font-weight:800; font-size:.75rem; letter-spacing:.2px; line-height:1;
-  pointer-events:none; /* keep clicks on the image/link */
-  opacity:0; transform:translateY(-4px);
+  padding:8px 14px; border-radius:999px;
+  background:linear-gradient(45deg, #ff3e1f, #ff6b47, #ff3e1f);
+  background-size: 200% 200%;
+  color:#fff; border: 2px solid #fff;
+  box-shadow:0 6px 20px rgba(255, 62, 31, 0.4), 
+             0 0 30px rgba(255, 62, 31, 0.3),
+             inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  font-weight:900; font-size:.8rem; letter-spacing:.3px; line-height:1;
+  pointer-events:none;
+  opacity:0; transform:translateY(-4px) scale(0.8);
   transition:opacity .25s ease .18s, transform .25s ease .18s;
-}
-.hang-sign.visible .hs-text{ opacity:1; transform:translateY(0); }
-/* Hide the large title, keep only the short call-to-action */
-.hang-sign .hs-text strong{ display:none; }
-.hang-sign .hs-text span{ color:#fff; font-weight:800; font-size:.75rem; white-space:nowrap; }
-.hang-sign .hs-close{
-  position:absolute; top:-10px; right:-10px;
-  width:28px; height:28px; border-radius:50%;
-  background:#fff; border:1px solid #eee; box-shadow:var(--shadow);
-  font-size:18px; line-height:1; cursor:pointer; color:#333;
+  animation: gradientShift 2s ease-in-out infinite, pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes hsSwing{
+.hang-sign.visible .hs-text{ 
+  opacity:1; 
+  transform:translateY(0) scale(1);
+  animation: gradientShift 2s ease-in-out infinite, 
+             pulse 1.5s ease-in-out infinite,
+             bounce 0.6s ease-out 0.8s;
+}
+
+/* Hide the large title, enhance the call-to-action */
+.hang-sign .hs-text strong{ display:none; }
+.hang-sign .hs-text span{ 
+  color:#fff; 
+  font-weight:900; 
+  font-size:.8rem; 
+  white-space:nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Add ticket emoji before text */
+.hang-sign .hs-text span::before{
+  content:"🎟️ ";
+  margin-right:4px;
+}
+
+/* Enhanced close button */
+.hang-sign .hs-close{
+  position:absolute; top:-12px; right:-12px;
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg, #fff, #f0f0f0);
+  border:2px solid #ff3e1f; 
+  box-shadow:0 4px 12px rgba(0,0,0,0.15), 0 0 10px rgba(255, 62, 31, 0.3);
+  font-size:18px; line-height:1; cursor:pointer; color:#ff3e1f;
+  font-weight:bold;
+  transition: all 0.2s ease;
+}
+
+.hang-sign .hs-close:hover{
+  transform: scale(1.1);
+  background:linear-gradient(135deg, #ff3e1f, #ff6b47);
+  color:#fff;
+}
+
+/* Enhanced animation keyframes for the hanging sign */
+@keyframes enhancedSwing{
+  0%{transform:rotate(0deg) translateY(0)}
+  15%{transform:rotate(2deg) translateY(-2px)}
+  30%{transform:rotate(0deg) translateY(0)}
+  45%{transform:rotate(-2deg) translateY(-1px)}
+  60%{transform:rotate(0deg) translateY(0)}
+  75%{transform:rotate(1deg) translateY(-1px)}
+  100%{transform:rotate(0deg) translateY(0)}
+}
+
+@keyframes glow{
+  0%{filter: drop-shadow(0 8px 18px rgba(0,0,0,.18)) 
+          drop-shadow(0 0 20px rgba(255, 223, 112, 0.3))
+          drop-shadow(0 0 40px rgba(255, 62, 31, 0.2))}
+  100%{filter: drop-shadow(0 8px 18px rgba(0,0,0,.18)) 
+          drop-shadow(0 0 30px rgba(255, 223, 112, 0.6))
+          drop-shadow(0 0 60px rgba(255, 62, 31, 0.4))}
+}
+
+@keyframes sparkle{
+  0%, 100%{opacity:1; transform:scale(1) rotate(0deg)}
+  25%{opacity:0.7; transform:scale(1.2) rotate(90deg)}
+  50%{opacity:1; transform:scale(0.8) rotate(180deg)}
+  75%{opacity:0.8; transform:scale(1.1) rotate(270deg)}
+}
+
+@keyframes float{
+  0%, 100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+
+@keyframes pulse{
+  0%, 100%{transform:scale(1)}
+  50%{transform:scale(1.05)}
+}
+
+@keyframes gradientShift{
+  0%{background-position: 0% 0%}
+  50%{background-position: 100% 100%}
+  100%{background-position: 0% 0%}
+}
+
+@keyframes bounce{
+  0%{transform:translateY(0) scale(1)}
+  30%{transform:translateY(-8px) scale(1.05)}
+  50%{transform:translateY(0) scale(1)}
+  70%{transform:translateY(-4px) scale(1.02)}
+  100%{transform:translateY(0) scale(1)}
+}
+
+@keyframes signEntrance{
+  0%{opacity:0; transform:translateY(-100px) rotate(-10deg) scale(0.5)}
+  60%{opacity:1; transform:translateY(10px) rotate(2deg) scale(1.05)}
+  100%{opacity:1; transform:translateY(0) rotate(0deg) scale(1)}
+}
+
+@keyframes attentionPulse{
+  0%, 100%{transform:scale(1)}
+  10%{transform:scale(1.1)}
+  20%{transform:scale(1)}
+  30%{transform:scale(1.05)}
+  40%{transform:scale(1)}
+}
+
+@keyframes textGlow{
+  0%, 100%{text-shadow: 0 1px 2px rgba(0,0,0,0.3)}
+  50%{text-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,62,31,0.6)}
+}
+
+/* Navigation ticket button animations */
+@keyframes navTicketPulse{
+  0%, 100%{transform:scale(1)}
+  50%{transform:scale(1.03)}
+}
+
+@keyframes navGradientShift{
+  0%{background-position: 0% 0%}
+  50%{background-position: 100% 100%}
+  100%{background-position: 0% 0%}
+}
+
+@keyframes ticketSpin{
   0%{transform:rotate(0deg)}
-  25%{transform:rotate(3deg)}
+  25%{transform:rotate(5deg)}
   50%{transform:rotate(0deg)}
-  75%{transform:rotate(-3deg)}
+  75%{transform:rotate(-5deg)}
   100%{transform:rotate(0deg)}
 }
 
 @media (max-width:600px){
   .hang-sign{ top:10px; right:10px; }
-  .hang-sign .hs-logo{ width:72px; }
+  .hang-sign .hs-logo{ width:180px; } /* Larger on mobile for better visibility */
+  .hang-sign .hs-text{ 
+    font-size:.7rem; 
+    padding:6px 12px;
+    right:2px; 
+  }
+  .hang-sign::before{ 
+    font-size:20px; 
+    top:-15px; right:-15px; 
+  }
+  .hang-sign::after{ 
+    font-size:16px; 
+    top:-12px; left:-20px; 
+  }
+}
+
+@media (max-width:480px){
+  .hang-sign .hs-logo{ width:160px; }
+  .hang-sign .hs-text{ 
+    font-size:.65rem; 
+    padding:5px 10px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce){
