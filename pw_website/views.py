@@ -78,7 +78,8 @@ def events(request):
     
     context = {
         'events': events,
-        'page_title': 'Events - Palmwine Merchants & Flames'
+        'page_title': 'Events - Palmwine Merchants & Flames',
+        'paystack_public_key': settings.PAYSTACK_PUBLIC_KEY
     }
     return render(request, 'events.html', context)
 
@@ -86,7 +87,8 @@ def events(request):
 def booking(request):
     """Booking page with quote form"""
     context = {
-        'page_title': 'Book Your Experience - Palmwine Merchants & Flames'
+        'page_title': 'Book Your Experience - Palmwine Merchants & Flames',
+        'paystack_public_key': settings.PAYSTACK_PUBLIC_KEY
     }
     return render(request, 'booking.html', context)
 
