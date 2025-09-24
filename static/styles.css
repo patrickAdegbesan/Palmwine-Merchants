@@ -44,8 +44,8 @@
 }
 
 .radio-label input[type="radio"] {
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid #ddd;
@@ -205,12 +205,12 @@ img{max-width:100%;height:auto;display:block}
 .tagline{font-size:clamp(1.1rem,2.2vw,1.4rem);margin:0 0 28px;color:rgba(255,255,255,.95);text-shadow:0 2px 8px rgba(0,0,0,.4);font-weight:500;max-width:680px;margin-left:auto;margin-right:auto;line-height:1.5}
 .hero-ctas{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:680px;margin:0 auto;padding:0 16px}
   .badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;font-weight:700;font-size:0.9em;
-    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;backdrop-filter:blur(4px)}
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
   .badge i{color:var(--sun);font-size:1.1em}
   /* Local sub-navigation (About page) */
   .subnav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px auto 0}
   .subnav a{color:#fff;text-decoration:none;font-weight:700;border-radius:20px;padding:6px 14px;font-size:0.95em;
-    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(4px);transition:all 0.2s ease}
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);transition:all 0.2s ease}
   .subnav a:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
   /* Verification Page Styles */
 .qr-scanner {
@@ -340,7 +340,7 @@ img{max-width:100%;height:auto;display:block}
   .btn.primary:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(255,87,51,.5);background:linear-gradient(135deg,#ff4500 0%,var(--flame) 50%,var(--sun) 100%)}
   .btn.secondary{background:linear-gradient(135deg,var(--teal) 0%,var(--sea) 100%);color:#fff;box-shadow:0 8px 24px rgba(14,201,201,.3);text-shadow:0 1px 2px rgba(0,0,0,.15)}
   .btn.secondary:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(14,201,201,.4);background:linear-gradient(135deg,#0ea5a5 0%,var(--teal) 100%)}
-  .btn.ghost{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.6);backdrop-filter:blur(8px)}
+  .btn.ghost{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.6);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
   .btn.ghost:hover{background:rgba(255,255,255,.25);border-color:#fff;transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,255,255,.1)}
   .btn.accent{background:linear-gradient(135deg,var(--leaf) 0%,#1e8f55 100%);color:#fff;box-shadow:0 8px 24px rgba(34,160,95,.35);text-shadow:0 1px 2px rgba(0,0,0,.15)}
   .btn.accent:hover{background:linear-gradient(135deg,#1e8f55 0%,var(--leaf) 100%);transform:translateY(-3px);box-shadow:0 12px 32px rgba(34,160,95,.45)}
@@ -559,7 +559,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 .btn.secondary:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(14,201,201,.4);background:linear-gradient(135deg,#0ea5a5 0%,var(--teal) 100%)}
 .btn.accent{background:linear-gradient(135deg,var(--leaf) 0%,#1e8f55 100%);color:#fff;box-shadow:0 8px 24px rgba(34,160,95,.35);text-shadow:0 1px 2px rgba(0,0,0,.15);flex:1 1 40%;min-width:160px;max-width:320px;padding:12px 16px;font-weight:600;text-align:center;border-radius:12px;transition:all 0.3s ease;overflow:hidden;text-overflow:ellipsis}
 .btn.accent:hover{background:linear-gradient(135deg,#1e8f55 0%,var(--leaf) 100%);transform:translateY(-3px);box-shadow:0 12px 32px rgba(34,160,95,.45)}
-.btn.ghost{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.6);backdrop-filter:blur(8px);flex:1 1 40%;min-width:160px;max-width:320px;padding:12px 16px;font-weight:600;text-align:center;border-radius:12px;transition:all 0.3s ease;overflow:hidden;text-overflow:ellipsis}
+.btn.ghost{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.6);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);flex:1 1 40%;min-width:160px;max-width:320px;padding:12px 16px;font-weight:600;text-align:center;border-radius:12px;transition:all 0.3s ease;overflow:hidden;text-overflow:ellipsis}
 .btn.ghost:hover{background:rgba(255,255,255,.25);border-color:#fff;transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,255,255,.1)}
 
 /* Button row utility */
@@ -587,7 +587,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 .modal.show{display:flex}
 .modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5)}
 .modal-panel{position:relative;z-index:1;background:#101010;color:#fff;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.35);max-width:760px;width:94vw;max-height:92vh;display:flex;flex-direction:column;overflow:auto;border:1px solid rgba(255,255,255,.08)}
-.modal-header{position:sticky;top:0;z-index:2;padding:16px 18px;background:linear-gradient(135deg, rgba(14,201,201,.22), rgba(255,223,112,.22));backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.12)}
+.modal-header{position:sticky;top:0;z-index:2;padding:16px 18px;background:linear-gradient(135deg, rgba(14,201,201,.22), rgba(255,223,112,.22));-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.12)}
 .modal-header h3{margin:0 0 4px;color:#fff}
 .modal-close{position:absolute;top:8px;right:10px;background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer;padding:6px;border-radius:8px}
 .modal-close:hover{background:rgba(255,255,255,.12)}
@@ -842,7 +842,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   display:flex;gap:16px;justify-content:center;margin:1.5rem 0;flex-wrap:wrap
 }
 .feature{
-  background:rgba(255,255,255,0.2);padding:8px 12px;border-radius:8px;font-size:0.9rem;backdrop-filter:blur(4px)
+  background:rgba(255,255,255,0.2);padding:8px 12px;border-radius:8px;font-size:0.9rem;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)
 }
 
 /* Menu Extras */
@@ -1297,7 +1297,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   margin:1rem 0
 }
 .urgency-note{
-  background:rgba(255,255,255,0.2);padding:8px 16px;border-radius:12px;font-size:0.9rem;font-weight:600;backdrop-filter:blur(4px)
+  background:rgba(255,255,255,0.2);padding:8px 16px;border-radius:12px;font-size:0.9rem;font-weight:600;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)
 }
 .cta-buttons{
   display:flex;gap:1rem;justify-content:center;margin-top:2rem;flex-wrap:wrap
@@ -1504,7 +1504,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 .lb-img{display:block;max-width:100%;max-height:86vh;width:auto;height:auto;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);opacity:1;transition:opacity .25s ease}
 .lb-img.is-fading{opacity:0}
 .lb-cap{position:absolute;left:16px;right:16px;bottom:16px;color:#fff;text-align:center;font-weight:800;text-shadow:0 2px 10px rgba(0,0,0,.6);background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.35));padding:10px 12px;border-radius:10px}
-.lb-close,.lb-prev,.lb-next{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.lb-close,.lb-prev,.lb-next{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);box-shadow:0 8px 22px rgba(0,0,0,.35)}
 .lb-close{top:20px;right:20px;font-size:26px;line-height:1}
 .lb-prev{left:20px}
 .lb-next{right:20px}
@@ -1733,6 +1733,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
