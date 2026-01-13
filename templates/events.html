@@ -69,6 +69,29 @@
     top: 12px;
     z-index: 3;
 }
+
+/* Ticket availability styling */
+.tickets-info .available {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.tickets-info .sold-out {
+    color: #dc3545;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.sold-out-btn {
+    background-color: #6c757d !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.sold-out-btn:hover {
+    background-color: #6c757d !important;
+    opacity: 0.7;
+}
 </style>
 {% endblock %}
 
@@ -76,11 +99,11 @@
 
 
   <!-- Enhanced Hanging promo sign -->
-  <div id="hang-sign" class="hang-sign" aria-hidden="true">
+  <div id="hang-sign" class="hang-sign" aria-hidden="true" style="display:{% if events %}flex{% else %}none{% endif %}">
     <a href="#upcoming" class="hs-body" onclick="playTicketSound(); document.querySelector('.buy-ticket')?.scrollIntoView({behavior:'smooth'})">
       <img src="{% static 'img/tr_party1_logo.png' %}" alt="Palmwine Merchants Party" class="hs-logo" />
       <div class="hs-text">
-        <strong>Next Bush Party</strong>
+        <strong>Next Event</strong>
         <span>GET TICKETS NOW!</span>
       </div>
     </a>
@@ -155,44 +178,105 @@
         <h2>Upcoming Events</h2>
         <p class="lead">See what's next. Grab tickets early — limited slots.</p> <br>
         <div class="grid cards">
+          {% for event in events %}
           <div class="card">
-            <h3>Bush Party — October Edition</h3>
-            <p><strong>Date:</strong> Sun, 19 Oct 2025 • 4pm</p>
-            <p><strong>Location:</strong> Lagos beachfront (details after purchase)</p>
-            <p>Beach vibes, suya flames, palmwine cocktails, and DJs till late.</p>
-            <p><strong>Regular: ₦5,000</strong><br><em>(15% off group of 5)</em></p>
-            <p><strong>Premium: ₦100,000</strong><br><em>(Seat Reservation for 5, Cocktail refill and a platter)</em></p>
+            <h3>{{ event.name }}</h3>
+            <p><strong>Date:</strong> {{ event.date|date:"D, d M Y • g:ia" }}</p>
+            <p><strong>Location:</strong> {{ event.location }}</p>
+            <p>{{ event.description|truncatewords:20 }}</p>
+            <div class="tickets-info">
+                {% if event.available_ticket_types %}
+                    {% for ticket_type in event.available_ticket_types %}
+                        <p><strong>{{ ticket_type.type|title }}: ₦{{ ticket_type.price|floatformat:0 }}</strong> 
+                        <span class="{% if ticket_type.available > 0 %}available{% else %}sold-out{% endif %}">
+                            ({{ ticket_type.available }} available)
+                        </span></p>
+                    {% endfor %}
+                {% else %}
+                    <p><strong>From: ₦{{ event.min_ticket_price|floatformat:0 }}</strong> <span class="sold-out">(No tickets available)</span></p>
+                {% endif %}
+            </div>
+            <p class="tickets-info">
+              <strong>
+                {% if event.tickets_available > 0 %}
+                  <span class="available">{{ event.tickets_available }} tickets remaining</span>
+                {% else %}
+                  <span class="sold-out">SOLD OUT</span>
+                {% endif %}
+              </strong>
+            </p>
             <div class="btn-row">
-              <button type="button" class="btn primary buy-ticket"
-                data-event-id="BUSH-PARTY-OCT-2025"
-                data-event-name="Bush Party — October Edition"
-                data-event-date="Sun, 19 Oct 2025 • 4pm"
-                data-event-location="Lagos beachfront"
-                data-tickets='[{"label":"Regular","price":5000},{"label":"Premium","price":100000}]'>
-                Buy Tickets
+              <button type="button" 
+                class="btn primary buy-ticket{% if event.tickets_available <= 0 %} sold-out-btn{% endif %}"
+                data-event-id="{{ event.id }}"
+                data-event-name="{{ event.name }}"
+                data-event-date="{{ event.date|date:'D, d M Y • g:ia' }}"
+                data-event-location="{{ event.location }}"
+                data-tickets='{{ event.available_ticket_types_json }}'
+                data-available="{{ event.tickets_available }}"
+                {% if event.tickets_available <= 0 %}disabled onclick="showSoldOutMessage()"{% endif %}>
+                {% if event.tickets_available > 0 %}
+                  Buy Tickets
+                {% else %}
+                  SOLD OUT
+                {% endif %}
               </button>
-              <a class="btn secondary" href="https://wa.me/2348039490349?text=Hi%20Palmwine%20Merchants%20—%20I%20have%20a%20question%20about%20the%20upcoming%20event" target="_blank" rel="noopener">WhatsApp</a>
+              <a class="btn secondary" href="https://wa.me/2348039490349?text=Hi%20Palmwine%20Merchants%20—%20I%20have%20a%20question%20about%20{{ event.name|urlencode }}" target="_blank" rel="noopener">WhatsApp</a>
             </div>
           </div>
+          {% empty %}
+          <div class="card" style="grid-column: 1 / -1; text-align: center;">
+            <h3>No Upcoming Events</h3>
+            <p>Check back soon for our next bush party or event announcement.</p>
+          </div>
+          {% endfor %}
         </div>
+        
+        {% if events.has_other_pages %}
+        <div class="pagination" style="text-align: center; margin-top: 2rem;">
+            {% if events.has_previous %}
+                <a class="btn ghost" href="?page={{ events.previous_page_number }}">&laquo; Previous</a>
+            {% endif %}
+            
+            <span class="current" style="margin: 0 1rem;">
+                Page {{ events.number }} of {{ events.paginator.num_pages }}
+            </span>
+            
+            {% if events.has_next %}
+                <a class="btn ghost" href="?page={{ events.next_page_number }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+        {% endif %}
       </div>
     </section>
 
     <section class="ticket-banner corner-leaves" aria-label="Ticket callout">
       <div class="container">
         <div class="ticket-inner">
+          {% if events %}
+          {% with event=events.0 %}
           <div class="ticket-copy">
-            <h3>Join the next Bush Party</h3>
+            <h3>Join the next {{ event.name }}</h3>
             <p>Limited slots. Secure your spot and let's make memories under the palms.</p>
           </div>
           <button type="button" class="btn primary buy-ticket"
-            data-event-id="BUSH-PARTY-OCT-2025"
-            data-event-name="Bush Party — October Edition"
-            data-event-date="Sun, 19 Oct 2025 • 4pm"
-            data-event-location="Lagos beachfront"
-            data-tickets='[{"label":"Regular","price":5000},{"label":"Premium","price":100000}]'>
+            data-event-id="{{ event.id }}"
+            data-event-name="{{ event.name }}"
+            data-event-date="{{ event.date|date:'D, d M Y • g:ia' }}"
+            data-event-location="{{ event.location }}"
+            data-tickets='{{ event.available_ticket_types_json }}'>
             Buy Tickets
           </button>
+          {% endwith %}
+          {% else %}
+          <div class="ticket-copy">
+            <h3>Stay Updated</h3>
+            <p>Our next event will be announced soon. Follow us on social media for updates.</p>
+          </div>
+          <div class="btn-row">
+            <a href="https://instagram.com/palmwinemerchants" target="_blank" rel="noopener" class="btn primary"><i class="fab fa-instagram"></i> Follow on Instagram</a>
+          </div>
+          {% endif %}
         </div>
       </div>
     </section>

@@ -20,7 +20,6 @@ class Event(models.Model):
     date = models.DateTimeField()
     location = models.CharField(max_length=300)
     max_capacity = models.PositiveIntegerField(default=100)
-    price_per_ticket = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
     featured_image = models.ImageField(upload_to='events/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -39,6 +38,42 @@ class Event(models.Model):
     @property
     def tickets_available(self):
         return self.max_capacity - self.tickets_sold
+    
+    @property
+    def available_ticket_types(self):
+        """Get available ticket types with their prices for this event"""
+        from django.db import models
+        ticket_types = self.tickets.values('ticket_type', 'price_per_ticket').annotate(
+            available_count=models.Count('id')
+        ).filter(customer_name='')
+        
+        # Group by ticket type and get the price
+        types_dict = {}
+        for ticket in ticket_types:
+            ticket_type = ticket['ticket_type']
+            if ticket_type not in types_dict:
+                types_dict[ticket_type] = {
+                    'type': ticket_type,
+                    'price': float(ticket['price_per_ticket']),
+                    'available': 0
+                }
+            types_dict[ticket_type]['available'] += ticket['available_count']
+        
+        return list(types_dict.values())
+    
+    @property
+    def min_ticket_price(self):
+        """Get the minimum ticket price for this event"""
+        available_tickets = self.available_ticket_types
+        if available_tickets:
+            return min(ticket['price'] for ticket in available_tickets)
+        return 0
+
+    @property
+    def available_ticket_types_json(self):
+        """Get available ticket types as JSON string for template usage"""
+        import json
+        return json.dumps(self.available_ticket_types)
 
 
 class Booking(models.Model):
@@ -87,11 +122,20 @@ class Booking(models.Model):
 
 
 class Ticket(models.Model):
+    TICKET_TYPES = [
+        ('normal', 'Normal'),
+        ('regular', 'Regular'),
+        ('premium', 'Premium'),
+        ('vip', 'VIP'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ticket_id = models.CharField(max_length=50, unique=True)
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='tickets')
-    customer_name = models.CharField(max_length=200)
-    customer_email = models.EmailField()
+    ticket_type = models.CharField(max_length=10, choices=TICKET_TYPES, default='normal')
+    price_per_ticket = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    customer_name = models.CharField(max_length=200, blank=True)
+    customer_email = models.EmailField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
     quantity = models.PositiveIntegerField(default=1, help_text="Number of tickets purchased")
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2)

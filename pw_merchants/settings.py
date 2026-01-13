@@ -25,7 +25,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-pro
 # Default to True for local development; set DEBUG=False via environment in production
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1') .split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,.vercel.app').split(',')
 
 
 # Application definition
@@ -94,6 +94,11 @@ else:
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
+AUTHENTICATION_BACKENDS = [
+    'pw_website.backends.EmailOrUsernameBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -129,6 +134,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Serve static files from staticfiles directory
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -147,6 +155,7 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = 'DENY'
+    SECURE_SSL_REDIRECT = True
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

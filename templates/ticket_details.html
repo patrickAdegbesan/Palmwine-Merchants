@@ -5,6 +5,140 @@
 
 {% block extra_css %}
 <style>
+/* Professional Notification System */
+.notification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.notification-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 0;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.4s ease-out;
+    overflow: hidden;
+}
+
+.notification-icon {
+    text-align: center;
+    padding: 30px 20px 20px;
+    font-size: 48px;
+}
+
+.notification-icon.success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.notification-icon.error {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+}
+
+.notification-icon.warning {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+}
+
+.notification-icon.info {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+}
+
+.notification-content {
+    padding: 0 30px 20px;
+    text-align: center;
+}
+
+.notification-content h3 {
+    margin: 0 0 15px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+.notification-content p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #666;
+    white-space: pre-line;
+}
+
+.notification-actions {
+    padding: 20px 30px 30px;
+    text-align: center;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.notification-btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.notification-btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.notification-btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8, #6a4190);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+}
+
+.notification-modal.closing {
+    animation: slideOut 0.3s ease-in;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -381,6 +515,22 @@
 {% endblock %}
 
 {% block content %}
+<!-- Custom Notification Modal -->
+<div id="notificationOverlay" class="notification-overlay" style="display: none;">
+    <div id="notificationModal" class="notification-modal">
+        <div class="notification-icon" id="notificationIcon">
+            <!-- Icon will be inserted here -->
+        </div>
+        <div class="notification-content">
+            <h3 id="notificationTitle">Notification</h3>
+            <p id="notificationMessage">Message content goes here</p>
+        </div>
+        <div class="notification-actions">
+            <button class="notification-btn notification-btn-primary" id="notificationOkBtn" onclick="closeNotification()">OK</button>
+        </div>
+    </div>
+</div>
+
 <div class="ticket-container">
     <div class="ticket-wrapper">
         <div class="ticket-card">
@@ -516,7 +666,65 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script>
+<script>// Professional Notification System
+function showNotification(type, title, message) {
+    const overlay = document.getElementById('notificationOverlay');
+    const modal = document.getElementById('notificationModal');
+    const icon = document.getElementById('notificationIcon');
+    const titleEl = document.getElementById('notificationTitle');
+    const messageEl = document.getElementById('notificationMessage');
+    const okBtn = document.getElementById('notificationOkBtn');
+    
+    // Set icon based on type
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    // Reset classes and set new type
+    icon.className = `notification-icon ${type}`;
+    icon.innerHTML = icons[type] || icons.info;
+    
+    // Set content
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    
+    // Show modal
+    overlay.style.display = 'flex';
+    modal.classList.remove('closing');
+    
+    okBtn.onclick = closeNotification;
+}
+
+function closeNotification() {
+    const overlay = document.getElementById('notificationOverlay');
+    const modal = document.getElementById('notificationModal');
+    
+    modal.classList.add('closing');
+    
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        modal.classList.remove('closing');
+    }, 300);
+}
+
+function showSuccess(message, title = 'Success!') {
+    showNotification('success', title, message);
+}
+
+function showError(message, title = 'Error') {
+    showNotification('error', title, message);
+}
+
+function showWarning(message, title = 'Notice') {
+    showNotification('warning', title, message);
+}
+
+function showInfo(message, title = 'Information') {
+    showNotification('info', title, message);
+}
 // Generate QR Code
 document.addEventListener('DOMContentLoaded', function() {
     const ticketCode = '{{ ticket.code|default:"537xxxxxxxxxxxxxxxxxxxxxxxxx6a3" }}';
@@ -642,7 +850,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }).catch(err => {
                 console.error('Delete error', err);
-                alert('Failed to delete ticket. See console for details.');
+                showError('Failed to delete ticket. Please see console for details or try again later.', 'Delete Failed');
                 btn.innerHTML = original;
                 btn.disabled = false;
             });

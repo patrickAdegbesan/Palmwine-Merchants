@@ -36,6 +36,7 @@
 
               <label for="date">Event Date</label>
               <input id="date" name="date" type="date" required />
+              <div id="availability-status" class="availability-status" style="display: none; margin-top: 5px; padding: 8px; border-radius: 6px; font-size: 14px;"></div>
 
               <label for="eventType">Event Type</label>
               <select id="eventType" name="eventType" required>
@@ -154,8 +155,107 @@
 {% block extra_js %}
 <!-- Pre-load Paystack -->
 <script src="https://js.paystack.co/v1/inline.js"></script>
+
+<script>
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Check availability when date changes
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('date');
+    const availabilityStatus = document.getElementById('availability-status');
+    
+    // Set minimum date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.min = tomorrow.toISOString().split('T')[0];
+    
+    dateInput.addEventListener('change', async function() {
+        const selectedDate = this.value;
+        if (!selectedDate) return;
+        
+        availabilityStatus.style.display = 'block';
+        availabilityStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking availability...';
+        availabilityStatus.className = 'availability-status checking';
+        
+        try {
+            const response = await fetch('/api/check-availability/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    event_date: selectedDate
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.available) {
+                availabilityStatus.innerHTML = '<i class="fa-solid fa-check-circle"></i> ' + data.message;
+                availabilityStatus.className = 'availability-status available';
+            } else {
+                availabilityStatus.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> ' + data.message;
+                availabilityStatus.className = 'availability-status unavailable';
+            }
+        } catch (error) {
+            availabilityStatus.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Error checking availability';
+            availabilityStatus.className = 'availability-status error';
+        }
+    });
+});
+</script>
+
 <!-- Add loading indicator styles -->
 <style>
+.availability-status {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.availability-status.checking {
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.availability-status.available {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.availability-status.unavailable {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.availability-status.error {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+}
+
 .loading-overlay {
     display: none;
     position: fixed;
@@ -238,6 +338,48 @@ document.addEventListener('DOMContentLoaded', async function() {
     const loadingText = loadingOverlay.querySelector('.loading-text');
     const originalStartPayment = PaymentHandler.startPayment;
     
+    // Add check availability to the booking form
+    const bookingDateInput = document.getElementById('date');
+    if (bookingDateInput) {
+        bookingDateInput.addEventListener('change', async function() {
+            const date = this.value;
+            if (!date) return;
+            
+            try {
+                // Show checking status
+                const feedbackDiv = this.nextElementSibling && this.nextElementSibling.classList.contains('input-feedback') 
+                    ? this.nextElementSibling 
+                    : document.createElement('div');
+                
+                if (!feedbackDiv.classList.contains('input-feedback')) {
+                    feedbackDiv.className = 'input-feedback mt-1';
+                    feedbackDiv.style.fontSize = '0.85rem';
+                    this.parentNode.insertBefore(feedbackDiv, this.nextSibling);
+                }
+                
+                feedbackDiv.textContent = 'Checking availability...';
+                feedbackDiv.className = 'input-feedback mt-1 text-info';
+                
+                const response = await fetch(`/api/check-availability/?date=${date}`);
+                const data = await response.json();
+                
+                if (data.available) {
+                    feedbackDiv.textContent = 'Date is available!';
+                    feedbackDiv.className = 'input-feedback mt-1 text-success';
+                    this.setCustomValidity('');
+                    document.getElementById('calculate-btn').disabled = false;
+                } else {
+                    feedbackDiv.textContent = data.message || 'Date is unavailable.';
+                    feedbackDiv.className = 'input-feedback mt-1 text-danger';
+                    this.setCustomValidity('Date unavailable');
+                    document.getElementById('calculate-btn').disabled = true;
+                }
+            } catch (error) {
+                console.error('Error checking availability:', error);
+            }
+        });
+    }
+
     PaymentHandler.startPayment = async function(type) {
         try {
             loadingOverlay.style.display = 'flex';

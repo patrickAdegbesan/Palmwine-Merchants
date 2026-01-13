@@ -146,15 +146,38 @@
     <section class="ticket-banner" aria-label="Primary callout">
       <div class="container">
         <div class="ticket-inner">
+          {% if featured_events %}
+          {% with event=featured_events.0 %}
           <div class="ticket-copy">
-            <h3>🚨 Next Bush Party: Oct 19th, 2025</h3>
-            <p><strong>Regular: ₦5,000</strong><br><em>(15% off group of 5)</em></p>
-            <p><strong>Premium: ₦100,000</strong><br><em>(Seat Reservation for 5, Cocktail refill and a platter)</em></p>
+            <h3>🚨 Next Event: {{ event.name }}</h3>
+            <p><strong>Date:</strong> {{ event.date|date:"D, d M Y" }}</p>
+            {% if event.available_ticket_types %}
+              <p><strong>From: ₦{{ event.min_ticket_price|floatformat:0 }}</strong></p>
+            {% else %}
+              <p><strong>Tickets coming soon!</strong></p>
+            {% endif %}
           </div>
           <div class="btn-row">
-            <a class="btn primary" href="{% url 'pw_website:events' %}#upcoming">🎫 Buy Tickets</a>
-            <a class="btn secondary" href="https://wa.me/2348039490349?text=Hi%20—%20I%20want%20VIP%20table%20for%20Bush%20Party" target="_blank" rel="noopener">Book VIP Table</a>
+            <button type="button" class="btn primary buy-ticket"
+                data-event-id="{{ event.id }}"
+                data-event-name="{{ event.name }}"
+                data-event-date="{{ event.date|date:'D, d M Y • g:ia' }}"
+                data-event-location="{{ event.location }}"
+                data-tickets='{{ event.available_ticket_types_json }}'>
+                🎫 Buy Tickets
+            </button>
+            <a class="btn secondary" href="https://wa.me/2348039490349?text=Hi%20—%20I%20want%20VIP%20table%20for%20{{ event.name|urlencode }}" target="_blank" rel="noopener">Book VIP Table</a>
           </div>
+          {% endwith %}
+          {% else %}
+          <div class="ticket-copy">
+            <h3>More Events Coming Soon</h3>
+            <p>Stay tuned for our next bush party announcement.</p>
+          </div>
+          <div class="btn-row">
+            <a class="btn primary" href="{% url 'pw_website:events' %}">View Past Events</a>
+          </div>
+          {% endif %}
         </div>
       </div>
     </section>

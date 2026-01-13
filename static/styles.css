@@ -2149,7 +2149,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
+  max-width: 900px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
@@ -2619,25 +2619,25 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
   margin-bottom: 2rem;
   padding: 0.5rem;
 }
 
 .product-card {
   border: 2px solid #eee;
-  border-radius: 16px;
-  padding: 1.25rem;
+  border-radius: 12px;
+  padding: 0.75rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .product-card:hover {
@@ -2648,8 +2648,8 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 
 @media (max-width: 768px) {
   .product-card {
-    padding: 1rem;
-    gap: 0.75rem;
+    padding: 0.75rem;
+    gap: 0.5rem;
   }
   
   .product-card:hover {
@@ -2659,18 +2659,23 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   .product-image {
     border-radius: 10px;
   }
+  
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {
   .product-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
     padding: 0.25rem;
   }
   
   .product-card {
-    padding: 0.75rem;
-    gap: 0.5rem;
+    padding: 0.5rem;
+    gap: 0.3rem;
   }
   
   .product-image {
@@ -2708,7 +2713,7 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
 .product-card h5 {
   margin: 0;
   color: var(--ink);
-  font-size: 1.2rem;
+  font-size: 0.95rem;
 }
 
 @media (max-width: 768px) {
@@ -2727,13 +2732,13 @@ h2:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom
   font-weight: 700;
   color: var(--leaf);
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
 }
 
 .product-card small {
   color: var(--muted);
-  font-size: 0.85rem;
-  line-height: 1.4;
+  font-size: 0.75rem;
+  line-height: 1.3;
 }
 
 @media (max-width: 768px) {

@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/verify-ticket/', views.verify_ticket_api, name='verify_ticket_api'),
     path('api/inquiry/', views.submit_inquiry, name='submit_inquiry'),
     path('api/booking-quote/', views.create_booking_quote, name='create_booking_quote'),
+    path('api/check-availability/', views.check_availability_api, name='check_availability_api'),
     path('api/download-ticket/<str:code>/', views.download_ticket, name='download_ticket'),
     path('api/verify-payment/', views.verify_paystack_payment, name='verify_paystack_payment'),
     path('api/send-ticket-email/', views.send_ticket_email, name='send_ticket_email'),
@@ -24,6 +25,7 @@ urlpatterns = [
     path('api/events/<uuid:event_id>/', views.events_api, name='event_detail_api'),
     path('api/tickets/', views.tickets_api, name='tickets_api'),
     path('api/tickets/<uuid:ticket_id>/', views.tickets_api, name='ticket_detail_api'),
+    path('api/tickets/create-batch/', views.tickets_create_batch_api, name='tickets_create_batch_api'),
 
     # Authentication URLs
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),

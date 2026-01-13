@@ -6,6 +6,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.core.mail import EmailMessage
+from django.db import models
 from decimal import Decimal, InvalidOperation
 from .models import Event, Booking, Ticket, Payment, Inquiry
 from .ticket_generator import generate_ticket_pdf
@@ -91,6 +92,98 @@ def booking(request):
         'paystack_public_key': settings.PAYSTACK_PUBLIC_KEY
     }
     return render(request, 'booking.html', context)
+
+
+def check_availability(request):
+    """Check if a date is available for booking"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            event_date = data.get('event_date')
+            
+            if not event_date:
+                return JsonResponse({'available': False, 'message': 'Date is required'})
+            
+            # Convert string date to datetime object
+            requested_date = datetime.strptime(event_date, '%Y-%m-%d').date()
+            
+            # Check if date is in the past
+            if requested_date <= timezone.now().date():
+                return JsonResponse({
+                    'available': False, 
+                    'message': 'Please select a future date'
+                })
+            
+            # Check if we already have bookings for this date
+            existing_bookings = Booking.objects.filter(
+                event_date=requested_date,
+                status__in=['confirmed', 'pending']
+            ).count()
+            
+            # Limit to 2 bookings per day (you can adjust this)
+            max_bookings_per_day = 2
+            
+            if existing_bookings >= max_bookings_per_day:
+                return JsonResponse({
+                    'available': False,
+                    'message': f'We are currently busy for {requested_date.strftime("%B %d, %Y")}. Please try another day.'
+                })
+            
+            return JsonResponse({
+                'available': True,
+                'message': f'{requested_date.strftime("%B %d, %Y")} is available for booking!'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'available': False, 'message': 'Error checking availability'})
+    
+    return JsonResponse({'available': False, 'message': 'Invalid request method'})
+
+
+def check_availability(request):
+    """Check if a date is available for booking"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            event_date = data.get('event_date')
+            
+            if not event_date:
+                return JsonResponse({'available': False, 'message': 'Date is required'})
+            
+            # Convert string date to datetime object
+            requested_date = datetime.strptime(event_date, '%Y-%m-%d').date()
+            
+            # Check if date is in the past
+            if requested_date <= timezone.now().date():
+                return JsonResponse({
+                    'available': False, 
+                    'message': 'Please select a future date'
+                })
+            
+            # Check if we already have bookings for this date
+            existing_bookings = Booking.objects.filter(
+                event_date=requested_date,
+                status__in=['confirmed', 'pending']
+            ).count()
+            
+            # Limit to 2 bookings per day (you can adjust this)
+            max_bookings_per_day = 2
+            
+            if existing_bookings >= max_bookings_per_day:
+                return JsonResponse({
+                    'available': False,
+                    'message': f'We are currently busy for {requested_date.strftime("%B %d, %Y")}. Please try another day.'
+                })
+            
+            return JsonResponse({
+                'available': True,
+                'message': f'{requested_date.strftime("%B %d, %Y")} is available for booking!'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'available': False, 'message': 'Error checking availability'})
+    
+    return JsonResponse({'available': False, 'message': 'Invalid request method'})
 
 
 def contact(request):
@@ -523,8 +616,11 @@ def events_api(request, event_id=None):
                 'event_type': event.event_type,
                 'date': event.date.isoformat(),
                 'location': event.location,
-                'price_per_ticket': float(event.price_per_ticket),
+                'max_capacity': event.max_capacity,
                 'tickets_available': event.tickets_available,
+                # Backward-compatible "price" for the UI: lowest available ticket price
+                'min_ticket_price': float(event.min_ticket_price),
+                'price_per_ticket': float(event.min_ticket_price),
                 'featured_image': event.featured_image.url if event.featured_image else None
             }
             return JsonResponse(data)
@@ -538,8 +634,10 @@ def events_api(request, event_id=None):
                 'date': ev.date.isoformat(),
                 'location': ev.location,
                 'max_capacity': ev.max_capacity,
-                'price_per_ticket': float(ev.price_per_ticket),
                 'tickets_available': ev.tickets_available,
+                # Backward-compatible "price" for the UI: lowest available ticket price
+                'min_ticket_price': float(ev.min_ticket_price),
+                'price_per_ticket': float(ev.min_ticket_price),
                 'featured_image': ev.featured_image.url if ev.featured_image else None
             } for ev in events]
             return JsonResponse(events_data, safe=False)
@@ -553,8 +651,7 @@ def events_api(request, event_id=None):
                 event_type=data['event_type'],
                 date=datetime.fromisoformat(data['date']),
                 location=data['location'],
-                max_capacity=data['max_capacity'],
-                price_per_ticket=data['price_per_ticket']
+                max_capacity=data['max_capacity']
             )
             return JsonResponse({
                 'success': True,
@@ -579,7 +676,6 @@ def events_api(request, event_id=None):
                 event.date = datetime.fromisoformat(data['date'])
             event.location = data.get('location', event.location)
             event.max_capacity = data.get('max_capacity', event.max_capacity)
-            event.price_per_ticket = data.get('price_per_ticket', event.price_per_ticket)
             event.is_active = data.get('is_active', event.is_active)
             
             event.save()
@@ -611,6 +707,180 @@ def events_api(request, event_id=None):
                 'success': False,
                 'message': 'Event not found'
             }, status=404)
+
+
+@csrf_exempt
+def tickets_create_batch_api(request):
+    """API endpoint for creating multiple tickets at once"""
+    if request.method != "POST":
+        return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        print(f"DEBUG: Received ticket creation data: {data}")  # Debug logging
+        
+        # Validate required fields
+        required_fields = ['event_id', 'ticket_type', 'price', 'quantity']
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return JsonResponse({
+                'success': False,
+                'message': f'Missing required fields: {", ".join(missing_fields)}'
+            }, status=400)
+        
+        # Try to get the event
+        try:
+            event = Event.objects.get(id=data['event_id'])
+            print(f"DEBUG: Found event: {event.name} (ID: {event.id})")
+        except Event.DoesNotExist:
+            print(f"DEBUG: Event not found with ID: {data['event_id']}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Event not found with ID: {data["event_id"]}'
+            }, status=400)
+        ticket_type = data['ticket_type']
+        price = Decimal(str(data['price']))
+        quantity = int(data['quantity'])
+        
+        # Validate data types
+        if quantity <= 0:
+            return JsonResponse({
+                'success': False,
+                'message': 'Quantity must be greater than 0'
+            }, status=400)
+        
+        if price <= 0:
+            return JsonResponse({
+                'success': False,
+                'message': 'Price must be greater than 0'
+            }, status=400)
+        
+        # Check if there's enough capacity
+        current_tickets = event.tickets.aggregate(total=models.Sum('quantity'))['total'] or 0
+        if current_tickets + quantity > event.max_capacity:
+            return JsonResponse({
+                'success': False,
+                'message': f'Not enough capacity. Only {event.max_capacity - current_tickets} spots remaining.'
+            }, status=400)
+        
+        # Create a single batch ticket entry with the requested quantity
+        ticket_id = f"{event.name[:3].upper()}-{ticket_type[:3].upper()}-{uuid.uuid4().hex[:8].upper()}"
+        total_amount = Decimal(str(quantity)) * price
+        
+        ticket = Ticket.objects.create(
+            ticket_id=ticket_id,
+            event=event,
+            ticket_type=ticket_type,
+            price_per_ticket=price,
+            quantity=quantity,  # Store the full quantity in one ticket record
+            amount_paid=total_amount  # Total amount paid for the batch
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{quantity} {ticket_type} tickets created successfully',
+            'tickets': [{
+                'id': str(ticket.id),
+                'ticket_id': ticket.ticket_id,
+                'ticket_type': ticket.ticket_type,
+                'price_per_ticket': float(ticket.price_per_ticket),
+                'quantity': ticket.quantity
+            }]
+        })
+        
+    except Exception as e:
+        error_message = str(e)
+        print(f"DEBUG: Exception in ticket creation: {error_message}")
+        return JsonResponse({
+            'success': False,
+            'message': error_message
+        }, status=400)
+
+
+def check_availability_api(request):
+    """API endpoint to check if we're available for booking on a specific date"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            event_date = data.get('event_date')
+            
+            if not event_date:
+                return JsonResponse({'available': False, 'message': 'Date is required'})
+            
+            # Convert string date to datetime object
+            requested_date = datetime.strptime(event_date, '%Y-%m-%d').date()
+            
+            # Check if date is in the past
+            if requested_date <= timezone.now().date():
+                return JsonResponse({
+                    'available': False, 
+                    'message': 'Please select a future date'
+                })
+            
+            # Check if we already have bookings for this date
+            existing_bookings = Booking.objects.filter(
+                event_date=requested_date,
+                status__in=['confirmed', 'pending']
+            ).count()
+            
+            # Limit to 2 bookings per day (you can adjust this)
+            max_bookings_per_day = 2
+            
+            if existing_bookings >= max_bookings_per_day:
+                return JsonResponse({
+                    'available': False,
+                    'message': f'We are currently busy for {requested_date.strftime("%B %d, %Y")}. Please try another day.'
+                })
+            
+            return JsonResponse({
+                'available': True,
+                'message': f'{requested_date.strftime("%B %d, %Y")} is available for booking!'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'available': False, 'message': 'Error checking availability'})
+    
+    elif request.method == "GET":
+        try:
+            date_str = request.GET.get('date')
+            if not date_str:
+                return JsonResponse({'available': True, 'message': 'No date specified'})
+            
+            check_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            
+            # Check if there are confirmed bookings or events on that date
+            bookings_on_date = Booking.objects.filter(
+                event_date=check_date,
+                status__in=['confirmed', 'completed']
+            ).count()
+            
+            events_on_date = Event.objects.filter(
+                date__date=check_date,
+                is_active=True
+            ).count()
+            
+            # You can customize this logic - maybe allow multiple small events but not large ones
+            is_available = bookings_on_date == 0 and events_on_date == 0
+            
+            return JsonResponse({
+                'available': is_available,
+                'message': 'Available' if is_available else 'We are currently busy for that day. Please try another date.',
+                'bookings_count': bookings_on_date,
+                'events_count': events_on_date
+            })
+            
+        except ValueError:
+            return JsonResponse({
+                'available': False,
+                'message': 'Invalid date format. Use YYYY-MM-DD.'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'available': False,
+                'message': 'Error checking availability'
+            }, status=500)
+    else:
+        return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
 
 
 def ticket_management(request):
@@ -777,10 +1047,12 @@ def tickets_api(request, ticket_id=None):
                     'date': ticket.event.date.isoformat(),
                     'location': ticket.event.location,
                 } if ticket.event else None,
+                'ticket_type': ticket.ticket_type,
+                'price_per_ticket': float(ticket.price_per_ticket),
                 'customer_name': ticket.customer_name,
                 'customer_email': ticket.customer_email,
                 'customer_phone': ticket.phone,
-                'quantity': 1,  # Default quantity
+                'quantity': ticket.quantity,
                 'amount': float(ticket.amount_paid),
                 'status': 'verified' if ticket.verified else 'unverified',
                 'purchased_at': ticket.purchase_date.isoformat(),
@@ -799,6 +1071,9 @@ def tickets_api(request, ticket_id=None):
                     'date': t.event.date.isoformat(),
                     'location': t.event.location,
                 } if t.event else None,
+                'ticket_type': t.ticket_type,
+                'price_per_ticket': float(t.price_per_ticket),
+                'quantity': t.quantity,
                 'customer_name': t.customer_name,
                 'customer_email': t.customer_email,
                 'verified': t.verified,
@@ -1405,6 +1680,7 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.contrib.auth import update_session_auth_hash
 
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
@@ -1513,6 +1789,9 @@ def password_reset_confirm(request, uidb64, token):
                     user.set_password(password1)
                     user.save()
                     
+                    # Update the session with the new password hash
+                    update_session_auth_hash(request, user)
+
                     messages.success(request, 'Your password has been reset successfully. You can now log in with your new password.')
                     return redirect('pw_website:login')
             except Exception as e:

@@ -1581,12 +1581,23 @@
                 <input type="number" class="form-control" id="maxCapacity" min="1" required>
             </div>
             <div class="form-group">
-                <label>Price per Ticket</label>
-                <input type="number" class="form-control" id="ticketPrice" min="0" step="0.01" required>
-            </div>
-            <div class="form-group">
                 <label>Description</label>
                 <textarea class="form-control" id="eventDescription" rows="3" required></textarea>
+            </div>
+
+            <!-- Ticket creation during event registration -->
+            <div class="form-group">
+                <h4 style="margin: 10px 0 6px;">Tickets</h4>
+                <div style="margin-bottom: 10px; color: #666; font-size: 14px;">
+                    Add ticket types now and they will be created as available tickets for this event.
+                    Total ticket quantities should not exceed the maximum capacity.
+                </div>
+                <div id="eventTicketTypesList">
+                    <!-- Event ticket types will be added here dynamically -->
+                </div>
+                <button type="button" class="btn-action btn-secondary" onclick="addEventTicketTypeRow()" id="addEventTicketTypeBtn">
+                    + Add Ticket Type
+                </button>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-action" onclick="closeModal('eventModal')">Cancel</button>
@@ -1596,8 +1607,65 @@
     </div>
 </div>
 
-<!-- Add/Edit Ticket Modal -->
+<!-- Enhanced Multi-Type Ticket Creation Modal -->
 <div class="modal" id="ticketModal">
+    <div class="modal-content" style="max-width: 800px; width: 90%;">
+        <h3 id="ticketModalTitle">Create Event Tickets</h3>
+        
+        <!-- Event Selection -->
+        <div class="form-group">
+            <label>Select Event</label>
+            <select class="form-control" id="ticketEventSelect" required>
+                <option value="">Choose an event...</option>
+            </select>
+        </div>
+        
+        <!-- Event Capacity Info -->
+        <div class="form-group" id="capacityInfo" style="display: none;">
+            <div class="alert alert-info">
+                <strong>Event Capacity:</strong> <span id="eventCapacity">0</span><br>
+                <strong>Tickets Already Created:</strong> <span id="existingTickets">0</span><br>
+                <strong>Remaining Capacity:</strong> <span id="remainingCapacity">0</span>
+            </div>
+        </div>
+        
+        <!-- Multiple Ticket Types Section -->
+        <div id="ticketTypesSection" style="display: none;">
+            <h4>Add Ticket Types</h4>
+            <div id="ticketTypesList">
+                <!-- Ticket types will be added here dynamically -->
+            </div>
+            
+            <button type="button" class="btn-action btn-secondary" onclick="addTicketTypeRow()" id="addTicketTypeBtn">
+                + Add Ticket Type
+            </button>
+        </div>
+        
+        <div class="modal-footer" style="margin-top: 20px;">
+            <button type="button" class="btn-action" onclick="closeModal('ticketModal')">Cancel</button>
+            <button type="button" class="btn-action btn-primary" onclick="createAllTickets()" id="createAllTicketsBtn" style="display: none;">Create All Tickets</button>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Notification Modal -->
+<div class="modal" id="notificationModal" style="z-index: 10000;">
+    <div class="modal-content" id="notificationContent" style="max-width: 500px; text-align: center; padding: 30px;">
+        <div id="notificationIcon" style="font-size: 48px; margin-bottom: 20px;"></div>
+        <h3 id="notificationTitle" style="margin-bottom: 15px; color: #333;"></h3>
+        <p id="notificationMessage" style="font-size: 16px; line-height: 1.5; margin-bottom: 25px; color: #666;"></p>
+        <div id="notificationActions" style="display: flex; gap: 15px; justify-content: center;">
+            <button id="notificationOK" class="btn-action btn-primary" onclick="closeNotification()" style="min-width: 100px;">OK</button>
+            <button id="notificationCancel" class="btn-action" onclick="closeNotification()" style="min-width: 100px; display: none;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Inline Alert System -->
+<div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;"></div>
+
+<!-- Old ticket modal -->
+<div class="modal" id="oldTicketModal" style="display: none;">
     <div class="modal-content">
         <h3 id="ticketModalTitle">Add Ticket</h3>
         <form id="ticketForm">
@@ -1635,10 +1703,17 @@
 <script>
 // Utility functions - declared first to avoid hoisting issues
 function formatCurrency(amount) {
+    const n = Number(amount);
+    if (!Number.isFinite(n)) {
+        return new Intl.NumberFormat('en-NG', {
+            style: 'currency',
+            currency: 'NGN'
+        }).format(0);
+    }
     return new Intl.NumberFormat('en-NG', {
         style: 'currency',
         currency: 'NGN'
-    }).format(amount);
+    }).format(n);
 }
 
 function formatDate(dateString) {
@@ -1758,6 +1833,12 @@ class TabSlider {
     }
     
     handleTouchStart(e) {
+        // Ignore if touching an interactive element
+        if (e.target.closest('button, input, select, textarea, a, label, .no-swipe')) {
+            this.isDragging = false;
+            return;
+        }
+
         this.startX = e.touches[0].clientX;
         this.isDragging = true;
         this.container.style.transition = 'none';
@@ -1772,6 +1853,14 @@ class TabSlider {
         
         this.currentX = e.touches[0].clientX;
         const diffX = this.startX - this.currentX;
+        
+        // Helper to check if movement is vertical (scrolling)
+        const diffY = e.touches[0].clientY - (this.startY || e.touches[0].clientY);
+        if (Math.abs(diffY) > Math.abs(diffX)) {
+             this.isDragging = false; // Release drag if scrolling vertically
+             return;
+        }
+        
         const currentTransform = -(this.currentTab * 33.333);
         const dragPercentage = (diffX / this.container.offsetWidth) * 33.333;
         const newTransform = currentTransform - dragPercentage;
@@ -1785,7 +1874,7 @@ class TabSlider {
         }
         
         this.container.style.transform = `translateX(${clampedTransform}%)`;
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
     }
     
     handleTouchEnd(e) {
@@ -1815,6 +1904,11 @@ class TabSlider {
     }
     
     handleMouseDown(e) {
+        // Ignore if clicking an interactive element
+        if (e.target.closest('button, input, select, textarea, a, label, .no-swipe')) {
+            return;
+        }
+        
         if (e.button !== 0) return; // Only left mouse button
         this.startX = e.clientX;
         this.isDragging = true;
@@ -2024,6 +2118,482 @@ function closeModal(modalId) {
     if (modal) {
         modal.classList.remove('show');
     }
+}
+
+// Missing modal functions that buttons are calling
+function showAddBookingModal() {
+    showModal('bookingModal');
+}
+
+function showAddEventModal() {
+    // Clear form and set minimum date to today
+    document.getElementById('eventForm').reset();
+    document.getElementById('eventId').value = '';
+    const titleEl = document.getElementById('eventModalTitle');
+    if (titleEl) titleEl.textContent = 'Add Event';
+    const now = new Date();
+    const minDateTime = now.toISOString().slice(0, 16); // Format for datetime-local input
+    document.getElementById('eventDateTime').min = minDateTime;
+
+    // Reset event ticket creation section
+    const eventTicketTypesList = document.getElementById('eventTicketTypesList');
+    if (eventTicketTypesList) {
+        eventTicketTypesList.innerHTML = '';
+    }
+    eventTicketTypeCounter = 0;
+    updateEventTicketQuantityLimits();
+
+    // Ticket creation is required for new events
+    addEventTicketTypeRow();
+
+    showModal('eventModal');
+}
+
+async function editEvent(eventId) {
+    try {
+        const response = await fetch('/api/events/' + eventId + '/');
+        const event = await response.json();
+
+        // Set modal title + hidden id
+        document.getElementById('eventId').value = eventId;
+        const titleEl = document.getElementById('eventModalTitle');
+        if (titleEl) titleEl.textContent = 'Edit Event';
+
+        // Prevent selecting past dates
+        const now = new Date();
+        const minDateTime = now.toISOString().slice(0, 16);
+        document.getElementById('eventDateTime').min = minDateTime;
+
+        // Populate form fields
+        document.getElementById('eventName').value = event.name || '';
+        document.getElementById('eventDescription').value = event.description || '';
+        document.getElementById('eventTypeSelect').value = event.event_type || 'bush_party';
+        document.getElementById('eventDateTime').value = event.date ? new Date(event.date).toISOString().slice(0, 16) : '';
+        document.getElementById('eventLocation').value = event.location || '';
+        document.getElementById('maxCapacity').value = event.max_capacity || 1;
+
+        // Reset ticket section (add new ticket types if needed)
+        const eventTicketTypesList = document.getElementById('eventTicketTypesList');
+        if (eventTicketTypesList) {
+            eventTicketTypesList.innerHTML = '';
+        }
+        eventTicketTypeCounter = 0;
+        updateEventTicketQuantityLimits();
+
+        showModal('eventModal');
+    } catch (error) {
+        console.error('Error loading event:', error);
+        showNotification('Error', 'Failed to load event details. Please try again.', 'error');
+    }
+}
+
+async function showAddTicketModal() {
+    // Load available events
+    try {
+        const response = await fetch('/api/events/');
+        const events = await response.json();
+        const eventSelect = document.getElementById('ticketEventSelect');
+        
+        eventSelect.innerHTML = '<option value="">Choose an event...</option>';
+        events.forEach(event => {
+            if (new Date(event.date) >= new Date()) { // Only future events
+                eventSelect.innerHTML += `<option value="${event.id}">${event.name} - ${new Date(event.date).toLocaleDateString()}</option>`;
+            }
+        });
+    } catch (error) {
+        console.error('Error loading events:', error);
+    }
+    
+    // Reset modal state
+    document.getElementById('capacityInfo').style.display = 'none';
+    document.getElementById('ticketTypesSection').style.display = 'none';
+    document.getElementById('ticketTypesList').innerHTML = '';
+    document.getElementById('createAllTicketsBtn').style.display = 'none';
+    
+    showModal('ticketModal');
+}
+
+// Functions for managing multiple ticket types
+let ticketTypeCounter = 0;
+
+function addTicketTypeRow() {
+    ticketTypeCounter++;
+    const ticketTypesList = document.getElementById('ticketTypesList');
+    const remainingCapacity = parseInt(document.getElementById('remainingCapacity').textContent) || 0;
+    
+    const ticketRow = document.createElement('div');
+    ticketRow.className = 'ticket-type-row';
+    ticketRow.id = `ticketRow${ticketTypeCounter}`;
+    ticketRow.style.cssText = 'border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; background-color: #f9f9f9;';
+    
+    ticketRow.innerHTML = `
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">
+            <div style="flex: 1; min-width: 150px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Ticket Type</label>
+                <select class="form-control ticket-type-select" required>
+                    <option value="normal">Normal</option>
+                    <option value="regular">Regular</option>
+                    <option value="premium">Premium</option>
+                    <option value="vip">VIP</option>
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 120px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Price (₦)</label>
+                <input type="number" class="form-control ticket-price-input" min="1" step="0.01" required>
+            </div>
+            <div style="flex: 1; min-width: 120px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Quantity</label>
+                <input type="number" class="form-control ticket-quantity-input" min="1" max="${remainingCapacity}" required>
+            </div>
+            <div style="flex: 0;">
+                <button type="button" class="btn-action btn-danger" onclick="removeTicketTypeRow(${ticketTypeCounter})" style="padding: 8px 12px;">
+                    ✕ Remove
+                </button>
+            </div>
+        </div>
+    `;
+    
+    ticketTypesList.appendChild(ticketRow);
+    updateQuantityLimits();
+}
+
+function removeTicketTypeRow(rowId) {
+    const row = document.getElementById(`ticketRow${rowId}`);
+    if (row) {
+        row.remove();
+        updateQuantityLimits();
+    }
+    
+    if (document.getElementById('ticketTypesList').children.length === 0) {
+        document.getElementById('createAllTicketsBtn').style.display = 'none';
+    }
+}
+
+function updateQuantityLimits() {
+    const remainingCapacity = parseInt(document.getElementById('remainingCapacity').textContent) || 0;
+    const quantityInputs = document.querySelectorAll('.ticket-quantity-input');
+    
+    quantityInputs.forEach(input => {
+        input.max = remainingCapacity;
+    });
+}
+
+// Functions for managing event ticket types (during event creation)
+let eventTicketTypeCounter = 0;
+
+function addEventTicketTypeRow() {
+    eventTicketTypeCounter++;
+    const ticketTypesList = document.getElementById('eventTicketTypesList');
+    if (!ticketTypesList) return;
+
+    const maxCapacity = parseInt(document.getElementById('maxCapacity').value) || 0;
+
+    const ticketRow = document.createElement('div');
+    ticketRow.className = 'event-ticket-type-row';
+    ticketRow.id = 'eventTicketRow' + eventTicketTypeCounter;
+    ticketRow.style.cssText = 'border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; background-color: #f9f9f9;';
+
+    ticketRow.innerHTML =
+        '<div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">'
+      + '  <div style="flex: 1; min-width: 150px;">'
+      + '    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Ticket Type</label>'
+      + '    <select class="form-control event-ticket-type-select" required>'
+      + '      <option value="normal">Normal</option>'
+      + '      <option value="regular">Regular</option>'
+      + '      <option value="premium">Premium</option>'
+      + '      <option value="vip">VIP</option>'
+      + '    </select>'
+      + '  </div>'
+      + '  <div style="flex: 1; min-width: 120px;">'
+      + '    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Price (₦)</label>'
+      + '    <input type="number" class="form-control event-ticket-price-input" min="1" step="0.01" required>'
+      + '  </div>'
+      + '  <div style="flex: 1; min-width: 120px;">'
+      + '    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Quantity</label>'
+      + '    <input type="number" class="form-control event-ticket-quantity-input" min="1" max="' + maxCapacity + '" required>'
+      + '  </div>'
+      + '  <div style="flex: 0;">'
+      + '    <button type="button" class="btn-action btn-danger" onclick="removeEventTicketTypeRow(' + eventTicketTypeCounter + ')" style="padding: 8px 12px;">'
+      + '      ✕ Remove'
+      + '    </button>'
+      + '  </div>'
+      + '</div>';
+
+    ticketTypesList.appendChild(ticketRow);
+    updateEventTicketQuantityLimits();
+}
+
+function removeEventTicketTypeRow(rowId) {
+    const row = document.getElementById('eventTicketRow' + rowId);
+    if (row) {
+        row.remove();
+        updateEventTicketQuantityLimits();
+    }
+}
+
+function updateEventTicketQuantityLimits() {
+    const maxCapacity = parseInt(document.getElementById('maxCapacity').value) || 0;
+    const quantityInputs = document.querySelectorAll('.event-ticket-quantity-input');
+    quantityInputs.forEach(input => {
+        input.max = maxCapacity;
+    });
+}
+
+// Keep event ticket quantity limits in sync with max capacity
+const maxCapacityInput = document.getElementById('maxCapacity');
+if (maxCapacityInput) {
+    maxCapacityInput.addEventListener('input', updateEventTicketQuantityLimits);
+}
+
+async function createAllTickets() {
+    const eventId = document.getElementById('ticketEventSelect').value;
+    if (!eventId) {
+        showNotification('Event Required', 'Please select an event before creating tickets.', 'warning');
+        return;
+    }
+    
+    const ticketRows = document.querySelectorAll('.ticket-type-row');
+    if (ticketRows.length === 0) {
+        showNotification('Tickets Required', 'Please add at least one ticket type to proceed.', 'warning');
+        return;
+    }
+    
+    const ticketData = [];
+    let totalQuantity = 0;
+    let hasErrors = false;
+    
+    for (let row of ticketRows) {
+        const ticketType = row.querySelector('.ticket-type-select').value;
+        const price = parseFloat(row.querySelector('.ticket-price-input').value);
+        const quantity = parseInt(row.querySelector('.ticket-quantity-input').value);
+        
+        if (!ticketType || !price || !quantity || price <= 0 || quantity <= 0) {
+            hasErrors = true;
+            // Highlight the problematic row
+            row.style.borderColor = '#dc3545';
+            row.style.backgroundColor = '#f8d7da';
+        } else {
+            // Reset row styling
+            row.style.borderColor = '#ddd';
+            row.style.backgroundColor = '#f9f9f9';
+        }
+        
+        totalQuantity += quantity || 0;
+        ticketData.push({
+            ticket_type: ticketType,
+            price: price,
+            quantity: quantity
+        });
+    }
+    
+    if (hasErrors) {
+        showNotification(
+            'Invalid Input', 
+            'Please fill in all fields with valid values for each ticket type. Problematic rows are highlighted in red.', 
+            'error'
+        );
+        return;
+    }
+    
+    const remainingCapacity = parseInt(document.getElementById('remainingCapacity').textContent);
+    if (totalQuantity > remainingCapacity) {
+        showNotification(
+            'Capacity Exceeded', 
+            'You are trying to create ' + totalQuantity + ' tickets, but only ' + remainingCapacity + ' spots remain for this event. Please reduce the quantities or create tickets in batches.',
+            'error'
+        );
+        return;
+    }
+    
+    // Show processing notification
+    showAlert('Creating tickets, please wait...', 'info', 10000);
+    
+    let successCount = 0;
+    let errorMessages = [];
+    
+    for (let ticket of ticketData) {
+        try {
+            console.log('Creating tickets:', {
+                event_id: eventId,
+                ticket_type: ticket.ticket_type,
+                price: ticket.price,
+                quantity: ticket.quantity
+            });
+            
+            const response = await fetch('/api/tickets/create-batch/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    event_id: eventId,
+                    ticket_type: ticket.ticket_type,
+                    price: ticket.price,
+                    quantity: ticket.quantity
+                })
+            });
+            
+            const result = await response.json();
+            console.log('API response:', result);
+            
+            if (result.success) {
+                successCount++;
+            } else {
+                errorMessages.push(`${ticket.ticket_type}: ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Error creating tickets:', error);
+            errorMessages.push(`${ticket.ticket_type}: Network error`);
+        }
+    }
+    
+    // Close processing notification
+    const alerts = document.querySelectorAll('#alertContainer > div');
+    alerts.forEach(alert => alert.remove());
+    
+    if (successCount > 0) {
+        closeModal('ticketModal');
+        loadTickets();
+        
+        if (errorMessages.length === 0) {
+            showNotification(
+                'Success! 🎉', 
+                'Successfully created ' + successCount + ' ticket type(s). Your tickets are now available for sale.',
+                'success'
+            );
+        } else {
+            showNotification(
+                'Partially Completed',
+                successCount + ' ticket type(s) created successfully, but some failed:\\n\\n' + errorMessages.join('\\n'),
+                'warning'
+            );
+        }
+    } else {
+        showNotification(
+            'Creation Failed',
+            'No tickets were created. Errors encountered:\\n\\n' + errorMessages.join('\\n'),
+            'error'
+        );
+    }
+}
+
+// Professional Notification System
+function showNotification(title, message, type = 'info', showCancel = false) {
+    const modal = document.getElementById('notificationModal');
+    const icon = document.getElementById('notificationIcon');
+    const titleEl = document.getElementById('notificationTitle');
+    const messageEl = document.getElementById('notificationMessage');
+    const content = document.getElementById('notificationContent');
+    const cancelBtn = document.getElementById('notificationCancel');
+    
+    // Set icon and colors based on type
+    switch(type) {
+        case 'success':
+            icon.innerHTML = '✅';
+            content.style.borderLeft = '5px solid #28a745';
+            titleEl.style.color = '#28a745';
+            break;
+        case 'error':
+            icon.innerHTML = '❌';
+            content.style.borderLeft = '5px solid #dc3545';
+            titleEl.style.color = '#dc3545';
+            break;
+        case 'warning':
+            icon.innerHTML = '⚠️';
+            content.style.borderLeft = '5px solid #ffc107';
+            titleEl.style.color = '#856404';
+            break;
+        default:
+            icon.innerHTML = 'ℹ️';
+            content.style.borderLeft = '5px solid #17a2b8';
+            titleEl.style.color = '#17a2b8';
+    }
+    
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    cancelBtn.style.display = showCancel ? 'inline-block' : 'none';
+    
+    modal.style.display = 'block';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNotification() {
+    const modal = document.getElementById('notificationModal');
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// Inline Alert System
+function showAlert(message, type = 'info', duration = 5000) {
+    const container = document.getElementById('alertContainer');
+    const alert = document.createElement('div');
+    
+    const colors = {
+        success: { bg: '#d4edda', border: '#c3e6cb', text: '#155724' },
+        error: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' },
+        warning: { bg: '#fff3cd', border: '#ffeaa7', text: '#856404' },
+        info: { bg: '#d1ecf1', border: '#bee5eb', text: '#0c5460' }
+    };
+    
+    const color = colors[type] || colors.info;
+    
+    alert.style.cssText = `
+        background-color: ${color.bg};
+        border: 1px solid ${color.border};
+        color: ${color.text};
+        padding: 12px 20px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        animation: slideInRight 0.3s ease-out;
+        font-weight: 500;
+    `;
+    
+    alert.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" style="
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: ${color.text};
+            cursor: pointer;
+            padding: 0;
+            margin-left: 15px;
+        ">×</button>
+    `;
+    
+    container.appendChild(alert);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => alert.remove(), 300);
+        }
+    }, duration);
+}
+
+// Add CSS animations for alerts
+if (!document.getElementById('alertStyles')) {
+    const style = document.createElement('style');
+    style.id = 'alertStyles';
+    style.textContent = `
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // Dashboard stats
@@ -2547,8 +3117,311 @@ document.getElementById('ticketStatusFilter').addEventListener('change', (e) => 
 });
 
 // Form submissions
+// Event form submission handler
+document.getElementById('eventForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const eventDate = document.getElementById('eventDateTime').value;
+    const now = new Date();
+    const selectedDate = new Date(eventDate);
+    
+    if (selectedDate <= now) {
+        showNotification(
+            'Invalid Date', 
+            'Event date must be in the future. Please select a date and time that has not passed yet.', 
+            'error'
+        );
+        return;
+    }
+    
+    const formData = {
+        name: document.getElementById('eventName').value,
+        description: document.getElementById('eventDescription').value,
+        event_type: document.getElementById('eventTypeSelect').value,
+        date: eventDate,
+        location: document.getElementById('eventLocation').value,
+        max_capacity: parseInt(document.getElementById('maxCapacity').value)
+    };
+
+    const existingEventId = document.getElementById('eventId').value;
+    const isEdit = !!existingEventId;
+
+    // Collect optional ticket types for this new event
+    const eventTicketRows = document.querySelectorAll('#eventTicketTypesList .event-ticket-type-row');
+    const eventTicketData = [];
+    let totalEventTicketQuantity = 0;
+    let hasEventTicketErrors = false;
+
+    eventTicketRows.forEach(row => {
+        const ticketTypeEl = row.querySelector('.event-ticket-type-select');
+        const priceEl = row.querySelector('.event-ticket-price-input');
+        const quantityEl = row.querySelector('.event-ticket-quantity-input');
+
+        const ticketType = ticketTypeEl ? ticketTypeEl.value : '';
+        const price = priceEl ? parseFloat(priceEl.value) : NaN;
+        const quantity = quantityEl ? parseInt(quantityEl.value) : NaN;
+
+        row.style.borderColor = '#ddd';
+
+        if (!ticketType || !price || price <= 0 || !quantity || quantity <= 0) {
+            hasEventTicketErrors = true;
+            row.style.borderColor = '#dc3545';
+            return;
+        }
+
+        totalEventTicketQuantity += quantity;
+        eventTicketData.push({
+            ticket_type: ticketType,
+            price: price,
+            quantity: quantity
+        });
+    });
+
+    if (hasEventTicketErrors) {
+        showNotification(
+            'Invalid Ticket Input',
+            'Please fill in all ticket fields with valid values (or remove the invalid ticket rows).',
+            'error'
+        );
+        return;
+    }
+
+    // Require at least one ticket type when creating a new event
+    if (!isEdit && eventTicketData.length === 0) {
+        showNotification(
+            'Tickets Required',
+            'Please add at least one ticket type for this event before saving.',
+            'warning'
+        );
+        return;
+    }
+
+    if (eventTicketData.length > 0 && totalEventTicketQuantity > formData.max_capacity) {
+        showNotification(
+            'Capacity Exceeded',
+            'You added ' + totalEventTicketQuantity + ' tickets, but the event capacity is only ' + formData.max_capacity + '. Please reduce ticket quantities or increase the maximum capacity.',
+            'error'
+        );
+        return;
+    }
+    
+    // Show loading notification
+    showAlert(isEdit ? 'Updating event, please wait...' : 'Creating event, please wait...', 'info', 10000);
+    
+    try {
+        const response = await fetch(isEdit ? ('/api/events/' + existingEventId + '/') : '/api/events/', {
+            method: isEdit ? 'PUT' : 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        // Remove loading notification
+        const alerts = document.querySelectorAll('#alertContainer > div');
+        alerts.forEach(alert => alert.remove());
+        
+        if (result.success) {
+            const newEventId = isEdit ? existingEventId : result.id;
+
+            // If ticket types were provided, create them as available tickets for the new event
+            let ticketCreateSuccessCount = 0;
+            const ticketCreateErrors = [];
+
+            if (eventTicketData.length > 0) {
+                showAlert('Creating tickets for this event, please wait...', 'info', 10000);
+
+                for (let i = 0; i < eventTicketData.length; i++) {
+                    const ticketPayload = {
+                        event_id: newEventId,
+                        ticket_type: eventTicketData[i].ticket_type,
+                        price: eventTicketData[i].price,
+                        quantity: eventTicketData[i].quantity
+                    };
+
+                    try {
+                        const ticketResp = await fetch('/api/tickets/create-batch/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify(ticketPayload)
+                        });
+
+                        const ticketResult = await ticketResp.json();
+
+                        if (ticketResp.ok && ticketResult.success) {
+                            ticketCreateSuccessCount += 1;
+                        } else {
+                            ticketCreateErrors.push((ticketPayload.ticket_type || 'ticket') + ': ' + (ticketResult.message || 'Failed to create tickets'));
+                        }
+                    } catch (err) {
+                        ticketCreateErrors.push((ticketPayload.ticket_type || 'ticket') + ': Network error while creating tickets');
+                    }
+                }
+
+                // Remove loading notification
+                const alerts2 = document.querySelectorAll('#alertContainer > div');
+                alerts2.forEach(alert => alert.remove());
+            }
+
+            closeModal('eventModal');
+            loadEvents();
+            loadTickets();
+
+            if (eventTicketData.length === 0) {
+                showNotification(
+                    isEdit ? 'Event Updated! ✅' : 'Event Created! 🎉',
+                    '\"' + formData.name + '\" has been successfully ' + (isEdit ? 'updated' : 'created') + '.',
+                    'success'
+                );
+            } else if (ticketCreateErrors.length === 0) {
+                showNotification(
+                    isEdit ? 'Event Updated & Tickets Added! 🎉' : 'Event & Tickets Created! 🎉',
+                    '\"' + formData.name + '\" was ' + (isEdit ? 'updated' : 'created') + ' and ' + ticketCreateSuccessCount + ' ticket type(s) were added as available tickets.',
+                    'success'
+                );
+            } else {
+                showNotification(
+                    isEdit ? 'Event Updated (Some Tickets Failed)' : 'Event Created (Some Tickets Failed)',
+                    'The event was created, but some ticket types could not be created:\n\n' + ticketCreateErrors.join('\n'),
+                    'warning'
+                );
+            }
+        } else {
+            showNotification(
+                'Creation Failed', 
+                (isEdit ? 'Unable to update the event: ' : 'Unable to create the event: ') + result.message + '. Please check your information and try again.',
+                'error'
+            );
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        
+        // Remove loading notification
+        const alerts = document.querySelectorAll('#alertContainer > div');
+        alerts.forEach(alert => alert.remove());
+        
+        showNotification(
+            'Network Error', 
+            'An error occurred while creating the event. Please check your internet connection and try again.',
+            'error'
+        );
+    }
+});
+
+// Ticket form submission handler
+document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const eventId = document.getElementById('ticketEventSelect').value;
+    const ticketType = document.getElementById('ticketType').value;
+    const price = parseFloat(document.getElementById('ticketPrice').value);
+    const quantity = parseInt(document.getElementById('ticketQuantity').value);
+    
+    if (!eventId) {
+        alert('Please select an event!');
+        return;
+    }
+    
+    // Check capacity
+    const remainingCapacity = parseInt(document.getElementById('remainingCapacity').textContent);
+    if (quantity > remainingCapacity) {
+        alert(`Cannot create ${quantity} tickets. Only ${remainingCapacity} spots remaining for this event.`);
+        return;
+    }
+    
+    try {
+        // Create tickets via API
+        const response = await fetch('/api/tickets/create-batch/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                event_id: eventId,
+                ticket_type: ticketType,
+                price: price,
+                quantity: quantity
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            closeModal('ticketModal');
+            loadTickets();
+            alert(`${quantity} ${ticketType} tickets created successfully!`);
+        } else {
+            alert('Error creating tickets: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while creating tickets.');
+    }
+});
+
+// Event selection handler for ticket creation
+document.getElementById('ticketEventSelect').addEventListener('change', async function() {
+    const eventId = this.value;
+    const capacityInfo = document.getElementById('capacityInfo');
+    const ticketTypesSection = document.getElementById('ticketTypesSection');
+    const createAllTicketsBtn = document.getElementById('createAllTicketsBtn');
+    
+    if (!eventId) {
+        capacityInfo.style.display = 'none';
+        ticketTypesSection.style.display = 'none';
+        createAllTicketsBtn.style.display = 'none';
+        return;
+    }
+    
+    try {
+        // Get event details
+        const eventResponse = await fetch(`/api/events/${eventId}/`);
+        const event = await eventResponse.json();
+        
+        // Get existing tickets for this event
+        const ticketsResponse = await fetch('/api/tickets/');
+        const allTickets = await ticketsResponse.json();
+        const eventTickets = allTickets.filter(t => t.event && t.event.id === eventId);
+        const existingTicketsCount = eventTickets.reduce((sum, ticket) => sum + ticket.quantity, 0);
+        
+        // Update capacity display
+        document.getElementById('eventCapacity').textContent = event.max_capacity;
+        document.getElementById('existingTickets').textContent = existingTicketsCount;
+        document.getElementById('remainingCapacity').textContent = event.max_capacity - existingTicketsCount;
+        
+        // Show capacity info and ticket types section
+        capacityInfo.style.display = 'block';
+        ticketTypesSection.style.display = 'block';
+        createAllTicketsBtn.style.display = 'inline-block';
+        
+        // Add first ticket type row if none exist
+        if (document.getElementById('ticketTypesList').children.length === 0) {
+            addTicketTypeRow();
+        }
+        
+    } catch (error) {
+        console.error('Error getting event capacity:', error);
+    }
+});
+
 document.getElementById('bookingForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Check availability before booking
+    const eventDate = document.getElementById('eventDate').value;
+    const availabilityResponse = await fetch(`/api/check-availability/?date=${eventDate}`);
+    const availability = await availabilityResponse.json();
+    
+    if (!availability.available) {
+        alert('We are currently busy for that day. Please try another date.');
+        return;
+    }
     const formData = {
         client_name: document.getElementById('clientName').value,
         phone: document.getElementById('phone').value,
@@ -2796,135 +3669,10 @@ function editBooking(bookingId) {
         });
 }
 
-function editEvent(eventId) {
-    console.log('Editing event:', eventId);
-    
-    // Create modal for event editing
-    const modal = document.createElement('div');
-    modal.className = 'modal fade show';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Event</h5>
-                    <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="event-edit-loading">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p>Loading event information...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Fetch current event data
-    fetch(`/api/events/${eventId}/`)
-        .then(response => response.json())
-        .then(event => {
-            modal.querySelector('.modal-body').innerHTML = `
-                <form id="editEventForm">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Event Name</label>
-                                <input type="text" class="form-control" id="name" value="${event.name || ''}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Event Date</label>
-                                <input type="datetime-local" class="form-control" id="date" value="${event.date ? new Date(event.date).toISOString().slice(0, 16) : ''}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Location</label>
-                                <input type="text" class="form-control" id="location" value="${event.location || ''}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Price per Ticket</label>
-                                <input type="number" class="form-control" id="pricePerTicket" value="${event.price_per_ticket || 0}" step="0.01" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Max Capacity</label>
-                                <input type="number" class="form-control" id="maxCapacity" value="${event.max_capacity || 0}" min="1" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select class="form-control" id="status" required>
-                                    <option value="upcoming" ${event.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
-                                    <option value="ongoing" ${event.status === 'ongoing' ? 'selected' : ''}>Ongoing</option>
-                                    <option value="completed" ${event.status === 'completed' ? 'selected' : ''}>Completed</option>
-                                    <option value="cancelled" ${event.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" id="description" rows="3">${event.description || ''}</textarea>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Save Changes
-                        </button>
-                    </div>
-                </form>
-            `;
-            
-            // Add form submission handler
-            document.getElementById('editEventForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = {
-                    name: document.getElementById('name').value,
-                    date: document.getElementById('date').value,
-                    location: document.getElementById('location').value,
-                    price_per_ticket: parseFloat(document.getElementById('pricePerTicket').value),
-                    max_capacity: parseInt(document.getElementById('maxCapacity').value),
-                    status: document.getElementById('status').value,
-                    description: document.getElementById('description').value
-                };
-                
-                fetch(`/api/events/${eventId}/`, {
-                    method: 'PUT',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success || data.id) {
-                        showNotification('Event updated successfully', 'success');
-                        loadEvents(); // Refresh events list
-                        modal.remove();
-                    } else {
-                        showNotification('Failed to update event', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating event:', error);
-                    showNotification('Error updating event', 'error');
-                });
-            });
-        })
-        .catch(error => {
-            console.error('Error loading event data:', error);
-            modal.querySelector('.modal-body').innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Failed to load event data. Please try again.
-                </div>
-            `;
-        });
+function legacyEditEvent(eventId) {
+    // Legacy stub: kept to avoid breaking any older references.
+    // The real edit flow uses the main Add/Edit Event modal.
+    editEvent(eventId);
 }
 
 function deleteEvent(eventId) {

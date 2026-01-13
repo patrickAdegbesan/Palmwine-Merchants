@@ -572,7 +572,11 @@ async function handlePaymentSuccess(transaction, customerInfo, eventDetails) {
                         if (!ok) throw new Error('download failed');
                     } catch (error) {
                         console.error('Error downloading ticket (Download Ticket button):', error);
-                        alert('Could not download ticket. Please check your email for the ticket or contact support.');
+                        if (window.showError) {
+                            showError('Could not download ticket. Please check your email for the ticket or contact support.', 'Download Error');
+                        } else {
+                            alert('Could not download ticket. Please check your email for the ticket or contact support.');
+                        }
                     }
                 };
             }
@@ -581,13 +585,21 @@ async function handlePaymentSuccess(transaction, customerInfo, eventDetails) {
             console.log('Verification modal should now be visible');
         } else {
             console.error('Verification modal not found!');
-            // Fallback: show simple alert
-            alert(`Payment successful! Reference: ${transaction.reference}\nTicket code: ${ticketCode}`);
+            // Fallback: show notification or alert
+            if (window.showSuccess) {
+                showSuccess(`Payment successful!\n\nReference: ${transaction.reference}\nTicket code: ${ticketCode}`, 'Payment Complete');
+            } else {
+                alert(`Payment successful! Reference: ${transaction.reference}\nTicket code: ${ticketCode}`);
+            }
         }
 
     } catch (error) {
         console.error('Error processing ticket:', error);
-        alert('Payment successful but there was an error generating your tickets. Please contact support with your reference: ' + transaction.reference);
+        if (window.showError) {
+            showError(`Payment successful but there was an error generating your tickets.\n\nPlease contact support with your reference: ${transaction.reference}`, 'Ticket Generation Error');
+        } else {
+            alert('Payment successful but there was an error generating your tickets. Please contact support with your reference: ' + transaction.reference);
+        }
     } finally {
         // Clean up
         const processingMsg = document.querySelector('.loading-indicator');
@@ -724,7 +736,11 @@ async function initializePaymentHandler() {
 
         } catch (error) {
             console.error('Payment error:', error);
-            alert(error.message || 'Could not process payment. Please try again.');
+            if (window.showError) {
+                showError(error.message || 'Could not process payment. Please try again.', 'Payment Error');
+            } else {
+                alert(error.message || 'Could not process payment. Please try again.');
+            }
             resetPaymentState();
         }
     });
