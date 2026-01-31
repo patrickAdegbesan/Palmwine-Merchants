@@ -23,9 +23,16 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-pro
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Default to True for local development; set DEBUG=False via environment in production
-DEBUG = config('DEBUG', default=True, cast=bool)
+# Read DEBUG robustly to accept values like 'false', 'False', '0', 'no', etc.
+debug_val = os.environ.get('DEBUG')
+if debug_val is None:
+    DEBUG = config('DEBUG', default=True, cast=bool)
+else:
+    DEBUG = str(debug_val).strip().lower() in ('1', 'true', 'yes', 'on')
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,.vercel.app').split(',')
+# Allow all Vercel domains and localhost
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS += ['.vercel.app', 'pwmerchants.vercel.app']
 
 
 # Application definition
@@ -134,8 +141,11 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Serve static files from staticfiles directory
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Serve static files - use basic whitenoise for Vercel
+if DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'

@@ -1,6 +1,6 @@
 #!/usr/bin/env powershell
 
-# Deployment script for Vercel
+# Deployment script for Vercel (Direct deployment without GitHub)
 Write-Host "======================================" -ForegroundColor Green
 Write-Host "Deploying to Vercel" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Green
@@ -9,23 +9,21 @@ Write-Host "======================================" -ForegroundColor Green
 $projectDir = "C:\Users\seuna\OneDrive - CUL Host\Desktop\pat-proj\pw_merchants"
 Set-Location $projectDir
 
-# Check git status
-Write-Host "`n[1/4] Checking git status..." -ForegroundColor Yellow
-git status
+# Remove git remotes temporarily to avoid GitHub linking
+Write-Host "`nRemoving git remotes for direct deployment..." -ForegroundColor Yellow
+$remotes = git remote
+foreach ($remote in $remotes) {
+    git remote remove $remote
+}
 
-# Commit changes
-Write-Host "`n[2/4] Committing changes..." -ForegroundColor Yellow
-git add .
-git commit -m "Prepare for Vercel deployment with Supabase"
-
-# Push to repository
-Write-Host "`n[3/4] Pushing to repository..." -ForegroundColor Yellow
-git push
-
-# Deploy to Vercel
-Write-Host "`n[4/4] Deploying to Vercel..." -ForegroundColor Yellow
-vercel --prod
+# Deploy to Vercel directly
+Write-Host "`nDeploying to Vercel..." -ForegroundColor Yellow
+vercel --prod --yes
 
 Write-Host "`n======================================" -ForegroundColor Green
 Write-Host "Deployment complete!" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Green
+Write-Host "`nNext steps:" -ForegroundColor Cyan
+Write-Host "1. Go to Vercel dashboard to set environment variables" -ForegroundColor White
+Write-Host "2. Add your Supabase DATABASE_URL" -ForegroundColor White
+Write-Host "3. Add SECRET_KEY, PAYSTACK keys, and email settings" -ForegroundColor White
